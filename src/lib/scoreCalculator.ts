@@ -62,7 +62,6 @@ export const getTopRecommendations = (
   responses: Record<string, Answer>,
   overallScore: number
 ): TopRecommendation[] => {
-  console.log('getTopRecommendations called with:', { categoryScores, responsesCount: Object.keys(responses).length, overallScore });
   const recommendations: Array<TopRecommendation & { internalPriority: number }> = [];
   
   // Find the 3 weakest categories
@@ -70,13 +69,11 @@ export const getTopRecommendations = (
     .sort(([_, a], [__, b]) => a - b)
     .slice(0, 3);
 
-  console.log('Weakest categories:', weakCategories);
   const skillLevel = getSkillLevel(overallScore);
 
   // Generate personalized recommendations for each weak category
   weakCategories.forEach(([category, score], index) => {
     const categoryQuestions = QUESTIONS.filter(q => q.category === category);
-    console.log(`Processing category ${category}, score: ${score}, questions:`, categoryQuestions.length);
     
     // For categories with low scores, generate recommendations even without specific low-scoring options
     // This handles scale questions and ensures all weak categories get recommendations
@@ -102,10 +99,8 @@ export const getTopRecommendations = (
     }> = [];
 
     // Try to find resources from answered questions in this category
-    console.log(`Looking for resources in ${category}, questions:`, categoryQuestions.length);
     categoryQuestions.forEach(question => {
       const response = responses[question.id];
-      console.log(`Question ${question.id} response:`, response);
       
       if (response && question.options) {
         let selectedOptions: QuestionOption[] = [];
@@ -116,9 +111,7 @@ export const getTopRecommendations = (
           if (opt) selectedOptions = [opt];
         }
 
-        console.log(`Selected options:`, selectedOptions.length);
         selectedOptions.forEach(option => {
-          console.log(`Option has resources:`, option.resources?.length || 0);
           if (option.resources && option.resources.length > 0) {
             topResources.push(...option.resources);
           }
@@ -139,8 +132,6 @@ export const getTopRecommendations = (
     // Remove duplicates and limit to 6
     topResources = Array.from(new Map(topResources.map(r => [r.url, r])).values()).slice(0, 6);
 
-    console.log(`Final resources for ${category}:`, topResources.length, topResources);
-
     recommendations.push({
       title: `Strengthen ${category}`,
       description: mentorDescription,
@@ -158,7 +149,6 @@ export const getTopRecommendations = (
     .slice(0, 3)
     .map(({ internalPriority, ...rest }) => rest);
   
-  console.log('Final recommendations:', finalRecommendations);
   return finalRecommendations;
 };
 

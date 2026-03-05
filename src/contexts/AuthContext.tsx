@@ -43,14 +43,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('Auth state changed:', { firebaseUser: firebaseUser?.uid });
       setUser(firebaseUser);
       
       if (firebaseUser) {
         // Fetch user profile from Firestore
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          console.log('User doc exists:', userDoc.exists(), userDoc.data());
           if (userDoc.exists()) {
             setUserProfile(userDoc.data() as User);
           } else {
@@ -107,6 +105,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userCredential = await signInWithPopup(auth, provider);
     const user = userCredential.user;
 
+    // Check if email is from @onja.org domain
+    const email = user.email || '';
+    if (!email.endsWith('@onja.org')) {
+      // Sign out the user immediately
+      await firebaseSignOut(auth);
+      throw new Error('Access restricted to @onja.org email addresses only.');
+    }
+
+    // Determine role based on email
+    const role: 'developer' | 'admin' = email === 'adria.trepat@onja.org' ? 'admin' : 'developer';
+
     // Check if user profile exists
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     
@@ -115,18 +124,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newUserProfile: User = {
         uid: user.uid,
         name: user.displayName || 'User',
-        email: user.email || '',
-        role: 'developer',
+        email,
+        role,
         createdAt: new Date() as any,
       };
 
       await setDoc(doc(db, 'users', user.uid), newUserProfile);
+      
+      // If admin, also add to admins collection
+      if (role === 'admin') {
+        await setDoc(doc(db, 'admins', user.uid), {
+          uid: user.uid,
+          name: user.displayName || 'User',
+          email,
+        });
+      }
+      
       setUserProfile(newUserProfile);
-      console.log('Created new user profile:', newUserProfile);
     } else {
-      // User already exists, just set the profile
-      setUserProfile(userDoc.data() as User);
-      console.log('Loaded existing user profile:', userDoc.data());
+      // User already exists, update role if needed
+      const existingProfile = userDoc.data() as User;
+      
+      // Update role if it has changed (e.g., user became admin)
+      if (existingProfile.role !== role) {
+        const updatedProfile = { ...existingProfile, role };
+        await setDoc(doc(db, 'users', user.uid), updatedProfile);
+        
+        // Add to admins collection if newly promoted
+        if (role === 'admin') {
+          await setDoc(doc(db, 'admins', user.uid), {
+            uid: user.uid,
+            name: existingProfile.name,
+            email: existingProfile.email,
+          });
+        }
+        
+        setUserProfile(updatedProfile);
+      } else {
+        setUserProfile(existingProfile);
+      }
     }
   };
 

@@ -43,6 +43,12 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-8 bg-white rounded-lg shadow-xl p-8">
+          <div className="mb-6 rounded-md bg-blue-50 border border-blue-200 p-4">
+            <p className="text-sm text-blue-800">
+              <strong>🔒 Access Restricted:</strong> Only <strong>@onja.org</strong> email addresses are allowed.
+            </p>
+          </div>
+
           {error && (
             <div className="mb-6 rounded-md bg-red-50 border border-red-200 p-4">
               <p className="text-sm text-red-800">{error}</p>

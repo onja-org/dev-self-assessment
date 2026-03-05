@@ -79,9 +79,6 @@ export default function DashboardPage() {
       } catch (error: any) {
         console.error('Error fetching assessments:', error);
         // Silently handle index building errors - assessments will load once index is ready
-        if (error?.code === 'failed-precondition' || error?.message?.includes('index')) {
-          console.log('Firestore index is still building. Assessment history will load once ready.');
-        }
       }
     };
 
