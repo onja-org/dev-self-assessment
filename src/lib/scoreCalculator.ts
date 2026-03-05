@@ -62,6 +62,7 @@ export const getTopRecommendations = (
   responses: Record<string, Answer>,
   overallScore: number
 ): TopRecommendation[] => {
+  console.log('getTopRecommendations called with:', { categoryScores, responsesCount: Object.keys(responses).length, overallScore });
   const recommendations: Array<TopRecommendation & { internalPriority: number }> = [];
   
   // Find the 3 weakest categories
@@ -69,72 +70,96 @@ export const getTopRecommendations = (
     .sort(([_, a], [__, b]) => a - b)
     .slice(0, 3);
 
+  console.log('Weakest categories:', weakCategories);
   const skillLevel = getSkillLevel(overallScore);
 
   // Generate personalized recommendations for each weak category
   weakCategories.forEach(([category, score], index) => {
     const categoryQuestions = QUESTIONS.filter(q => q.category === category);
+    console.log(`Processing category ${category}, score: ${score}, questions:`, categoryQuestions.length);
     
-    // Find the specific answers that need improvement
-    const improvementAreas: Array<{ question: any; option: QuestionOption; weight: number }> = [];
+    // For categories with low scores, generate recommendations even without specific low-scoring options
+    // This handles scale questions and ensures all weak categories get recommendations
     
+    // Create mentor-style description based on skill level and category
+    let mentorDescription = generateMentorDescription(
+      category,
+      score,
+      skillLevel.label,
+      `Your ${category} skills show room for growth. Let's build a focused improvement plan.`
+    );
+
+    // Create actionable monthly plan
+    let actionPlan = generateActionPlan(category, score, skillLevel.label);
+
+    // Get generic resources for the category
+    const categoryQuestion = categoryQuestions[0]; // Get first question in category for resources
+    let topResources: Array<{
+      title: string;
+      url: string;
+      type: 'article' | 'video' | 'course' | 'docs' | 'github' | 'book' | 'roadmap';
+      description?: string;
+    }> = [];
+
+    // Try to find resources from answered questions in this category
+    console.log(`Looking for resources in ${category}, questions:`, categoryQuestions.length);
     categoryQuestions.forEach(question => {
       const response = responses[question.id];
-      if (!response || !question.options) return;
-
-      let selectedOptions: QuestionOption[] = [];
-      if (Array.isArray(response.value)) {
-        selectedOptions = question.options.filter(opt => (response.value as string[]).includes(opt.value));
-      } else {
-        const opt = question.options.find(opt => opt.value === response.value);
-        if (opt) selectedOptions = [opt];
-      }
-
-      selectedOptions.forEach(option => {
-        if (option.scoreWeight < 0.6) {
-          improvementAreas.push({ question, option, weight: option.scoreWeight });
+      console.log(`Question ${question.id} response:`, response);
+      
+      if (response && question.options) {
+        let selectedOptions: QuestionOption[] = [];
+        if (Array.isArray(response.value)) {
+          selectedOptions = question.options.filter(opt => (response.value as string[]).includes(opt.value));
+        } else {
+          const opt = question.options.find(opt => opt.value === response.value);
+          if (opt) selectedOptions = [opt];
         }
-      });
+
+        console.log(`Selected options:`, selectedOptions.length);
+        selectedOptions.forEach(option => {
+          console.log(`Option has resources:`, option.resources?.length || 0);
+          if (option.resources && option.resources.length > 0) {
+            topResources.push(...option.resources);
+          }
+        });
+      }
+      
+      // Also check if the question itself has options with resources (for unselected options)
+      if (question.options) {
+        question.options.forEach(opt => {
+          if (opt.resources && opt.resources.length > 0) {
+            // Add resources from all options, not just selected ones
+            topResources.push(...opt.resources.slice(0, 2));
+          }
+        });
+      }
     });
 
-    // Sort by lowest weight to prioritize biggest gaps
-    improvementAreas.sort((a, b) => a.weight - b.weight);
+    // Remove duplicates and limit to 6
+    topResources = Array.from(new Map(topResources.map(r => [r.url, r])).values()).slice(0, 6);
 
-    if (improvementAreas.length > 0) {
-      const topArea = improvementAreas[0];
-      
-      // Create mentor-style description based on skill level and category
-      let mentorDescription = generateMentorDescription(
-        category,
-        score,
-        skillLevel.label,
-        topArea.option.mentorExplanation
-      );
+    console.log(`Final resources for ${category}:`, topResources.length, topResources);
 
-      // Create actionable monthly plan
-      let actionPlan = generateActionPlan(category, score, skillLevel.label);
-
-      // Select best 2-3 resources that have descriptions
-      const topResources = (topArea.option.resources || [])
-        .slice(0, 3);
-
-      recommendations.push({
-        title: `Strengthen ${category}`,
-        description: mentorDescription,
-        actionPlan,
-        priority: index === 0 ? 'high' : index === 1 ? 'medium' : 'low',
-        resources: topResources,
-        category,
-        internalPriority: (3 - index) * 10 + (6 - score), // Higher priority for weaker areas
-      });
-    }
+    recommendations.push({
+      title: `Strengthen ${category}`,
+      description: mentorDescription,
+      actionPlan,
+      priority: index === 0 ? 'high' : index === 1 ? 'medium' : 'low',
+      resources: topResources,
+      category,
+      internalPriority: (3 - index) * 10 + (10 - score), // Higher priority for weaker areas
+    });
   });
 
   // Return top 3, sorted by internal priority
-  return recommendations
+  const finalRecommendations = recommendations
     .sort((a, b) => b.internalPriority - a.internalPriority)
     .slice(0, 3)
     .map(({ internalPriority, ...rest }) => rest);
+  
+  console.log('Final recommendations:', finalRecommendations);
+  return finalRecommendations;
 };
 
 function generateMentorDescription(
@@ -162,28 +187,28 @@ function generateActionPlan(category: string, score: number, skillLevel: string)
   const timeframe = score < 4 ? "2-3 months" : score < 6 ? "4-6 weeks" : "3-4 weeks";
   
   const plans: Record<string, string> = {
-    'Technical Skills': `**This Month:** Pick one technology from your stack and go deep. Build a small but complete project using it. Focus on understanding, not just making it work.\n\n**Next ${timeframe}:** Master the fundamentals through daily practice. Read official documentation, follow a structured course, and build 2-3 progressively complex projects. Share your work for feedback.`,
+    'Technical Skills': `This Month: Pick one technology from your stack and go deep. Build a small but complete project using it. Focus on understanding, not just making it work.\n\nNext ${timeframe}: Master the fundamentals through daily practice. Read official documentation, follow a structured course, and build 2-3 progressively complex projects. Share your work for feedback.`,
     
-    'Problem Solving': `**This Month:** Solve 3-4 coding challenges per week on LeetCode or similar platforms. Focus on understanding patterns, not memorizing solutions. Write down your thought process.\n\n**Next ${timeframe}:** Practice explaining your solutions out loud. Tackle harder problems. Learn common algorithms and data structures. Apply these patterns to real projects.`,
+    'Problem Solving': `This Month: Solve 3-4 coding challenges per week on LeetCode or similar platforms. Focus on understanding patterns, not memorizing solutions. Write down your thought process.\n\nNext ${timeframe}: Practice explaining your solutions out loud. Tackle harder problems. Learn common algorithms and data structures. Apply these patterns to real projects.`,
     
-    'Core Programming Concepts': `**This Month:** Pick one core concept you're weak in (OOP, functional programming, async, etc.). Study it deeply through articles and videos. Implement examples from scratch.\n\n**Next ${timeframe}:** Build a project that uses these concepts extensively. Refactor old code using your new understanding. Teach the concept to someone else - that solidifies learning.`,
+    'Core Programming Concepts': `This Month: Pick one core concept you're weak in (OOP, functional programming, async, etc.). Study it deeply through articles and videos. Implement examples from scratch.\n\nNext ${timeframe}: Build a project that uses these concepts extensively. Refactor old code using your new understanding. Teach the concept to someone else - that solidifies learning.`,
     
-    'Code Quality & Best Practices': `**This Month:** Read one chapter of "Clean Code" or similar book each week. Review your recent code and identify 3 improvements. Make those changes.\n\n**Next ${timeframe}:** Set up linting and formatting tools. Practice writing tests. Do code reviews focusing on quality. Build habits around writing maintainable code.`,
+    'Code Quality & Best Practices': `This Month: Read one chapter of "Clean Code" or similar book each week. Review your recent code and identify 3 improvements. Make those changes.\n\nNext ${timeframe}: Set up linting and formatting tools. Practice writing tests. Do code reviews focusing on quality. Build habits around writing maintainable code.`,
     
-    'Collaboration': `**This Month:** Volunteer for pair programming sessions. Review at least 3 pull requests per week with thoughtful, constructive feedback. Ask questions in team discussions.\n\n**Next ${timeframe}:** Lead a small technical discussion or demo. Share knowledge through documentation or quick tutorials. Practice active listening and clear communication.`,
+    'Collaboration': `This Month: Volunteer for pair programming sessions. Review at least 3 pull requests per week with thoughtful, constructive feedback. Ask questions in team discussions.\n\nNext ${timeframe}: Lead a small technical discussion or demo. Share knowledge through documentation or quick tutorials. Practice active listening and clear communication.`,
     
-    'Communication': `**This Month:** Write clear commit messages and PR descriptions. Document one complex piece of code. Present your work in a team meeting.\n\n**Next ${timeframe}:** Start a technical blog or internal wiki posts. Practice explaining technical concepts to non-technical people. Give feedback kindly but clearly.`,
+    'Communication': `This Month: Write clear commit messages and PR descriptions. Document one complex piece of code. Present your work in a team meeting.\n\nNext ${timeframe}: Start a technical blog or internal wiki posts. Practice explaining technical concepts to non-technical people. Give feedback kindly but clearly.`,
     
-    'Learning & Growth': `**This Month:** Subscribe to 2-3 quality learning resources. Dedicate 30 minutes daily to learning. Take notes and apply what you learn immediately.\n\n**Next ${timeframe}:** Build a learning habit. Follow a structured course. Join a developer community. Share what you learn. Stay curious!`,
+    'Learning & Growth': `This Month: Subscribe to 2-3 quality learning resources. Dedicate 30 minutes daily to learning. Take notes and apply what you learn immediately.\n\nNext ${timeframe}: Build a learning habit. Follow a structured course. Join a developer community. Share what you learn. Stay curious!`,
     
-    'Version Control & Git': `**This Month:** Practice Git commands beyond add/commit/push. Learn branching strategies. Review Git best practices. Clean up your commit history.\n\n**Next ${timeframe}:** Master rebasing, cherry-picking, and conflict resolution. Contribute to open source. Establish Git workflows in your team.`,
+    'Version Control & Git': `This Month: Practice Git commands beyond add/commit/push. Learn branching strategies. Review Git best practices. Clean up your commit history.\n\nNext ${timeframe}: Master rebasing, cherry-picking, and conflict resolution. Contribute to open source. Establish Git workflows in your team.`,
     
-    'Data Structures & Algorithms': `**This Month:** Study one data structure per week (arrays, linked lists, trees, graphs). Implement each from scratch. Solve problems using them.\n\n**Next ${timeframe}:** Learn algorithm analysis (Big O). Study sorting and searching algorithms. Practice on coding platforms. Apply to real projects where appropriate.`,
+    'Data Structures & Algorithms': `This Month: Study one data structure per week (arrays, linked lists, trees, graphs). Implement each from scratch. Solve problems using them.\n\nNext ${timeframe}: Learn algorithm analysis (Big O). Study sorting and searching algorithms. Practice on coding platforms. Apply to real projects where appropriate.`,
     
-    'Debugging & Problem Analysis': `**This Month:** Use debugger tools instead of console.log. Practice systematic debugging: reproduce, isolate, understand, fix, verify. Document your process.\n\n**Next ${timeframe}:** Learn profiling and performance debugging. Study common bug patterns. Help others debug - it sharpens your skills. Build debugging intuition through practice.`,
+    'Debugging & Problem Analysis': `This Month: Use debugger tools instead of console.log. Practice systematic debugging: reproduce, isolate, understand, fix, verify. Document your process.\n\nNext ${timeframe}: Learn profiling and performance debugging. Study common bug patterns. Help others debug - it sharpens your skills. Build debugging intuition through practice.`,
   };
 
-  return plans[category] || `**This Month:** Focus on fundamentals. Build small projects. Seek feedback.\n\n**Next ${timeframe}:** Deepen expertise through consistent practice and real-world application.`;
+  return plans[category] || `This Month: Focus on fundamentals. Build small projects. Seek feedback.\n\nNext ${timeframe}: Deepen expertise through consistent practice and real-world application.`;
 }
 
 export const generateActionPlans = (

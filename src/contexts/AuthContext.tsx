@@ -43,13 +43,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('Auth state changed:', { firebaseUser: firebaseUser?.uid });
       setUser(firebaseUser);
       
       if (firebaseUser) {
         // Fetch user profile from Firestore
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        if (userDoc.exists()) {
-          setUserProfile(userDoc.data() as User);
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          console.log('User doc exists:', userDoc.exists(), userDoc.data());
+          if (userDoc.exists()) {
+            setUserProfile(userDoc.data() as User);
+          } else {
+            console.error('User document not found in Firestore for uid:', firebaseUser.uid);
+            setUserProfile(null);
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          setUserProfile(null);
         }
       } else {
         setUserProfile(null);
@@ -102,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (!userDoc.exists()) {
       // Create new user profile
-      const userProfile: User = {
+      const newUserProfile: User = {
         uid: user.uid,
         name: user.displayName || 'User',
         email: user.email || '',
@@ -110,8 +120,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createdAt: new Date() as any,
       };
 
-      await setDoc(doc(db, 'users', user.uid), userProfile);
-      setUserProfile(userProfile);
+      await setDoc(doc(db, 'users', user.uid), newUserProfile);
+      setUserProfile(newUserProfile);
+      console.log('Created new user profile:', newUserProfile);
+    } else {
+      // User already exists, just set the profile
+      setUserProfile(userDoc.data() as User);
+      console.log('Loaded existing user profile:', userDoc.data());
     }
   };
 

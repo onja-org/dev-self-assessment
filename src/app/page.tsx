@@ -34,18 +34,12 @@ export default function Home() {
           <p className="mt-6 max-w-2xl mx-auto text-xl text-gray-600">
             Track your skills, identify growth areas, and accelerate your development career with personalized insights and actionable roadmaps.
           </p>
-          <div className="mt-10 flex justify-center gap-4">
-            <Link
-              href="/register"
-              className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-lg"
-            >
-              Get Started
-            </Link>
+          <div className="mt-10 flex justify-center">
             <Link
               href="/login"
-              className="px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-50 transition shadow-lg border border-blue-600"
+              className="px-10 py-4 bg-blue-600 text-white font-bold text-lg rounded-lg hover:bg-blue-700 transition shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              Sign In
+              Get Started with Google
             </Link>
           </div>
         </div>
@@ -92,8 +86,8 @@ export default function Home() {
                 1
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900">Create an account</h4>
-                <p className="text-gray-600">Sign up with your name and email to get started</p>
+                <h4 className="font-semibold text-gray-900">Sign in with Google</h4>
+                <p className="text-gray-600">Quick and secure authentication with your Google account</p>
               </div>
             </div>
             <div className="flex items-start">

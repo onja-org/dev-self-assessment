@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -11,7 +11,7 @@ import { generateActionPlans, getScoreLevel, getScoreLevelColor, getTopRecommend
 import { getSkillLevel } from '@/lib/constants';
 import Link from 'next/link';
 
-export default function ResultPage() {
+function ResultPageContent() {
   const { userProfile } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -320,5 +320,22 @@ export default function ResultPage() {
         </div>
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function ResultPage() {
+  return (
+    <Suspense fallback={
+      <ProtectedRoute>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading results...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    }>
+      <ResultPageContent />
+    </Suspense>
   );
 }
