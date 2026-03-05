@@ -1,13 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Developer Self-Assessment App
 
-## Getting Started
+A comprehensive skill tracking and growth planning application for developers, built with Next.js, TypeScript, and Firebase.
 
-First, run the development server:
+## Features
+
+### For Developers
+- **Authentication**: Secure login/registration with email/password or Google SSO
+- **Self-Assessment**: Complete a 10-question assessment covering:
+  - Technical Skills
+  - Problem Solving
+  - Collaboration
+  - Communication
+  - Learning & Growth
+- **Instant Feedback**: Get immediate recommendations after each answer
+- **Detailed Results**: View overall and category scores with visual breakdowns
+- **Action Plans**: Receive personalized 90-day and 12-month roadmaps
+- **Progress Tracking**: View assessment history and track growth over time
+
+### For Managers/Admins
+- **Admin Dashboard**: View all developer assessments
+- **Filtering & Sorting**: Search by name/email, sort by date or score
+- **Detailed Views**: Access complete assessment details for any developer
+- **Data Export**: Export assessment data to CSV format
+- **Analytics**: View team-wide statistics and averages
+
+## Tech Stack
+
+- **Frontend**: Next.js 14+ with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Backend**: Firebase (Firestore + Authentication)
+- **Hosting**: Vercel (recommended)
+
+## Prerequisites
+
+- Node.js 18+ and npm
+- Firebase project (create at [firebase.google.com](https://firebase.google.com))
+
+## Setup Instructions
+
+### 1. Install Dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
+npm install
 # or
 pnpm dev
 # or
