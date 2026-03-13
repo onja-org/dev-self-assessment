@@ -1,10 +1,11 @@
-import { Answer, Assessment, ActionPlan, QuestionOption } from '@/types';
+import { Answer, Assessment, ActionPlan, QuestionOption, Question } from '@/types';
 import { QUESTIONS, CATEGORIES, getSkillLevel } from './constants';
 
-export const calculateScore = (responses: Record<string, Answer>): {
+export const calculateScore = (responses: Record<string, Answer>, questions?: Question[]): {
   categoryScores: Record<string, number>;
   overallScore: number;
 } => {
+  const questionSet = questions || QUESTIONS;
   const categoryScores: Record<string, number> = {};
   const categoryTotals: Record<string, { sum: number; count: number }> = {};
 
@@ -15,7 +16,7 @@ export const calculateScore = (responses: Record<string, Answer>): {
 
   // Calculate scores per category
   Object.entries(responses).forEach(([questionId, answer]) => {
-    const question = QUESTIONS.find(q => q.id === questionId);
+    const question = questionSet.find(q => q.id === questionId);
     if (!question) return;
 
     const category = question.category;
@@ -60,8 +61,10 @@ interface TopRecommendation {
 export const getTopRecommendations = (
   categoryScores: Record<string, number>,
   responses: Record<string, Answer>,
-  overallScore: number
+  overallScore: number,
+  questions?: Question[]
 ): TopRecommendation[] => {
+  const questionSet = questions || QUESTIONS;
   const recommendations: Array<TopRecommendation & { internalPriority: number }> = [];
   
   // Find the 3 weakest categories
@@ -73,7 +76,7 @@ export const getTopRecommendations = (
 
   // Generate personalized recommendations for each weak category
   weakCategories.forEach(([category, score], index) => {
-    const categoryQuestions = QUESTIONS.filter(q => q.category === category);
+    const categoryQuestions = questionSet.filter(q => q.category === category);
     
     // For categories with low scores, generate recommendations even without specific low-scoring options
     // This handles scale questions and ensures all weak categories get recommendations
@@ -203,12 +206,14 @@ function generateActionPlan(category: string, score: number, skillLevel: string)
 
 export const generateActionPlans = (
   categoryScores: Record<string, number>,
-  responses: Record<string, Answer>
+  responses: Record<string, Answer>,
+  questions?: Question[]
 ): ActionPlan[] => {
+  const questionSet = questions || QUESTIONS;
   const plans: ActionPlan[] = [];
 
   Object.entries(categoryScores).forEach(([category, score]) => {
-    const categoryQuestions = QUESTIONS.filter(q => q.category === category);
+    const categoryQuestions = questionSet.filter(q => q.category === category);
     const shortTerm: string[] = [];
     const longTerm: string[] = [];
 

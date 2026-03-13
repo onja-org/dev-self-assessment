@@ -2,17 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { QUESTIONS } from '@/lib/constants';
-import { Answer } from '@/types';
+import { Answer, Question } from '@/types';
 import { calculateScore } from '@/lib/scoreCalculator';
 
 export default function NewAssessmentPage() {
   const { userProfile } = useAuth();
   const router = useRouter();
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, Answer>>({});
   const [currentAnswer, setCurrentAnswer] = useState<string | number | string[]>('');
@@ -20,9 +21,53 @@ export default function NewAssessmentPage() {
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const currentQuestion = QUESTIONS[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === QUESTIONS.length - 1;
-  const progress = ((currentQuestionIndex + 1) / QUESTIONS.length) * 100;
+  // Fetch questions from Firestore
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'questions'));
+        const firestoreQuestions = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Question[];
+        
+        // If no questions in Firestore, fallback to constants (for backward compatibility)
+        if (firestoreQuestions.length === 0) {
+          const { QUESTIONS } = await import('@/lib/constants');
+          setQuestions(QUESTIONS);
+        } else {
+          setQuestions(firestoreQuestions);
+        }
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+        // Fallback to constants if fetch fails
+        const { QUESTIONS } = await import('@/lib/constants');
+        setQuestions(QUESTIONS);
+      } finally {
+        setQuestionsLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
+
+  const currentQuestion = questions[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
+  const progress = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
+
+  // Show loading state while questions are being fetched
+  if (questionsLoading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading assessment questions...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   const getSelectedOption = () => {
     if (!currentQuestion.options) return null;
@@ -91,11 +136,22 @@ export default function NewAssessmentPage() {
     try {
       const { categoryScores, overallScore } = calculateScore(responses);
 
+      // Get the latest version number for this user
+      const q = query(
+        collection(db, 'assessments'),
+        where('userId', '==', userProfile.uid),
+        orderBy('version', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      const latestVersion = querySnapshot.empty ? 0 : querySnapshot.docs[0].data().version;
+      const newVersion = latestVersion + 1;
+
       await addDoc(collection(db, 'assessments'), {
         userId: userProfile.uid,
         userName: userProfile.name,
         userEmail: userProfile.email,
         createdAt: Timestamp.now(),
+        version: newVersion,
         responses,
         categoryScores,
         overallScore,
@@ -265,7 +321,7 @@ export default function NewAssessmentPage() {
           <div className="mb-6">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-gray-700">
-                Question {currentQuestionIndex + 1} of {QUESTIONS.length}
+                Question {currentQuestionIndex + 1} of {questions.length}
               </span>
               <span className="text-sm font-medium text-gray-700">
                 {Math.round(progress)}% Complete
@@ -419,7 +475,7 @@ export default function NewAssessmentPage() {
 
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600">
-                    {isLastQuestion ? 'Ready to see your results?' : `${QUESTIONS.length - currentQuestionIndex - 1} questions remaining`}
+                    {isLastQuestion ? 'Ready to see your results?' : `${questions.length - currentQuestionIndex - 1} questions remaining`}
                   </p>
                   <button
                     onClick={handleContinue}

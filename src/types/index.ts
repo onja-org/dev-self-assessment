@@ -45,6 +45,7 @@ export interface Assessment {
   userName: string;
   userEmail: string;
   createdAt: Timestamp;
+  version: number; // Test version number for this developer
   responses: Record<string, Answer>;
   categoryScores: Record<string, number>;
   overallScore: number;

@@ -4,9 +4,9 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { QUESTIONS, CATEGORIES, getSkillLevel } from '@/lib/constants';
-import { Answer, Assessment } from '@/types';
+import { useState, useEffect, useMemo } from 'react';
+import { CATEGORIES, getSkillLevel } from '@/lib/constants';
+import { Answer, Assessment, Question } from '@/types';
 import { calculateScore, getTopRecommendations, generateActionPlans } from '@/lib/scoreCalculator';
 import { collection, addDoc, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -14,6 +14,10 @@ import { db } from '@/lib/firebase';
 export default function DashboardPage() {
   const { userProfile, signOut } = useAuth();
   const router = useRouter();
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'assessment' | 'results' | 'history'>('assessment');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [assessmentStarted, setAssessmentStarted] = useState(false);
@@ -25,18 +29,80 @@ export default function DashboardPage() {
   const [showResults, setShowResults] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const [categoryResults, setCategoryResults] = useState<Record<string, { recommendations: any[], resources: any[] }>>({});
+  const [unsavedCategories, setUnsavedCategories] = useState<Set<string>>(new Set());
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [completedCategory, setCompletedCategory] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'saved' | 'preview'>('saved');
+
+  // Fetch questions from Firestore
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'questions'));
+        const firestoreQuestions = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Question[];
+        
+        // If no questions in Firestore, fallback to constants (for backward compatibility)
+        if (firestoreQuestions.length === 0) {
+          const { QUESTIONS } = await import('@/lib/constants');
+          setQuestions(QUESTIONS);
+        } else {
+          setQuestions(firestoreQuestions);
+        }
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+        // Fallback to constants if fetch fails
+        const { QUESTIONS } = await import('@/lib/constants');
+        setQuestions(QUESTIONS);
+      } finally {
+        setQuestionsLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
+
+  // Fetch categories from Firestore
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'categories'));
+        const firestoreCategories = querySnapshot.docs
+          .map(doc => ({ order: doc.data().order || 0, name: doc.data().name }))
+          .sort((a, b) => a.order - b.order)
+          .map(c => c.name);
+        
+        // If no categories in Firestore, fallback to constants
+        if (firestoreCategories.length === 0) {
+          setCategories(Object.values(CATEGORIES));
+        } else {
+          setCategories(firestoreCategories);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        // Fallback to constants if fetch fails
+        setCategories(Object.values(CATEGORIES));
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Get filtered questions based on selected categories
   const filteredQuestions = selectedCategories.length === 0
-    ? QUESTIONS 
-    : QUESTIONS.filter(q => selectedCategories.includes(q.category));
+    ? questions 
+    : questions.filter(q => selectedCategories.includes(q.category));
 
   const currentQuestion = filteredQuestions[currentQuestionIndex];
   const progress = filteredQuestions.length > 0 ? ((currentQuestionIndex + 1) / filteredQuestions.length) * 100 : 0;
 
   // Helper function to check if a category is completed
   const isCategoryCompleted = (category: string) => {
-    const categoryQuestions = QUESTIONS.filter(q => q.category === category);
+    const categoryQuestions = questions.filter(q => q.category === category);
     // Check current responses OR latest assessment responses
     const currentComplete = categoryQuestions.every(q => responses[q.id] !== undefined);
     const latestComplete = latestAssessment 
@@ -45,13 +111,25 @@ export default function DashboardPage() {
     return currentComplete || latestComplete;
   };
 
+  // Check if category is saved in Firestore
+  const isCategorySaved = (category: string) => {
+    if (!latestAssessment) return false;
+    const categoryQuestions = questions.filter(q => q.category === category);
+    return categoryQuestions.every(q => latestAssessment.responses[q.id] !== undefined);
+  };
+
+  // Check if category is unsaved (completed but not in Firestore)
+  const isCategoryUnsaved = (category: string) => {
+    return unsavedCategories.has(category) || 
+      (isCategoryCompleted(category) && !isCategorySaved(category));
+  };
+
   // Get all completed categories
-  const completedCategories = Object.values(CATEGORIES).filter(cat => isCategoryCompleted(cat));
+  const completedCategories = categories.filter(cat => isCategoryCompleted(cat));
 
   // Get next incomplete category
   const getNextIncompleteCategory = () => {
-    const allCategories = Object.values(CATEGORIES);
-    return allCategories.find(cat => !isCategoryCompleted(cat)) || null;
+    return categories.find(cat => !isCategoryCompleted(cat)) || null;
   };
 
   // Fetch latest assessment and history
@@ -84,19 +162,62 @@ export default function DashboardPage() {
 
     fetchAssessments();
     
-    // Load saved responses from localStorage
+    // Load saved responses from localStorage and merge with latest assessment
     try {
       const saved = localStorage.getItem('assessment_responses');
+      let localResponses = {};
       if (saved) {
-        const savedResponses = JSON.parse(saved);
-        setResponses(savedResponses);
+        localResponses = JSON.parse(saved);
+      }
+      
+      // Merge with latest assessment responses if they exist
+      // This ensures we don't lose previously saved category responses
+      if (assessmentHistory.length > 0 && assessmentHistory[0].responses) {
+        const mergedResponses = {
+          ...assessmentHistory[0].responses, // Start with saved responses
+          ...localResponses, // Override with any local changes
+        };
+        setResponses(mergedResponses);
+      } else if (Object.keys(localResponses).length > 0) {
+        setResponses(localResponses);
       }
     } catch (error) {
       console.error('Error loading from localStorage:', error);
     }
-  }, [userProfile]);
+  }, [userProfile, assessmentHistory]);
+
+  // Navigation warning for unsaved work
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (unsavedCategories.size > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [unsavedCategories]);
 
   const handleSignOut = async () => {
+    if (unsavedCategories.size > 0) {
+      const confirmLeave = confirm(
+        `⚠️ You have ${unsavedCategories.size} unsaved categor${unsavedCategories.size > 1 ? 'ies' : 'y'}!\n\n` +
+        `Your progress will be lost if you sign out now.\n\n` +
+        `Click OK to save first, or Cancel to sign out without saving.`
+      );
+      
+      if (confirmLeave) {
+        // Give user chance to save
+        setActiveTab('assessment');
+        const submitButton = document.getElementById('submit-assessment-btn');
+        if (submitButton) {
+          submitButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+    }
+    
     await signOut();
     router.push('/login');
   };
@@ -143,47 +264,18 @@ export default function DashboardPage() {
     if (currentQuestionIndex < filteredQuestions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      // Category completed - check if we should move to next category
-      
-      // Generate category-specific recommendations
+      // Category completed
       if (currentCategory) {
+        // Mark as unsaved
+        setUnsavedCategories(prev => new Set([...prev, currentCategory]));
+        
+        // Generate category-specific recommendations
         generateCategoryRecommendations(currentCategory, newResponses);
+        
+        // Show completion modal
+        setCompletedCategory(currentCategory);
+        setShowCompletionModal(true);
       }
-      
-      // Show completion message and offer next steps
-      setTimeout(() => {
-        const nextCategory = getNextIncompleteCategory();
-        if (nextCategory && nextCategory !== currentCategory) {
-          // Offer to move to next category
-          const moveToNext = confirm(
-            `🎉 ${currentCategory || 'Category'} completed!\n\n` +
-            `Would you like to continue with "${nextCategory}"?\n\n` +
-            `• Click OK to continue\n` +
-            `• Click Cancel to return to category selection`
-          );
-          
-          if (moveToNext) {
-            setCurrentCategory(nextCategory);
-            setSelectedCategories([nextCategory]);
-            setCurrentQuestionIndex(0);
-          } else {
-            // Go back to category selection
-            setAssessmentStarted(false);
-            setCurrentQuestionIndex(0);
-          }
-        } else {
-          // All categories complete
-          alert(
-            `🎉 Congratulations! You've completed all categories!\n\n` +
-            `Click "Back to Category Selection" to see your progress,\n` +
-            `or submit your assessment to save and view detailed results.`
-          );
-          const submitButton = document.getElementById('submit-assessment-btn');
-          if (submitButton) {
-            submitButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }
-      }, 500);
     }
   };
 
@@ -195,7 +287,17 @@ export default function DashboardPage() {
 
     setIsSubmitting(true);
     try {
-      const { categoryScores, overallScore } = calculateScore(responses);
+      const { categoryScores, overallScore } = calculateScore(responses, questions);
+
+      // Get the latest version number for this user
+      const q = query(
+        collection(db, 'assessments'),
+        where('userId', '==', userProfile.uid),
+        orderBy('version', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      const latestVersion = querySnapshot.empty ? 0 : querySnapshot.docs[0].data().version;
+      const newVersion = latestVersion + 1;
 
       const assessment: Omit<Assessment, 'id'> = {
         userId: userProfile.uid,
@@ -204,6 +306,7 @@ export default function DashboardPage() {
         responses,
         categoryScores,
         overallScore,
+        version: newVersion,
         createdAt: Timestamp.now(),
       };
 
@@ -213,11 +316,13 @@ export default function DashboardPage() {
       setLatestAssessment(newAssessment);
       setShowResults(true);
       setActiveTab('results');
+      setViewMode('saved');
       
       // Refresh history
       setAssessmentHistory([newAssessment, ...assessmentHistory]);
       
-      // Clear localStorage after successful submission
+      // Clear unsaved categories and localStorage after successful submission
+      setUnsavedCategories(new Set());
       localStorage.removeItem('assessment_responses');
     } catch (error) {
       console.error('Error submitting assessment:', error);
@@ -229,21 +334,22 @@ export default function DashboardPage() {
 
   // Generate category-specific recommendations
   const generateCategoryRecommendations = (category: string, currentResponses: Record<string, Answer>) => {
-    const categoryQuestions = QUESTIONS.filter(q => q.category === category);
+    const categoryQuestions = questions.filter(q => q.category === category);
     const categoryResponseIds = categoryQuestions.map(q => q.id);
     const categoryOnlyResponses = Object.fromEntries(
       Object.entries(currentResponses).filter(([qId]) => categoryResponseIds.includes(qId))
     );
 
     // Calculate category-specific scores
-    const { categoryScores } = calculateScore(categoryOnlyResponses);
+    const { categoryScores } = calculateScore(categoryOnlyResponses, questions);
     const categoryScore = categoryScores[category] || 0;
 
     // Generate recommendations for this category only
     const recommendations = getTopRecommendations(
       { [category]: categoryScore },
       categoryOnlyResponses,
-      categoryScore
+      categoryScore,
+      questions
     );
 
     // Extract all resources from recommendations
@@ -312,8 +418,21 @@ export default function DashboardPage() {
     // Don't change showResults - keep previous results visible in Results tab
   };
 
-  const categories = Object.values(CATEGORIES);
   const allAnswered = filteredQuestions.every(q => responses[q.id] !== undefined);
+
+  // Show loading state while questions or categories are being fetched (after all hooks)
+  if (questionsLoading || categoriesLoading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading assessment...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
@@ -356,7 +475,13 @@ export default function DashboardPage() {
               <div className="border-b border-gray-200">
                 <nav className="flex -mb-px">
                   <button
-                    onClick={() => setActiveTab('assessment')}
+                    onClick={() => {
+                      setActiveTab('assessment');
+                      setAssessmentStarted(false);
+                      setSelectedCategories([]);
+                      setCurrentCategory(null);
+                    }}
+                    data-tab="assessment"
                     className={`py-4 px-6 text-sm font-medium border-b-2 transition ${
                       activeTab === 'assessment'
                         ? 'border-blue-600 text-blue-600'
@@ -366,7 +491,11 @@ export default function DashboardPage() {
                     📝 Take Assessment
                   </button>
                   <button
-                    onClick={() => setActiveTab('results')}
+                    onClick={() => {
+                      setActiveTab('results');
+                      setViewMode('saved');
+                    }}
+                    data-tab="results"
                     className={`py-4 px-6 text-sm font-medium border-b-2 transition ${
                       activeTab === 'results'
                         ? 'border-blue-600 text-blue-600'
@@ -377,6 +506,7 @@ export default function DashboardPage() {
                   </button>
                   <button
                     onClick={() => setActiveTab('history')}
+                    data-tab="history"
                     className={`py-4 px-6 text-sm font-medium border-b-2 transition ${
                       activeTab === 'history'
                         ? 'border-blue-600 text-blue-600'
@@ -397,27 +527,64 @@ export default function DashboardPage() {
                       /* Category Selection */
                       <div className="space-y-6">
                         {/* Progress Summary */}
-                        {completedCategories.length > 0 && (
-                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="bg-green-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl">
-                                  {completedCategories.length}
-                                </div>
-                                <div>
-                                  <h4 className="font-bold text-green-900">Categories Completed!</h4>
-                                  <p className="text-sm text-green-700">
-                                    {completedCategories.length} of {categories.length} categories done
-                                  </p>
+                        {(completedCategories.length > 0 || unsavedCategories.size > 0) && (
+                          <div className="space-y-3">
+                            {/* Unsaved Progress Warning */}
+                            {unsavedCategories.size > 0 && (
+                              <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-400 rounded-lg p-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="bg-yellow-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl">
+                                      ⚠️
+                                    </div>
+                                    <div>
+                                      <h4 className="font-bold text-yellow-900">Unsaved Progress</h4>
+                                      <p className="text-sm text-yellow-700">
+                                        {unsavedCategories.size} categor{unsavedCategories.size > 1 ? 'ies' : 'y'} completed but not saved
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      const submitButton = document.getElementById('submit-assessment-btn');
+                                      if (submitButton) {
+                                        submitButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                      } else {
+                                        setAssessmentStarted(true);
+                                      }
+                                    }}
+                                    className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium transition"
+                                  >
+                                    Save Now
+                                  </button>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <p className="text-xs text-green-600 uppercase font-semibold">Progress</p>
-                                <p className="text-2xl font-bold text-green-700">
-                                  {Math.round((completedCategories.length / categories.length) * 100)}%
-                                </p>
+                            )}
+                            
+                            {/* Completed Summary */}
+                            {completedCategories.length > 0 && (
+                              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 rounded-lg p-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="bg-green-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl">
+                                      {completedCategories.length}
+                                    </div>
+                                    <div>
+                                      <h4 className="font-bold text-green-900">Categories Completed!</h4>
+                                      <p className="text-sm text-green-700">
+                                        {completedCategories.length} of {categories.length} categories done
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-xs text-green-600 uppercase font-semibold">Progress</p>
+                                    <p className="text-2xl font-bold text-green-700">
+                                      {Math.round((completedCategories.length / categories.length) * 100)}%
+                                    </p>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
+                            )}
                           </div>
                         )}
                         
@@ -426,14 +593,16 @@ export default function DashboardPage() {
                             Select Categories to Assess
                           </h3>
                           <p className="text-gray-600 mb-4">
-                            Choose one or more categories, or leave all unselected to take the full assessment ({QUESTIONS.length} questions).
+                            Choose one or more categories, or leave all unselected to take the full assessment ({questions.length} questions).
                           </p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                           {categories.map(category => {
-                            const count = QUESTIONS.filter(q => q.category === category).length;
+                            const count = questions.filter(q => q.category === category).length;
                             const isSelected = selectedCategories.includes(category);
+                            const isUnsaved = isCategoryUnsaved(category);
+                            const isSaved = isCategorySaved(category);
                             const isCompleted = isCategoryCompleted(category);
                             
                             return (
@@ -441,8 +610,10 @@ export default function DashboardPage() {
                                 key={category}
                                 onClick={() => toggleCategory(category)}
                                 className={`p-4 rounded-lg border-2 transition-all text-left relative ${
-                                  isCompleted
+                                  isSaved
                                     ? 'border-green-500 bg-green-50 shadow-md'
+                                    : isUnsaved
+                                    ? 'border-yellow-500 bg-yellow-50 shadow-md'
                                     : isSelected
                                     ? 'border-blue-600 bg-blue-50 shadow-md'
                                     : 'border-gray-200 hover:border-gray-300 bg-white hover:shadow'
@@ -451,20 +622,27 @@ export default function DashboardPage() {
                                 <div className="flex items-start justify-between">
                                   <div className="flex-1">
                                     <h4 className={`font-semibold mb-1 ${
-                                      isCompleted ? 'text-green-900' : isSelected ? 'text-blue-900' : 'text-gray-900'
+                                      isSaved ? 'text-green-900' : 
+                                      isUnsaved ? 'text-yellow-900' : 
+                                      isSelected ? 'text-blue-900' : 'text-gray-900'
                                     }`}>
                                       {category}
-                                      {isCompleted && <span className="ml-2 text-xs text-green-600">✓ Completed</span>}
+                                      {isSaved && <span className="ml-2 text-xs text-green-600">🟢 Saved</span>}
+                                      {isUnsaved && !isSaved && <span className="ml-2 text-xs text-yellow-600">🟡 Unsaved</span>}
                                     </h4>
                                     <p className={`text-sm ${
-                                      isCompleted ? 'text-green-600' : isSelected ? 'text-blue-600' : 'text-gray-600'
+                                      isSaved ? 'text-green-600' : 
+                                      isUnsaved ? 'text-yellow-600' : 
+                                      isSelected ? 'text-blue-600' : 'text-gray-600'
                                     }`}>
                                       {count} question{count !== 1 ? 's' : ''}
                                     </p>
                                   </div>
                                   <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                                    isCompleted
+                                    isSaved
                                       ? 'border-green-600 bg-green-600'
+                                      : isUnsaved
+                                      ? 'border-yellow-500 bg-yellow-500'
                                       : isSelected
                                       ? 'border-blue-600 bg-blue-600'
                                       : 'border-gray-300'
@@ -476,9 +654,14 @@ export default function DashboardPage() {
                                     )}
                                   </div>
                                 </div>
-                                {isCompleted && (
+                                {isSaved && (
                                   <div className="mt-2 text-xs text-green-700 font-medium">
-                                    Click to review answers
+                                    ✓ Saved to history
+                                  </div>
+                                )}
+                                {isUnsaved && !isSaved && (
+                                  <div className="mt-2 text-xs text-yellow-700 font-medium">
+                                    ⚠️ Not yet saved
                                   </div>
                                 )}
                               </button>
@@ -497,7 +680,7 @@ export default function DashboardPage() {
                               <p className="text-sm text-blue-900">
                                 {selectedCategories.length === 0 ? (
                                   <>
-                                    <strong>Full Assessment:</strong> You'll answer all {QUESTIONS.length} questions covering all skill areas.
+                                    <strong>Full Assessment:</strong> You'll answer all {questions.length} questions covering all skill areas.
                                   </>
                                 ) : (
                                   <>
@@ -607,21 +790,31 @@ export default function DashboardPage() {
                     )}
 
                     {/* Submit Button */}
-                    {allAnswered && (
+                    {(allAnswered || unsavedCategories.size > 0) && (
                       <div id="submit-assessment-btn" className="flex flex-col items-center pt-6 border-t">
                         <div className="mb-4 flex items-center gap-2 text-green-600">
                           <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
-                          <span className="font-semibold">All questions answered!</span>
+                          <span className="font-semibold">
+                            {unsavedCategories.size > 0 
+                              ? `${unsavedCategories.size} categor${unsavedCategories.size > 1 ? 'ies' : 'y'} ready to save!`
+                              : 'All questions answered!'
+                            }
+                          </span>
                         </div>
                         <button
                           onClick={handleSubmitAssessment}
                           disabled={isSubmitting}
                           className="px-8 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg text-lg animate-pulse"
                         >
-                          {isSubmitting ? 'Submitting...' : '✅ Submit Assessment & View Results'}
+                          {isSubmitting ? 'Saving...' : '💾 Save & View All Results'}
                         </button>
+                        {unsavedCategories.size > 0 && (
+                          <p className="text-xs text-gray-500 mt-2 text-center">
+                            Your progress will be permanently saved to your history
+                          </p>
+                        )}
                       </div>
                     )}
 
@@ -642,6 +835,10 @@ export default function DashboardPage() {
                     onReset={resetAssessment} 
                     categoryResults={categoryResults}
                     currentCategory={currentCategory}
+                    viewMode={viewMode}
+                    unsavedCategories={unsavedCategories}
+                    questions={questions}
+                    categories={categories}
                   />
                 )}
 
@@ -656,6 +853,89 @@ export default function DashboardPage() {
             </div>
           </div>
         </main>
+
+        {/* Category Completion Modal */}
+        {showCompletionModal && completedCategory && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">🎉</span>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  {completedCategory} Complete!
+                </h3>
+                <p className="text-gray-600">
+                  Great work! Save your progress to view results.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {/* Save Progress Button */}
+                <button
+                  onClick={async () => {
+                    setShowCompletionModal(false);
+                    // Trigger save
+                    await handleSubmitAssessment();
+                  }}
+                  className="w-full px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 shadow-lg"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                  </svg>
+                  💾 Save & View Results
+                </button>
+
+                {/* Continue to Next Category */}
+                {(() => {
+                  const nextCategory = getNextIncompleteCategory();
+                  if (nextCategory && nextCategory !== completedCategory) {
+                    return (
+                      <button
+                        onClick={() => {
+                          setShowCompletionModal(false);
+                          setCurrentCategory(nextCategory);
+                          setSelectedCategories([nextCategory]);
+                          setCurrentQuestionIndex(0);
+                        }}
+                        className="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        Continue to {nextCategory}
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* Back to Category Selection */}
+                <button
+                  onClick={() => {
+                    setShowCompletionModal(false);
+                    setAssessmentStarted(false);
+                    setCurrentQuestionIndex(0);
+                    setSelectedCategories([]);
+                    setCurrentCategory(null);
+                  }}
+                  className="w-full px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  Back to Category Selection
+                </button>
+              </div>
+
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-xs text-blue-800 text-center">
+                  💡 Your progress must be saved to view results and continue
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   );
@@ -753,8 +1033,8 @@ function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onN
         </div>
       )}
 
-      {/* Tech Stack (Checkbox) */}
-      {question.type === 'tech-stack' && question.options && (
+      {/* Checkbox Type (Multiple Selection) */}
+      {(question.type === 'checkbox' || question.type === 'tech-stack') && question.options && (
         <div className="space-y-3">
           {question.options.map((option: any) => {
             const isChecked = Array.isArray(tempValue) && tempValue.includes(option.value);
@@ -825,39 +1105,92 @@ function ResultsView({
   assessment, 
   onReset, 
   categoryResults, 
-  currentCategory 
+  currentCategory,
+  viewMode = 'saved',
+  unsavedCategories = new Set(),
+  questions,
+  categories
 }: { 
   assessment: Assessment | null; 
   onReset: () => void;
   categoryResults?: Record<string, { recommendations: any[], resources: any[] }>;
   currentCategory?: string | null;
+  viewMode?: 'saved' | 'preview';
+  unsavedCategories?: Set<string>;
+  questions: Question[];
+  categories: string[];
 }) {
   const [topRecommendations, setTopRecommendations] = useState<any[]>([]);
   const [actionPlans, setActionPlans] = useState<any[]>([]);
   const [selectedCategoryView, setSelectedCategoryView] = useState<string | null>(null);
 
-  // Get list of categories that have results
-  const categoriesWithResults = categoryResults ? Object.keys(categoryResults) : [];
+  // Show categories where user has answered at least one question
+  const categoriesWithResults = useMemo(() => {
+    return assessment
+      ? categories.filter((category) => {
+          const categoryQuestions = questions.filter((q) => q.category === category);
+          return categoryQuestions.some((q) => assessment.responses[q.id] !== undefined);
+        })
+      : [];
+  }, [assessment, questions, categories]);
 
   useEffect(() => {
     if (assessment) {
       // Determine which category to show
-      const categoryToShow = selectedCategoryView || currentCategory;
-      
-      // If viewing a specific category, show only that category's results
-      if (categoryToShow && categoryResults && categoryResults[categoryToShow]) {
-        setTopRecommendations(categoryResults[categoryToShow].recommendations);
-        setActionPlans(categoryResults[categoryToShow].recommendations);
-      } else {
-        // Show all results
-        const plans = generateActionPlans(assessment.categoryScores, assessment.responses);
-        setActionPlans(plans);
+      const categoryToShow = selectedCategoryView || 'all';
+      if (categoryToShow && categoryToShow !== 'all') {
+        // Generate category-specific recommendations dynamically
+        const categoryQuestions = questions.filter(q => q.category === categoryToShow);
+        const categoryResponseIds = categoryQuestions.map(q => q.id);
+        const categoryOnlyResponses = Object.fromEntries(
+          Object.entries(assessment.responses).filter(([qId]) => categoryResponseIds.includes(qId))
+        );
 
-        const topRecs = getTopRecommendations(assessment.categoryScores, assessment.responses, assessment.overallScore);
-        setTopRecommendations(topRecs);
+        // Calculate category-specific scores
+        const { categoryScores: catScores } = calculateScore(categoryOnlyResponses, questions);
+        const categoryScore = catScores[categoryToShow] || 0;
+
+        // Generate recommendations for this category only
+        const recommendations = getTopRecommendations(
+          { [categoryToShow]: categoryScore },
+          categoryOnlyResponses,
+          categoryScore,
+          questions
+        );
+
+        setTopRecommendations(recommendations);
+        setActionPlans(recommendations);
+      } else {
+        // Show all categories with results
+        const allCategoryRecommendations: any[] = [];
+        
+        categoriesWithResults.forEach(category => {
+          const categoryQuestions = questions.filter(q => q.category === category);
+          const categoryResponseIds = categoryQuestions.map(q => q.id);
+          const categoryOnlyResponses = Object.fromEntries(
+            Object.entries(assessment.responses).filter(([qId]) => categoryResponseIds.includes(qId))
+          );
+
+          // Calculate category-specific scores
+          const { categoryScores: catScores } = calculateScore(categoryOnlyResponses, questions);
+          const categoryScore = catScores[category] || 0;
+
+          // Generate recommendations for this category
+          const recommendations = getTopRecommendations(
+            { [category]: categoryScore },
+            categoryOnlyResponses,
+            categoryScore,
+            questions
+          );
+
+          allCategoryRecommendations.push(...recommendations);
+        });
+        
+        setTopRecommendations(allCategoryRecommendations);
+        setActionPlans(allCategoryRecommendations);
       }
     }
-  }, [assessment, currentCategory, categoryResults, selectedCategoryView]);
+  }, [assessment, selectedCategoryView, categoriesWithResults]);
 
   if (!assessment) {
     return (
@@ -875,19 +1208,20 @@ function ResultsView({
 
   const skillLevel = getSkillLevel(assessment.overallScore);
 
-  const viewingCategory = selectedCategoryView || currentCategory;
+  // Default to 'All' tab
+  const viewingCategory = selectedCategoryView && selectedCategoryView !== 'all' ? selectedCategoryView : null;
 
   return (
     <div className="space-y-6">
-      {/* Category Selector - Show if multiple categories have results */}
+      {/* Category Selector - Only show categories with results */}
       {categoriesWithResults.length > 0 && (
         <div className="bg-white rounded-lg p-4 border-2 border-blue-200">
           <h4 className="text-sm font-semibold text-gray-700 mb-3">View Recommendations by Category:</h4>
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setSelectedCategoryView(null)}
+              onClick={() => setSelectedCategoryView('all')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                !selectedCategoryView && !currentCategory
+                !selectedCategoryView || selectedCategoryView === 'all'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
@@ -899,7 +1233,7 @@ function ResultsView({
                 key={category}
                 onClick={() => setSelectedCategoryView(category)}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
-                  (selectedCategoryView || currentCategory) === category
+                  selectedCategoryView === category
                     ? 'bg-green-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
@@ -915,7 +1249,7 @@ function ResultsView({
       )}
 
       {/* Category-Specific Banner */}
-      {viewingCategory && (
+      {viewingCategory && categoriesWithResults.includes(viewingCategory as any) && (
         <div className="bg-green-100 border-2 border-green-500 rounded-lg p-4 text-center">
           <h3 className="text-lg font-bold text-green-900">
             📋 Showing results for: <span className="text-green-700">{viewingCategory}</span>
@@ -927,10 +1261,12 @@ function ResultsView({
       {/* Score Overview */}
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          {viewingCategory ? `${viewingCategory} Score` : 'Your Overall Score'}
+          {viewingCategory && categoriesWithResults.includes(viewingCategory as any)
+            ? `${viewingCategory} Score`
+            : `Your Overall Score (${categoriesWithResults.length} ${categoriesWithResults.length === 1 ? 'Category' : 'Categories'})`}
         </h2>
         <div className="text-6xl font-bold text-blue-600 my-4">
-          {viewingCategory && assessment.categoryScores[viewingCategory] 
+          {viewingCategory && categoriesWithResults.includes(viewingCategory as any) && assessment.categoryScores[viewingCategory] !== undefined
             ? assessment.categoryScores[viewingCategory].toFixed(1)
             : assessment.overallScore.toFixed(1)
           }<span className="text-3xl text-gray-500">/10</span>
@@ -1067,26 +1403,28 @@ function ResultsView({
         </div>
       )}
 
-      {/* Category Scores */}
-      <div className="bg-white rounded-lg p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Category Breakdown</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Object.entries(assessment.categoryScores).map(([category, score]) => (
-            <div key={category} className="bg-gray-50 rounded-lg p-4">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-semibold text-gray-900 text-sm">{category}</h4>
-                <span className="text-lg font-bold text-blue-600">{score.toFixed(1)}</span>
+      {/* Category Scores - Only show on "All Categories" tab */}
+      {(!viewingCategory || viewingCategory === 'all') && (
+        <div className="bg-white rounded-lg p-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">Category Breakdown</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Object.entries(assessment.categoryScores).map(([category, score]) => (
+              <div key={category} className="bg-gray-50 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-semibold text-gray-900 text-sm">{category}</h4>
+                  <span className="text-lg font-bold text-blue-600">{score.toFixed(1)}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all"
+                    style={{ width: `${(score / 10) * 100}%` }}
+                  />
+                </div>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all"
-                  style={{ width: `${(score / 10) * 100}%` }}
-                />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* New Assessment Button */}
       <div className="text-center pt-4">

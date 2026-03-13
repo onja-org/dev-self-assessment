@@ -6,6 +6,8 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
       allow read: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      // Allow users to update their own role (for setup-admin page)
+      allow update: if request.auth != null && request.auth.uid == userId;
     }
     
     // Assessments collection
@@ -23,6 +25,8 @@ service cloud.firestore {
     // Admins collection - only admins can read their own admin status
     match /admins/{adminId} {
       allow read: if request.auth != null && request.auth.uid == adminId;
+      // Allow users to create their own admin document (for setup-admin page)
+      allow create: if request.auth != null && request.auth.uid == adminId;
     }
     
     // Questions collection (optional, if you want dynamic questions)
@@ -32,6 +36,9 @@ service cloud.firestore {
       
       // Only admins can write questions
       allow write: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      
+      // Allow admins to delete questions
+      allow delete: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
   }
 }
