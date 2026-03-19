@@ -25,7 +25,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (userProfile && userProfile.role !== 'admin') {
-      router.push('/dashboard');
+      router.push('/assessments');
     }
   }, [userProfile, router]);
 
@@ -219,10 +219,10 @@ export default function AdminDashboard() {
               <div className="flex items-center space-x-4">
                 <span className="text-gray-700">Admin: {userProfile?.name}</span>
                 <Link
-                  href="/dashboard"
+                  href="/assessments"
                   className="text-blue-600 hover:text-blue-800 font-medium"
                 >
-                  Dashboard
+                  Assessments
                 </Link>
                 <button
                   onClick={handleSignOut}
@@ -240,6 +240,12 @@ export default function AdminDashboard() {
                   className="px-4 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600"
                 >
                   📊 Overview
+                </Link>
+                <Link
+                  href="/admin/assessments"
+                  className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                >
+                  📋 Assessments
                 </Link>
                 <Link
                   href="/admin/questions"

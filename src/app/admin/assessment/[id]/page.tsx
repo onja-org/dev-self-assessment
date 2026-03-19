@@ -40,7 +40,7 @@ export default function AdminAssessmentDetailPage() {
 
   useEffect(() => {
     if (userProfile && userProfile.role !== 'admin') {
-      router.push('/dashboard');
+      router.push('/assessments');
     }
   }, [userProfile, router]);
 

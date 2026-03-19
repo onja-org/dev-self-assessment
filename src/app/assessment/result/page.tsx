@@ -311,10 +311,10 @@ function ResultPageContent() {
               View History
             </Link>
             <Link
-              href="/dashboard"
+              href="/assessments"
               className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
             >
-              Back to Dashboard
+              Back to Assessments
             </Link>
           </div>
         </div>

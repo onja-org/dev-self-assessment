@@ -2,18 +2,22 @@
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect, useMemo } from 'react';
 import { CATEGORIES, getSkillLevel } from '@/lib/constants';
-import { Answer, Assessment, Question } from '@/types';
+import { Answer, Assessment, Question, AssessmentTemplate } from '@/types';
 import { calculateScore, getTopRecommendations, generateActionPlans } from '@/lib/scoreCalculator';
-import { collection, addDoc, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, query, where, orderBy, getDocs, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export default function DashboardPage() {
+export default function AssessmentTakePage() {
   const { userProfile, signOut } = useAuth();
   const router = useRouter();
+  const params = useParams();
+  const assessmentId = params?.id as string;
+  
+  const [template, setTemplate] = useState<AssessmentTemplate | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
@@ -34,63 +38,57 @@ export default function DashboardPage() {
   const [completedCategory, setCompletedCategory] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'saved' | 'preview'>('saved');
 
-  // Fetch questions from Firestore
+  // Fetch assessment template and load questions from it
   useEffect(() => {
-    const fetchQuestions = async () => {
+    const fetchAssessment = async () => {
+      if (!assessmentId) {
+        router.push('/assessments');
+        return;
+      }
+
       try {
-        const querySnapshot = await getDocs(collection(db, 'questions'));
-        const firestoreQuestions = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Question[];
+        // Fetch the assessment template
+        const templateDoc = await getDoc(doc(db, 'assessmentTemplates', assessmentId));
         
-        // If no questions in Firestore, fallback to constants (for backward compatibility)
-        if (firestoreQuestions.length === 0) {
-          const { QUESTIONS } = await import('@/lib/constants');
-          setQuestions(QUESTIONS);
-        } else {
-          setQuestions(firestoreQuestions);
+        if (!templateDoc.exists()) {
+          alert('Assessment not found');
+          router.push('/assessments');
+          return;
         }
+
+        const templateData = {
+          id: templateDoc.id,
+          ...templateDoc.data()
+        } as AssessmentTemplate;
+
+        if (!templateData.isActive) {
+          alert('This assessment is no longer active');
+          router.push('/assessments');
+          return;
+        }
+
+        setTemplate(templateData);
+        
+        // Load questions from the template
+        const templateQuestions = templateData.questions || [];
+        setQuestions(templateQuestions);
+        
+        // Extract unique categories from questions
+        const uniqueCategories = Array.from(new Set(templateQuestions.map(q => q.category)));
+        setCategories(uniqueCategories);
+        
       } catch (error) {
-        console.error('Error fetching questions:', error);
-        // Fallback to constants if fetch fails
-        const { QUESTIONS } = await import('@/lib/constants');
-        setQuestions(QUESTIONS);
+        console.error('Error fetching assessment:', error);
+        alert('Failed to load assessment');
+        router.push('/assessments');
       } finally {
         setQuestionsLoading(false);
-      }
-    };
-
-    fetchQuestions();
-  }, []);
-
-  // Fetch categories from Firestore
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'categories'));
-        const firestoreCategories = querySnapshot.docs
-          .map(doc => ({ order: doc.data().order || 0, name: doc.data().name }))
-          .sort((a, b) => a.order - b.order)
-          .map(c => c.name);
-        
-        // If no categories in Firestore, fallback to constants
-        if (firestoreCategories.length === 0) {
-          setCategories(Object.values(CATEGORIES));
-        } else {
-          setCategories(firestoreCategories);
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        // Fallback to constants if fetch fails
-        setCategories(Object.values(CATEGORIES));
-      } finally {
         setCategoriesLoading(false);
       }
     };
 
-    fetchCategories();
-  }, []);
+    fetchAssessment();
+  }, [assessmentId, router]);
 
   // Get filtered questions based on selected categories
   const filteredQuestions = selectedCategories.length === 0
@@ -448,6 +446,12 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center space-x-4">
                 <span className="text-gray-700">Hello, {userProfile?.name}</span>
+                <Link
+                  href="/assessments"
+                  className="text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  ← Back to Assessments
+                </Link>
                 {userProfile?.role === 'admin' && (
                   <Link
                     href="/admin"

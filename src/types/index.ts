@@ -39,6 +39,37 @@ export interface Answer {
   scoreWeight: number;
 }
 
+// Assessment Template (Created by Admin)
+export interface AssessmentTemplate {
+  id: string;
+  name: string; // e.g., "Developer Assessment 2026"
+  description?: string;
+  questions: Question[]; // Each template has its own questions
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string; // Admin UID
+  version: string; // e.g., "2026", "2027-Q1"
+}
+
+// User's Assessment Response (Developer's submission)
+export interface UserAssessment {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  assessmentTemplateId: string; // Reference to AssessmentTemplate
+  assessmentName: string; // Cached from template for easier querying
+  assessmentVersion: string; // Cached from template
+  createdAt: Timestamp;
+  completedAt?: Timestamp;
+  responses: Record<string, Answer>;
+  categoryScores: Record<string, number>;
+  overallScore: number;
+  status: 'in-progress' | 'completed';
+}
+
+// Legacy Assessment type (for backward compatibility)
 export interface Assessment {
   id: string;
   userId: string;

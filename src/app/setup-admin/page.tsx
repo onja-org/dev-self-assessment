@@ -69,7 +69,7 @@ export default function SetupAdminPage() {
   };
 
   const reloadPage = () => {
-    window.location.href = '/dashboard';
+    window.location.href = '/assessments';
   };
 
   return (

@@ -114,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Determine role based on email
-    const role: 'developer' | 'admin' = email === 'adria.trepat@onja.org' ? 'admin' : 'developer';
+    const role: 'developer' | 'admin' = email === 'adria.trepat@onja.org' || email === 'rinon.ten@onja.org' ? 'admin' : 'developer';
 
     // Check if user profile exists
     const userDoc = await getDoc(doc(db, 'users', user.uid));
