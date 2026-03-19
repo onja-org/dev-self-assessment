@@ -2690,17 +2690,15 @@ export const QUESTIONS: Question[] = [
 // SCORE LEVELS
 // ─────────────────────────────────────────────────────────────────────────────
 export const SCORE_LEVELS = {
-  JUNIOR: { min: 0, max: 3.9, label: 'Junior Developer', color: 'text-orange-600', description: 'Building foundations and learning core concepts' },
-  INTERMEDIATE: { min: 4, max: 6.9, label: 'Intermediate Developer', color: 'text-yellow-600', description: 'Solid fundamentals with growing independence' },
-  ADVANCED_BEGINNER: { min: 7, max: 7.9, label: 'Advanced Beginner', color: 'text-blue-600', description: 'Strong skills approaching senior level' },
-  ADVANCED: { min: 8, max: 8.9, label: 'Advanced Developer', color: 'text-indigo-600', description: 'Deep expertise and technical leadership' },
-  EXPERT: { min: 9, max: 10, label: 'Expert/Senior Developer', color: 'text-green-600', description: 'Mastery with organizational impact' },
+  BEGINNER: { min: 0, max: 3.9, label: 'Beginner', color: 'text-red-600', description: 'Starting to learn and build foundational skills' },
+  JUNIOR: { min: 4, max: 5.9, label: 'Junior', color: 'text-orange-600', description: 'Building foundations and learning core concepts' },
+  INTERMEDIATE: { min: 6, max: 7.9, label: 'Intermediate', color: 'text-yellow-600', description: 'Solid fundamentals with growing independence' },
+  UPPER_INTERMEDIATE: { min: 8, max: 10, label: 'Upper Intermediate', color: 'text-green-600', description: 'Strong skills with deep technical knowledge' },
 };
 
 export const getSkillLevel = (score: number): typeof SCORE_LEVELS[keyof typeof SCORE_LEVELS] => {
-  if (score < 4) return SCORE_LEVELS.JUNIOR;
-  if (score < 7) return SCORE_LEVELS.INTERMEDIATE;
-  if (score < 8) return SCORE_LEVELS.ADVANCED_BEGINNER;
-  if (score < 9) return SCORE_LEVELS.ADVANCED;
-  return SCORE_LEVELS.EXPERT;
+  if (score < 4) return SCORE_LEVELS.BEGINNER;
+  if (score < 6) return SCORE_LEVELS.JUNIOR;
+  if (score < 8) return SCORE_LEVELS.INTERMEDIATE;
+  return SCORE_LEVELS.UPPER_INTERMEDIATE;
 };

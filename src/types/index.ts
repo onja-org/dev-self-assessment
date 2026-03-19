@@ -101,3 +101,16 @@ export interface ActionPlan {
   shortTerm: string[]; // 90-day goals
   longTerm: string[]; // 12-month roadmap
 }
+
+export interface ScoreLevel {
+  id: string;
+  key: string; // e.g., 'BEGINNER', 'JUNIOR', 'INTERMEDIATE', 'UPPER_INTERMEDIATE'
+  min: number;
+  max: number;
+  label: string;
+  color: string; // Tailwind class e.g., 'text-red-600'
+  description: string;
+  order: number; // For sorting
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
