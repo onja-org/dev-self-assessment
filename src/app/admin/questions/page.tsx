@@ -554,6 +554,7 @@ function QuestionModal({ question, categories, onSave, onClose }: QuestionModalP
     hint: '',
     followUpQuestion: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update form data when question changes
   useEffect(() => {
@@ -607,13 +608,18 @@ function QuestionModal({ question, categories, onSave, onClose }: QuestionModalP
     setFormData({ ...formData, options: newOptions });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.category || !formData.type) {
       alert('Please fill in all required fields');
       return;
     }
-    onSave(formData);
+    setIsSubmitting(true);
+    try {
+      await onSave(formData);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -800,6 +806,104 @@ function QuestionModal({ question, categories, onSave, onClose }: QuestionModalP
                           placeholder="Explain why this option is correct/incorrect..."
                         />
                       </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Recommendations (one per line)
+                        </label>
+                        <textarea
+                          value={(option.recommendations || []).join('\n')}
+                          onChange={(e) => handleOptionChange(index, 'recommendations', e.target.value.split('\n').filter(r => r.trim()))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-y"
+                          rows={3}
+                          placeholder="Enter recommendations, one per line..."
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                          Resources
+                        </label>
+                        <div className="space-y-2">
+                          {(option.resources || []).map((resource, resIdx) => (
+                            <div key={resIdx} className="flex gap-2 items-start border border-gray-200 rounded p-2">
+                              <div className="flex-1 grid grid-cols-2 gap-2">
+                                <input
+                                  type="text"
+                                  value={resource.title}
+                                  onChange={(e) => {
+                                    const newResources = [...(option.resources || [])];
+                                    newResources[resIdx] = { ...resource, title: e.target.value };
+                                    handleOptionChange(index, 'resources', newResources);
+                                  }}
+                                  className="px-2 py-1 border border-gray-300 rounded text-xs"
+                                  placeholder="Resource title"
+                                />
+                                <input
+                                  type="url"
+                                  value={resource.url}
+                                  onChange={(e) => {
+                                    const newResources = [...(option.resources || [])];
+                                    newResources[resIdx] = { ...resource, url: e.target.value };
+                                    handleOptionChange(index, 'resources', newResources);
+                                  }}
+                                  className="px-2 py-1 border border-gray-300 rounded text-xs"
+                                  placeholder="https://..."
+                                />
+                                <select
+                                  value={resource.type}
+                                  onChange={(e) => {
+                                    const newResources = [...(option.resources || [])];
+                                    newResources[resIdx] = { ...resource, type: e.target.value as any };
+                                    handleOptionChange(index, 'resources', newResources);
+                                  }}
+                                  className="px-2 py-1 border border-gray-300 rounded text-xs"
+                                >
+                                  <option value="article">Article</option>
+                                  <option value="video">Video</option>
+                                  <option value="course">Course</option>
+                                  <option value="docs">Docs</option>
+                                  <option value="github">GitHub</option>
+                                  <option value="book">Book</option>
+                                  <option value="roadmap">Roadmap</option>
+                                </select>
+                                <input
+                                  type="text"
+                                  value={resource.description || ''}
+                                  onChange={(e) => {
+                                    const newResources = [...(option.resources || [])];
+                                    newResources[resIdx] = { ...resource, description: e.target.value };
+                                    handleOptionChange(index, 'resources', newResources);
+                                  }}
+                                  className="px-2 py-1 border border-gray-300 rounded text-xs"
+                                  placeholder="Description (optional)"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newResources = [...(option.resources || [])];
+                                  newResources.splice(resIdx, 1);
+                                  handleOptionChange(index, 'resources', newResources);
+                                }}
+                                className="text-red-600 hover:text-red-800 text-xs px-2"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newResources = [...(option.resources || []), { title: '', url: '', type: 'article' as const, description: '' }];
+                              handleOptionChange(index, 'resources', newResources);
+                            }}
+                            className="text-sm text-blue-600 hover:text-blue-800"
+                          >
+                            + Add Resource
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -846,15 +950,20 @@ function QuestionModal({ question, categories, onSave, onClose }: QuestionModalP
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              disabled={isSubmitting}
+              className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              disabled={isSubmitting}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {question ? 'Update Question' : 'Add Question'}
+              {isSubmitting && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              )}
+              {isSubmitting ? 'Saving...' : (question ? 'Update Question' : 'Add Question')}
             </button>
           </div>
         </form>

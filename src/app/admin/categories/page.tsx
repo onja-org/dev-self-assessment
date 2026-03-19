@@ -23,6 +23,7 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -81,6 +82,7 @@ export default function CategoriesPage() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       if (editingCategory) {
         // Update existing category
@@ -104,6 +106,8 @@ export default function CategoriesPage() {
     } catch (error) {
       console.error('Error saving category:', error);
       alert('Failed to save category');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -391,14 +395,19 @@ export default function CategoriesPage() {
                 <button
                   onClick={() => setShowAddModal(false)}
                   className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSave}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                  disabled={isSubmitting}
                 >
-                  {editingCategory ? 'Save Changes' : 'Create Category'}
+                  {isSubmitting && (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  )}
+                  {isSubmitting ? 'Saving...' : (editingCategory ? 'Save Changes' : 'Create Category')}
                 </button>
               </div>
             </div>
