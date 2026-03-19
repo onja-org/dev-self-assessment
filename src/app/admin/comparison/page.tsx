@@ -2,19 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, query, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { Assessment } from '@/types';
+import { AssessmentTemplate, UserAssessment } from '@/types';
 import { getScoreLevel, getScoreLevelColor } from '@/lib/scoreCalculator';
-import { CATEGORIES } from '@/lib/constants';
 import Link from 'next/link';
 
 export default function TeamComparison() {
   const { userProfile, signOut } = useAuth();
   const router = useRouter();
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [templates, setTemplates] = useState<AssessmentTemplate[]>([]);
+  const [userAssessments, setUserAssessments] = useState<UserAssessment[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,38 +26,46 @@ export default function TeamComparison() {
   }, [userProfile, router]);
 
   useEffect(() => {
-    const fetchAllAssessments = async () => {
+    const fetchData = async () => {
       try {
-        const q = query(
-          collection(db, 'assessments'),
+        // Fetch all assessment templates
+        const templatesQuery = query(
+          collection(db, 'assessmentTemplates'),
           orderBy('createdAt', 'desc')
         );
-
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map(doc => ({
+        const templatesSnapshot = await getDocs(templatesQuery);
+        const fetchedTemplates = templatesSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        })) as Assessment[];
+        })) as AssessmentTemplate[];
 
-        // Get only the latest assessment per user
-        const latestAssessments = new Map<string, Assessment>();
-        data.forEach(a => {
-          if (!latestAssessments.has(a.userId) || 
-              a.createdAt.toDate() > latestAssessments.get(a.userId)!.createdAt.toDate()) {
-            latestAssessments.set(a.userId, a);
-          }
-        });
+        // Fetch all user assessments
+        const assessmentsQuery = query(
+          collection(db, 'userAssessments'),
+          orderBy('createdAt', 'desc')
+        );
+        const assessmentsSnapshot = await getDocs(assessmentsQuery);
+        const fetchedAssessments = assessmentsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as UserAssessment[];
 
-        setAssessments(Array.from(latestAssessments.values()));
+        setTemplates(fetchedTemplates);
+        setUserAssessments(fetchedAssessments);
+        
+        // Auto-select first template if available
+        if (fetchedTemplates.length > 0 && !selectedTemplateId) {
+          setSelectedTemplateId(fetchedTemplates[0].id);
+        }
       } catch (error) {
-        console.error('Error fetching assessments:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
     if (userProfile?.role === 'admin') {
-      fetchAllAssessments();
+      fetchData();
     }
   }, [userProfile]);
 
@@ -68,7 +78,28 @@ export default function TeamComparison() {
     return null;
   }
 
-  const allCategories = Object.values(CATEGORIES);
+  // Filter assessments by selected template - only one per user
+  const filteredAssessments = selectedTemplateId
+    ? userAssessments.filter(ua => ua.assessmentTemplateId === selectedTemplateId)
+    : [];
+
+  // Get unique users (one assessment per user for selected template)
+  const uniqueUserAssessments = new Map<string, UserAssessment>();
+  filteredAssessments.forEach(assessment => {
+    const existing = uniqueUserAssessments.get(assessment.userId);
+    if (!existing || assessment.createdAt.toDate() > existing.createdAt.toDate()) {
+      uniqueUserAssessments.set(assessment.userId, assessment);
+    }
+  });
+  const assessments = Array.from(uniqueUserAssessments.values());
+
+  // Get selected template
+  const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+  
+  // Get all categories from selected template's questions
+  const allCategories = selectedTemplate
+    ? Array.from(new Set(selectedTemplate.questions.map(q => q.category)))
+    : [];
 
   // Calculate team averages by category
   const categoryAverages: { [key: string]: number } = {};
@@ -115,6 +146,16 @@ export default function TeamComparison() {
     if (score >= 6) return 'bg-yellow-500';
     if (score >= 4) return 'bg-orange-500';
     return 'bg-red-500';
+  };
+
+  const toggleRow = (userId: string) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(userId)) {
+      newExpanded.delete(userId);
+    } else {
+      newExpanded.add(userId);
+    }
+    setExpandedRows(newExpanded);
   };
 
   return (
@@ -183,10 +224,41 @@ export default function TeamComparison() {
         </nav>
 
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 py-6 sm:px-0">            {loading ? (
+          <div className="px-4 py-6 sm:px-0">
+            {/* Assessment Template Selector */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <h2 className="text-xl font-bold mb-4">Select Assessment</h2>
+              <select
+                value={selectedTemplateId}
+                onChange={(e) => setSelectedTemplateId(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Choose an assessment...</option>
+                {templates.map(template => (
+                  <option key={template.id} value={template.id}>
+                    {template.name} (v{template.version}) - {template.isActive ? 'Active' : 'Inactive'}
+                  </option>
+                ))}
+              </select>
+              {selectedTemplate && (
+                <p className="mt-2 text-sm text-gray-600">
+                  {selectedTemplate.description || 'No description'}
+                </p>
+              )}
+            </div>
+
+            {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <span className="ml-3 text-gray-600">Loading team data...</span>
+              </div>
+            ) : !selectedTemplateId ? (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                <p className="text-yellow-800">Please select an assessment to view team comparison.</p>
+              </div>
+            ) : assessments.length === 0 ? (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                <p className="text-gray-600">No user assessments found for this template yet.</p>
               </div>
             ) : (
               <>            {/* Team Overview Stats */}
@@ -313,6 +385,7 @@ export default function TeamComparison() {
             {/* Team Heatmap */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-bold mb-4">Team Skills Heatmap</h2>
+              <p className="text-sm text-gray-600 mb-4">Click on a row to see detailed breakdown</p>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
@@ -320,45 +393,110 @@ export default function TeamComparison() {
                       <th className="border border-gray-300 px-4 py-2 bg-gray-100 text-left">
                         Developer
                       </th>
-                      {allCategories.map(cat => (
-                        <th
-                          key={cat}
-                          className="border border-gray-300 px-2 py-2 bg-gray-100 text-center text-xs"
-                        >
-                          {cat}
-                        </th>
-                      ))}
                       <th className="border border-gray-300 px-4 py-2 bg-gray-100 text-center">
-                        Overall
+                        Overall Score
+                      </th>
+                      <th className="border border-gray-300 px-4 py-2 bg-gray-100 text-center">
+                        Status
+                      </th>
+                      <th className="border border-gray-300 px-4 py-2 bg-gray-100 text-center">
+                        Completed
+                      </th>
+                      <th className="border border-gray-300 px-4 py-2 bg-gray-100 text-center">
+                        
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {assessments.map(assessment => (
-                      <tr key={assessment.id} className="hover:bg-gray-50">
-                        <td className="border border-gray-300 px-4 py-2 font-medium">
-                          {assessment.userName}
-                        </td>
-                        {allCategories.map(cat => {
-                          const score = assessment.categoryScores[cat];
-                          return (
-                            <td
-                              key={cat}
-                              className={`border border-gray-300 px-2 py-2 text-center ${
-                                score !== undefined ? getColorForScore(score) : 'bg-gray-100'
-                              }`}
-                            >
-                              <span className={score !== undefined ? 'text-white font-bold' : 'text-gray-400'}>
-                                {score !== undefined ? score.toFixed(1) : '-'}
+                    {assessments.map(assessment => {
+                      const isExpanded = expandedRows.has(assessment.userId);
+                      return (
+                        <>
+                          <tr 
+                            key={assessment.id} 
+                            onClick={() => toggleRow(assessment.userId)}
+                            className="hover:bg-gray-50 cursor-pointer transition"
+                          >
+                            <td className="border border-gray-300 px-4 py-3 font-medium">
+                              {assessment.userName}
+                              <div className="text-xs text-gray-500">{assessment.userEmail}</div>
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-center">
+                              <span className="text-2xl font-bold text-blue-600">
+                                {assessment.overallScore.toFixed(1)}
+                              </span>
+                              <span className="text-gray-500">/10</span>
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-center">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                assessment.status === 'completed' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {assessment.status === 'completed' ? '✅ Completed' : '🔄 In Progress'}
                               </span>
                             </td>
-                          );
-                        })}
-                        <td className="border border-gray-300 px-4 py-2 text-center font-bold text-lg">
-                          {assessment.overallScore.toFixed(1)}
-                        </td>
-                      </tr>
-                    ))}
+                            <td className="border border-gray-300 px-4 py-3 text-center text-sm text-gray-600">
+                              {assessment.completedAt 
+                                ? assessment.completedAt.toDate().toLocaleDateString()
+                                : 'N/A'
+                              }
+                            </td>
+                            <td className="border border-gray-300 px-4 py-3 text-center">
+                              <svg 
+                                className={`w-5 h-5 inline-block transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </td>
+                          </tr>
+                          {isExpanded && (
+                            <tr key={`${assessment.id}-details`}>
+                              <td colSpan={5} className="border border-gray-300 bg-gray-50 p-4">
+                                <div className="space-y-3">
+                                  <h4 className="font-semibold text-gray-900 mb-3">Category Scores</h4>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                    {allCategories.map(cat => {
+                                      const score = assessment.categoryScores[cat];
+                                      return (
+                                        <div key={cat} className="bg-white rounded-lg p-3 border border-gray-200">
+                                          <div className="text-xs font-medium text-gray-600 mb-1">
+                                            {cat}
+                                          </div>
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-lg font-bold text-blue-600">
+                                              {score !== undefined ? score.toFixed(1) : 'N/A'}
+                                            </span>
+                                            {score !== undefined && (
+                                              <div className={`w-3 h-3 rounded-full ${getColorForScore(score)}`} />
+                                            )}
+                                          </div>
+                                          {score !== undefined && (
+                                            <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
+                                              <div
+                                                className={`h-1.5 rounded-full ${
+                                                  score >= 8 ? 'bg-green-500' :
+                                                  score >= 6 ? 'bg-yellow-500' :
+                                                  score >= 4 ? 'bg-orange-500' : 'bg-red-500'
+                                                }`}
+                                                style={{ width: `${(score / 10) * 100}%` }}
+                                              />
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -121,6 +121,46 @@ export default function CategoriesPage() {
     }
   };
 
+  const handleSyncFromQuestions = async () => {
+    try {
+      // Get all questions
+      const questionsSnapshot = await getDocs(collection(db, 'questions'));
+      const questionCategories = Array.from(
+        new Set(questionsSnapshot.docs.map(doc => doc.data().category).filter(Boolean))
+      );
+      
+      // Get existing categories
+      const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+      const existingCategories = new Map(
+        categoriesSnapshot.docs.map(doc => [doc.data().name, { id: doc.id, ...doc.data() }])
+      );
+      
+      let addedCount = 0;
+      // Add any missing categories
+      for (const categoryName of questionCategories) {
+        if (!existingCategories.has(categoryName)) {
+          await addDoc(collection(db, 'categories'), {
+            name: categoryName,
+            description: 'Auto-synced from questions',
+            order: existingCategories.size + addedCount,
+            createdAt: new Date()
+          });
+          addedCount++;
+        }
+      }
+      
+      if (addedCount > 0) {
+        alert(`Synced ${addedCount} new categories from questions!`);
+      } else {
+        alert('All question categories are already in the categories list.');
+      }
+      fetchCategories();
+    } catch (error) {
+      console.error('Error syncing categories:', error);
+      alert('Failed to sync categories from questions');
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     router.push('/login');
@@ -212,13 +252,29 @@ export default function CategoriesPage() {
                   Manage categories that organize assessment questions
                 </p>
               </div>
-              <button
-                onClick={handleAdd}
-                className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-lg text-lg flex items-center gap-2"
-              >
-                <span className="text-2xl">➕</span>
-                <span>Add Category</span>
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleSyncFromQuestions}
+                  className="px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition flex items-center gap-2"
+                >
+                  <span>🔄</span>
+                  <span>Sync from Questions</span>
+                </button>
+                <button
+                  onClick={handleAdd}
+                  className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-lg text-lg flex items-center gap-2"
+                >
+                  <span className="text-2xl">➕</span>
+                  <span>Add Category</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Info Box */}
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                💡 <strong>Categories are automatically synced from questions.</strong> When you add a question with a new category in the Questions tab, it will appear here. Use "Sync from Questions" to manually refresh.
+              </p>
             </div>
 
             {/* Categories List */}

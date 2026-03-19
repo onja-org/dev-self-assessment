@@ -34,6 +34,34 @@ export default function QuestionManagement() {
     fetchCategories();
   }, []);
 
+  const syncCategoriesFromQuestions = async (allQuestions: Question[]) => {
+    try {
+      // Get unique categories from all questions
+      const questionCategories = Array.from(new Set(allQuestions.map(q => q.category).filter(Boolean)));
+      
+      // Get existing categories from Firestore
+      const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+      const existingCategories = new Map(
+        categoriesSnapshot.docs.map(doc => [doc.data().name, { id: doc.id, ...doc.data() }])
+      );
+      
+      // Add any missing categories
+      for (const categoryName of questionCategories) {
+        if (!existingCategories.has(categoryName)) {
+          await addDoc(collection(db, 'categories'), {
+            name: categoryName,
+            description: `Auto-synced from questions`,
+            order: existingCategories.size,
+            createdAt: new Date()
+          });
+          console.log(`Added category: ${categoryName}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error syncing categories:', error);
+    }
+  };
+
   const fetchCategories = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'categories'));
@@ -78,6 +106,10 @@ export default function QuestionManagement() {
       console.log('Firestore questions:', firestoreQuestions.length);
       console.log('Constants-only questions:', constantsOnlyQuestions.length);
       setQuestions(allQuestions);
+      
+      // Sync categories from questions
+      await syncCategoriesFromQuestions(allQuestions);
+      await fetchCategories();
     } catch (error) {
       console.error('Error fetching questions:', error);
       // Fallback to constant questions if Firestore fails
@@ -141,13 +173,24 @@ export default function QuestionManagement() {
         // Make sure this question is tracked as being in Firestore
         setFirestoreQuestionIds(prev => new Set([...prev, id]));
         setEditingQuestion(null);
+        
+        // Sync categories after update
+        const updatedQuestions = questions.map(q => q.id === id ? question : q);
+        await syncCategoriesFromQuestions(updatedQuestions);
+        await fetchCategories();
+        
         alert('Question updated successfully!');
       } else {
         // Add new question
         const { id, ...newData } = question;
         const docRef = await addDoc(collection(db, 'questions'), newData);
         const newQuestion = { ...question, id: docRef.id };
-        setQuestions([...questions, newQuestion]);
+        const updatedQuestions = [...questions, newQuestion];
+        setQuestions(updatedQuestions);
+        
+        // Sync categories after adding
+        await syncCategoriesFromQuestions(updatedQuestions);
+        await fetchCategories();
         // Track this new question as being in Firestore
         setFirestoreQuestionIds(prev => new Set([...prev, docRef.id]));
         setShowAddModal(false);
@@ -196,13 +239,24 @@ export default function QuestionManagement() {
       console.log(`Migration completed: ${successCount}/${questionsToAdd.length} questions migrated`);
       alert(`Successfully migrated ${successCount}/${questionsToAdd.length} questions to Firestore!`);
       
-      // Refresh the list
+      // Refresh the list and sync categories
       await fetchQuestions();
     } catch (error) {
       console.error('Error during migration:', error);
       alert('Failed to migrate questions. Check console for details. You may need to set up admin access first.');
     } finally {
       setMigratingQuestions(false);
+    }
+  };
+
+  const handleSyncCategories = async () => {
+    try {
+      await syncCategoriesFromQuestions(questions);
+      await fetchCategories();
+      alert('Categories synced successfully!');
+    } catch (error) {
+      console.error('Error syncing categories:', error);
+      alert('Failed to sync categories.');
     }
   };
 
@@ -343,6 +397,12 @@ export default function QuestionManagement() {
                     + Add Question
                   </button>
                   <button
+                    onClick={handleSyncCategories}
+                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium whitespace-nowrap"
+                  >
+                    🔄 Sync Categories
+                  </button>
+                  <button
                     onClick={migrateConstantQuestions}
                     disabled={migratingQuestions}
                     className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium whitespace-nowrap disabled:opacity-50"
@@ -350,6 +410,9 @@ export default function QuestionManagement() {
                     {migratingQuestions ? 'Migrating...' : '📥 Migrate Built-in Questions'}
                   </button>
                 </div>
+                <p className="text-xs text-gray-600">
+                  💡 Categories are auto-synced from questions. Use "Sync Categories" to manually update or manage them in the <Link href="/admin/categories" className="text-blue-600 hover:underline">Categories</Link> tab.
+                </p>
               </div>
 
               {/* Questions Table */}

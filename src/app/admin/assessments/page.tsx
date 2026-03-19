@@ -342,9 +342,10 @@ function AdminAssessmentsContent() {
         <div className="mb-6">
           <button
             onClick={handleCreateTemplate}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            disabled={loading}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            + Create New Assessment Template
+            {loading ? 'Loading...' : '+ Create New Assessment Template'}
           </button>
         </div>
 
@@ -505,8 +506,8 @@ function AdminAssessmentsContent() {
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                  ℹ️ This template will start with {formData.questions.length} questions from the global question bank. 
-                  After creating, use "Manage Questions" to add, edit, or remove questions specific to this assessment.
+                  ℹ️ This template includes all {formData.questions.length} questions from the global question bank by default.
+                  After creating, use "Manage Questions" to customize, add, edit, or remove questions specific to this assessment.
                 </p>
               </div>
 

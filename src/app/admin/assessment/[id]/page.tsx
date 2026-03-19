@@ -6,9 +6,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { Assessment, ActionPlan } from '@/types';
+import { UserAssessment, AssessmentTemplate, Question, ActionPlan } from '@/types';
 import { generateActionPlans, getScoreLevel, getScoreLevelColor, getTopRecommendations } from '@/lib/scoreCalculator';
-import { QUESTIONS, CATEGORIES } from '@/lib/constants';
 import Link from 'next/link';
 
 interface TopRecommendation {
@@ -31,7 +30,8 @@ export default function AdminAssessmentDetailPage() {
   const params = useParams();
   const assessmentId = params?.id as string;
   
-  const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [userAssessment, setUserAssessment] = useState<UserAssessment | null>(null);
+  const [template, setTemplate] = useState<AssessmentTemplate | null>(null);
   const [actionPlans, setActionPlans] = useState<ActionPlan[]>([]);
   const [recommendations, setRecommendations] = useState<TopRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,18 +49,44 @@ export default function AdminAssessmentDetailPage() {
       if (!assessmentId) return;
 
       try {
-        const docRef = doc(db, 'assessments', assessmentId);
-        const docSnap = await getDoc(docRef);
+        // Fetch the user assessment
+        const userAssessmentRef = doc(db, 'userAssessments', assessmentId);
+        const userAssessmentSnap = await getDoc(userAssessmentRef);
 
-        if (docSnap.exists()) {
-          const data = { id: docSnap.id, ...docSnap.data() } as Assessment;
-          setAssessment(data);
+        if (userAssessmentSnap.exists()) {
+          const assessmentData = { 
+            id: userAssessmentSnap.id, 
+            ...userAssessmentSnap.data() 
+          } as UserAssessment;
+          setUserAssessment(assessmentData);
 
-          const plans = generateActionPlans(data.categoryScores, data.responses);
-          setActionPlans(plans);
+          // Fetch the assessment template
+          const templateRef = doc(db, 'assessmentTemplates', assessmentData.assessmentTemplateId);
+          const templateSnap = await getDoc(templateRef);
 
-          const recs = getTopRecommendations(data.categoryScores, data.responses, data.overallScore);
-          setRecommendations(recs);
+          if (templateSnap.exists()) {
+            const templateData = {
+              id: templateSnap.id,
+              ...templateSnap.data()
+            } as AssessmentTemplate;
+            setTemplate(templateData);
+
+            // Generate action plans and recommendations
+            const plans = generateActionPlans(
+              assessmentData.categoryScores, 
+              assessmentData.responses,
+              templateData.questions
+            );
+            setActionPlans(plans);
+
+            const recs = getTopRecommendations(
+              assessmentData.categoryScores, 
+              assessmentData.responses, 
+              assessmentData.overallScore,
+              templateData.questions
+            );
+            setRecommendations(recs);
+          }
         } else {
           alert('Assessment not found');
           router.push('/admin');
@@ -90,12 +116,15 @@ export default function AdminAssessmentDetailPage() {
     );
   }
 
-  if (!assessment || userProfile?.role !== 'admin') {
+  if (!userAssessment || !template || userProfile?.role !== 'admin') {
     return null;
   }
 
-  const scoreLevel = getScoreLevel(assessment.overallScore);
-  const scoreColor = getScoreLevelColor(assessment.overallScore);
+  const scoreLevel = getScoreLevel(userAssessment.overallScore);
+  const scoreColor = getScoreLevelColor(userAssessment.overallScore);
+
+  // Get unique categories from template questions
+  const allCategories = Array.from(new Set(template.questions.map(q => q.category)));
 
   return (
     <ProtectedRoute>
@@ -116,14 +145,25 @@ export default function AdminAssessmentDetailPage() {
                 Assessment Details
               </h1>
               <div className="text-gray-600">
-                <p className="text-lg font-medium">{assessment.userName}</p>
-                <p>{assessment.userEmail}</p>
+                <p className="text-lg font-medium">{userAssessment.userName}</p>
+                <p>{userAssessment.userEmail}</p>
                 <p className="text-sm mt-2">
-                  Completed on {assessment.createdAt.toDate().toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                  {userAssessment.status === 'completed' && userAssessment.completedAt ? (
+                    <>Completed on {userAssessment.completedAt.toDate().toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}</>
+                  ) : (
+                    <>Started on {userAssessment.createdAt.toDate().toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })} - In Progress</>
+                  )}
+                </p>
+                <p className="text-sm mt-1">
+                  <span className="font-medium">Assessment:</span> {userAssessment.assessmentName} (v{userAssessment.assessmentVersion})
                 </p>
               </div>
             </div>
@@ -131,7 +171,7 @@ export default function AdminAssessmentDetailPage() {
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-8 text-center mb-8">
               <div className="mb-4">
                 <span className="text-6xl font-bold text-gray-900">
-                  {assessment.overallScore.toFixed(1)}
+                  {userAssessment.overallScore.toFixed(1)}
                 </span>
                 <span className="text-2xl text-gray-600">/10</span>
               </div>
@@ -142,7 +182,7 @@ export default function AdminAssessmentDetailPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {Object.entries(assessment.categoryScores).map(([category, score]) => (
+              {Object.entries(userAssessment.categoryScores).map(([category, score]) => (
                 <div key={category} className="bg-gray-50 rounded-lg p-4">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-semibold text-gray-900">{category}</h3>
@@ -193,9 +233,9 @@ export default function AdminAssessmentDetailPage() {
             {viewMode === 'responses' ? (
               <div className="space-y-6">
                 {/* Group by category */}
-                {Object.values(CATEGORIES).map(category => {
-                  const categoryQuestions = QUESTIONS.filter(q => q.category === category);
-                  const categoryResponses = categoryQuestions.filter(q => assessment.responses[q.id]);
+                {allCategories.map(category => {
+                  const categoryQuestions = template.questions.filter(q => q.category === category);
+                  const categoryResponses = categoryQuestions.filter(q => userAssessment.responses[q.id]);
                   
                   if (categoryResponses.length === 0) return null;
 
@@ -204,12 +244,12 @@ export default function AdminAssessmentDetailPage() {
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="text-xl font-bold text-gray-900">{category}</h3>
                         <span className="text-lg font-bold text-blue-600">
-                          {assessment.categoryScores[category]?.toFixed(1) || 'N/A'}/10
+                          {userAssessment.categoryScores[category]?.toFixed(1) || 'N/A'}/10
                         </span>
                       </div>
                       <div className="space-y-4">
                         {categoryResponses.map(question => {
-                          const response = assessment.responses[question.id];
+                          const response = userAssessment.responses[question.id];
                           const scoreWeight = response.scoreWeight;
                           const isLowScore = scoreWeight < 0.5;
 

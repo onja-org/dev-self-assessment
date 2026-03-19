@@ -2,11 +2,11 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { Assessment, ActionPlan } from '@/types';
+import { UserAssessment, AssessmentTemplate, ActionPlan } from '@/types';
 import { generateActionPlans, getScoreLevel, getScoreLevelColor, getTopRecommendations } from '@/lib/scoreCalculator';
 import { getSkillLevel } from '@/lib/constants';
 import Link from 'next/link';
@@ -15,35 +15,67 @@ function ResultPageContent() {
   const { userProfile } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const assessmentId = searchParams?.get('id');
+  const [userAssessment, setUserAssessment] = useState<UserAssessment | null>(null);
+  const [template, setTemplate] = useState<AssessmentTemplate | null>(null);
   const [actionPlans, setActionPlans] = useState<ActionPlan[]>([]);
   const [topRecommendations, setTopRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchLatestAssessment = async () => {
-      if (!userProfile) return;
+    const fetchAssessment = async () => {
+      if (!userProfile || !assessmentId) {
+        setLoading(false);
+        return;
+      }
 
       try {
-        const q = query(
-          collection(db, 'assessments'),
-          where('userId', '==', userProfile.uid),
-          orderBy('createdAt', 'desc'),
-          limit(1)
-        );
+        // Fetch the user assessment
+        const userAssessmentRef = doc(db, 'userAssessments', assessmentId);
+        const userAssessmentSnap = await getDoc(userAssessmentRef);
 
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const doc = querySnapshot.docs[0];
-          const data = { id: doc.id, ...doc.data() } as Assessment;
-          setAssessment(data);
+        if (userAssessmentSnap.exists()) {
+          const assessmentData = {
+            id: userAssessmentSnap.id,
+            ...userAssessmentSnap.data()
+          } as UserAssessment;
 
-          const plans = generateActionPlans(data.categoryScores, data.responses);
-          setActionPlans(plans);
+          // Verify this assessment belongs to the current user
+          if (assessmentData.userId !== userProfile.uid) {
+            alert('Unauthorized access');
+            router.push('/assessments');
+            return;
+          }
 
-          const topRecs = getTopRecommendations(data.categoryScores, data.responses, data.overallScore);
-          setTopRecommendations(topRecs);
+          setUserAssessment(assessmentData);
+
+          // Fetch the assessment template to get questions
+          const templateRef = doc(db, 'assessmentTemplates', assessmentData.assessmentTemplateId);
+          const templateSnap = await getDoc(templateRef);
+
+          if (templateSnap.exists()) {
+            const templateData = {
+              id: templateSnap.id,
+              ...templateSnap.data()
+            } as AssessmentTemplate;
+            setTemplate(templateData);
+
+            const plans = generateActionPlans(
+              assessmentData.categoryScores,
+              assessmentData.responses,
+              templateData.questions
+            );
+            setActionPlans(plans);
+
+            const topRecs = getTopRecommendations(
+              assessmentData.categoryScores,
+              assessmentData.responses,
+              assessmentData.overallScore,
+              templateData.questions
+            );
+            setTopRecommendations(topRecs);
+          }
         }
       } catch (error) {
         console.error('Error fetching assessment:', error);
@@ -52,8 +84,8 @@ function ResultPageContent() {
       }
     };
 
-    fetchLatestAssessment();
-  }, [userProfile]);
+    fetchAssessment();
+  }, [userProfile, assessmentId, router]);
 
   if (loading) {
     return (
@@ -68,14 +100,14 @@ function ResultPageContent() {
     );
   }
 
-  if (!assessment) {
+  if (!userAssessment) {
     return (
       <ProtectedRoute>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">No assessment found</h2>
-            <Link href="/assessment/new" className="text-blue-600 hover:text-blue-800">
-              Start a new assessment
+            <Link href="/assessments" className="text-blue-600 hover:text-blue-800">
+              Go to Assessments
             </Link>
           </div>
         </div>
@@ -83,14 +115,27 @@ function ResultPageContent() {
     );
   }
 
-  const scoreLevel = getScoreLevel(assessment.overallScore);
-  const scoreColor = getScoreLevelColor(assessment.overallScore);
-  const skillLevelDetails = getSkillLevel(assessment.overallScore);
+  const scoreLevel = getScoreLevel(userAssessment.overallScore);
+  const scoreColor = getScoreLevelColor(userAssessment.overallScore);
+  const skillLevelDetails = getSkillLevel(userAssessment.overallScore);
 
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          {/* Back Button */}
+          <div className="mb-6">
+            <Link
+              href="/assessments"
+              className="inline-flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-800 font-medium transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Assessments
+            </Link>
+          </div>
+
           {searchParams?.get('new') === 'true' && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
               <p className="text-green-800 font-medium">
@@ -105,14 +150,17 @@ function ResultPageContent() {
                 Your Assessment Results
               </h1>
               <p className="text-gray-600">
-                Completed on {assessment.createdAt.toDate().toLocaleDateString()}
+                {userAssessment.assessmentName} (v{userAssessment.assessmentVersion})
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Completed on {userAssessment.completedAt?.toDate().toLocaleDateString() || userAssessment.createdAt.toDate().toLocaleDateString()}
               </p>
             </div>
 
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-8 text-center mb-8">
               <div className="mb-4">
                 <span className="text-6xl font-bold text-gray-900">
-                  {assessment.overallScore.toFixed(1)}
+                  {userAssessment.overallScore.toFixed(1)}
                 </span>
                 <span className="text-2xl text-gray-600">/10</span>
               </div>
@@ -216,7 +264,7 @@ function ResultPageContent() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {Object.entries(assessment.categoryScores).map(([category, score]) => (
+              {Object.entries(userAssessment.categoryScores).map(([category, score]) => (
                 <div key={category} className="bg-gray-50 rounded-lg p-4">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-semibold text-gray-900">{category}</h3>

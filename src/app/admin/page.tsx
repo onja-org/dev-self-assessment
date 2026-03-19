@@ -6,22 +6,23 @@ import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { Assessment } from '@/types';
-import { getScoreLevel, getScoreLevelColor, getTopRecommendations } from '@/lib/scoreCalculator';
-import { QUESTIONS, CATEGORIES } from '@/lib/constants';
+import { AssessmentTemplate, UserAssessment } from '@/types';
+import { getScoreLevel, getScoreLevelColor } from '@/lib/scoreCalculator';
 import Link from 'next/link';
 
 export default function AdminDashboard() {
   const { userProfile, signOut } = useAuth();
   const router = useRouter();
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
-  const [filteredAssessments, setFilteredAssessments] = useState<Assessment[]>([]);
+  const [templates, setTemplates] = useState<AssessmentTemplate[]>([]);
+  const [userAssessments, setUserAssessments] = useState<UserAssessment[]>([]);
+  const [filteredAssessments, setFilteredAssessments] = useState<UserAssessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'score'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [completionFilter, setCompletionFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [templateFilter, setTemplateFilter] = useState<string>('all');
 
   useEffect(() => {
     if (userProfile && userProfile.role !== 'admin') {
@@ -30,36 +31,52 @@ export default function AdminDashboard() {
   }, [userProfile, router]);
 
   useEffect(() => {
-    const fetchAllAssessments = async () => {
+    const fetchData = async () => {
       try {
-        const q = query(
-          collection(db, 'assessments'),
+        // Fetch assessment templates
+        const templatesQuery = query(
+          collection(db, 'assessmentTemplates'),
           orderBy('createdAt', 'desc')
         );
-
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map(doc => ({
+        const templatesSnapshot = await getDocs(templatesQuery);
+        const fetchedTemplates = templatesSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        })) as Assessment[];
+        })) as AssessmentTemplate[];
 
-        // Don't filter - show all assessments (all versions for all developers)
-        setAssessments(data);
-        setFilteredAssessments(data);
+        // Fetch user assessments
+        const assessmentsQuery = query(
+          collection(db, 'userAssessments'),
+          orderBy('createdAt', 'desc')
+        );
+        const assessmentsSnapshot = await getDocs(assessmentsQuery);
+        const fetchedAssessments = assessmentsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as UserAssessment[];
+
+        setTemplates(fetchedTemplates);
+        setUserAssessments(fetchedAssessments);
+        setFilteredAssessments(fetchedAssessments);
       } catch (error) {
-        console.error('Error fetching assessments:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
     if (userProfile?.role === 'admin') {
-      fetchAllAssessments();
+      fetchData();
     }
   }, [userProfile]);
 
   useEffect(() => {
-    let filtered = [...assessments];
+    let filtered = [...userAssessments];
+
+    // Filter by template
+    if (templateFilter !== 'all') {
+      filtered = filtered.filter(a => a.assessmentTemplateId === templateFilter);
+    }
 
     // Filter by search term
     if (searchTerm) {
@@ -75,16 +92,11 @@ export default function AdminDashboard() {
       filtered = filtered.filter(a => a.categoryScores[categoryFilter] !== undefined);
     }
 
-    // Filter by completion status
-    const allCategories = Object.values(CATEGORIES);
-    if (completionFilter === 'complete') {
-      filtered = filtered.filter(a => 
-        allCategories.every(cat => a.categoryScores[cat] !== undefined)
-      );
-    } else if (completionFilter === 'incomplete') {
-      filtered = filtered.filter(a => 
-        !allCategories.every(cat => a.categoryScores[cat] !== undefined)
-      );
+    // Filter by status
+    if (statusFilter === 'completed') {
+      filtered = filtered.filter(a => a.status === 'completed');
+    } else if (statusFilter === 'in-progress') {
+      filtered = filtered.filter(a => a.status === 'in-progress');
     }
 
     // Sort
@@ -100,8 +112,32 @@ export default function AdminDashboard() {
       }
     });
 
-    setFilteredAssessments(filtered);
-  }, [searchTerm, sortBy, sortOrder, assessments, categoryFilter, completionFilter]);
+    // Deduplicate: For same developer + same assessment, keep only completed version
+    const deduplicatedMap = new Map<string, UserAssessment>();
+    filtered.forEach(assessment => {
+      const key = `${assessment.userId}_${assessment.assessmentTemplateId}`;
+      const existing = deduplicatedMap.get(key);
+      
+      if (!existing) {
+        // No existing entry, add this one
+        deduplicatedMap.set(key, assessment);
+      } else if (assessment.status === 'completed' && existing.status === 'in-progress') {
+        // Replace in-progress with completed
+        deduplicatedMap.set(key, assessment);
+      } else if (existing.status === 'completed' && assessment.status === 'in-progress') {
+        // Keep the completed one (do nothing)
+      } else {
+        // Both have same status, keep the most recent one
+        if (assessment.createdAt.toDate().getTime() > existing.createdAt.toDate().getTime()) {
+          deduplicatedMap.set(key, assessment);
+        }
+      }
+    });
+
+    const deduplicated = Array.from(deduplicatedMap.values());
+
+    setFilteredAssessments(deduplicated);
+  }, [userAssessments, searchTerm, sortBy, sortOrder, categoryFilter, statusFilter, templateFilter]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -116,15 +152,15 @@ export default function AdminDashboard() {
     });
     const categories = Array.from(allCategories).sort();
 
-    const headers = ['Developer Name', 'Email', 'Date', 'Version', 'Overall Score', ...categories, 'Categories Completed'];
+    const headers = ['Developer Name', 'Email', 'Date', 'Assessment', 'Overall Score', 'Status', ...categories];
     const rows = filteredAssessments.map(a => [
       a.userName,
       a.userEmail,
       a.createdAt.toDate().toLocaleDateString(),
-      `v${a.version || 1}`,
+      a.assessmentName,
       a.overallScore.toFixed(1),
-      ...categories.map(cat => (a.categoryScores[cat] || 0).toFixed(1)),
-      Object.keys(a.categoryScores).length
+      a.status,
+      ...categories.map(cat => (a.categoryScores[cat] || 0).toFixed(1))
     ]);
 
     const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
@@ -144,7 +180,7 @@ export default function AdminDashboard() {
     report += '='.repeat(80) + '\n\n';
 
     filteredAssessments.forEach((assessment, idx) => {
-      report += `[${idx + 1}] ${assessment.userName} (${assessment.userEmail}) - Version ${assessment.version || 1}\n`;
+      report += `[${idx + 1}] ${assessment.userName} (${assessment.userEmail}) - ${assessment.assessmentName}\n`;
       report += `Date: ${assessment.createdAt.toDate().toLocaleString()}\n`;
       report += `Overall Score: ${assessment.overallScore.toFixed(1)}/10\n\n`;
 
@@ -155,29 +191,13 @@ export default function AdminDashboard() {
       });
       report += '\n';
 
-      // Questions and Answers
-      report += 'RESPONSES:\n';
-      Object.entries(assessment.responses).forEach(([qId, answer]) => {
-        const question = QUESTIONS.find(q => q.id === qId);
-        if (question) {
-          report += `  Q: ${question.title}\n`;
-          report += `  Category: ${question.category}\n`;
-          report += `  Answer: ${JSON.stringify(answer.value)}\n`;
-          report += `  Score Weight: ${(answer.scoreWeight * 10).toFixed(1)}/10\n\n`;
-        }
-      });
-
-      // Recommendations
-      const recommendations = getTopRecommendations(
-        assessment.categoryScores,
-        assessment.responses,
-        assessment.overallScore
-      );
-      report += 'RECOMMENDATIONS:\n';
-      recommendations.forEach((rec, recIdx) => {
-        report += `  ${recIdx + 1}. ${rec.title} (Priority: ${rec.priority})\n`;
-        report += `     ${rec.description.substring(0, 200)}...\n\n`;
-      });
+      // Response Count
+      report += `Total Questions Answered: ${Object.keys(assessment.responses).length}\n`;
+      report += `Status: ${assessment.status}\n`;
+      if (assessment.completedAt) {
+        report += `Completed At: ${assessment.completedAt.toDate().toLocaleString()}\n`;
+      }
+      report += '\n';
 
       report += '\n' + '='.repeat(80) + '\n\n';
     });
@@ -195,12 +215,18 @@ export default function AdminDashboard() {
     return null;
   }
 
-  const allCategories = Object.values(CATEGORIES);
+  // Get all unique categories from all assessments
+  const allCategoriesSet = new Set<string>();
+  userAssessments.forEach(a => {
+    Object.keys(a.categoryScores).forEach(cat => allCategoriesSet.add(cat));
+  });
+  const allCategories = Array.from(allCategoriesSet).sort();
+
   const stats = {
-    totalAssessments: assessments.length,
-    uniqueDevelopers: new Set(assessments.map(a => a.userId)).size,
-    averageScore: assessments.length > 0
-      ? (assessments.reduce((sum, a) => sum + a.overallScore, 0) / assessments.length).toFixed(1)
+    totalAssessments: userAssessments.length,
+    uniqueDevelopers: new Set(userAssessments.map(a => a.userId)).size,
+    averageScore: userAssessments.length > 0
+      ? (userAssessments.reduce((sum, a) => sum + a.overallScore, 0) / userAssessments.length).toFixed(1)
       : '0',
     filteredCount: filteredAssessments.length,
   };
@@ -319,6 +345,18 @@ export default function AdminDashboard() {
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <select
+                    value={templateFilter}
+                    onChange={(e) => setTemplateFilter(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">All Assessments</option>
+                    {templates.map(template => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
                     className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -329,13 +367,13 @@ export default function AdminDashboard() {
                     ))}
                   </select>
                   <select
-                    value={completionFilter}
-                    onChange={(e) => setCompletionFilter(e.target.value)}
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
                     className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="all">All Status</option>
-                    <option value="complete">Complete</option>
-                    <option value="incomplete">Incomplete</option>
+                    <option value="completed">Completed</option>
+                    <option value="in-progress">In Progress</option>
                   </select>
                 </div>
                 
@@ -378,16 +416,16 @@ export default function AdminDashboard() {
                         Developer
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
-                        Date
+                        Assessment
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
-                        Version
+                        Date
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                         Overall Score
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
-                        Categories
+                        Status
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                         Level
@@ -401,8 +439,6 @@ export default function AdminDashboard() {
                     {filteredAssessments.map((assessment) => {
                       const scoreLevel = getScoreLevel(assessment.overallScore);
                       const scoreColor = getScoreLevelColor(assessment.overallScore);
-                      const completedCategories = Object.keys(assessment.categoryScores).length;
-                      const totalCategories = allCategories.length;
 
                       return (
                         <tr key={assessment.id} className="hover:bg-gray-50">
@@ -414,13 +450,16 @@ export default function AdminDashboard() {
                               {assessment.userEmail}
                             </div>
                           </td>
+                          <td className="px-4 py-4 text-sm">
+                            <div className="font-medium text-gray-900">
+                              {assessment.assessmentName}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              v{assessment.assessmentVersion}
+                            </div>
+                          </td>
                           <td className="px-4 py-4 text-sm text-gray-600">
                             {assessment.createdAt.toDate().toLocaleDateString()}
-                          </td>
-                          <td className="px-4 py-4">
-                            <span className="inline-block px-2 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded">
-                              v{assessment.version || 1}
-                            </span>
                           </td>
                           <td className="px-4 py-4">
                             <div className="text-lg font-bold text-gray-900">
@@ -428,15 +467,13 @@ export default function AdminDashboard() {
                             </div>
                           </td>
                           <td className="px-4 py-4">
-                            <div className="flex flex-wrap gap-1">
-                              <span className={`text-xs px-2 py-1 rounded ${
-                                completedCategories === totalCategories
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-yellow-100 text-yellow-700'
-                              }`}>
-                                {completedCategories}/{totalCategories}
-                              </span>
-                            </div>
+                            <span className={`inline-block px-2 py-1 text-xs font-semibold rounded ${
+                              assessment.status === 'completed'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-yellow-100 text-yellow-700'
+                            }`}>
+                              {assessment.status === 'completed' ? '✅ Completed' : '🔄 In Progress'}
+                            </span>
                           </td>
                           <td className="px-4 py-4">
                             <span className={`font-semibold ${scoreColor}`}>
@@ -465,7 +502,8 @@ export default function AdminDashboard() {
                     onClick={() => {
                       setSearchTerm('');
                       setCategoryFilter('all');
-                      setCompletionFilter('all');
+                      setStatusFilter('all');
+                      setTemplateFilter('all');
                     }}
                     className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
                   >

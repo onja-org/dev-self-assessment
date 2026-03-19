@@ -6,9 +6,9 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect, useMemo } from 'react';
 import { CATEGORIES, getSkillLevel } from '@/lib/constants';
-import { Answer, Assessment, Question, AssessmentTemplate } from '@/types';
+import { Answer, Assessment, Question, AssessmentTemplate, UserAssessment } from '@/types';
 import { calculateScore, getTopRecommendations, generateActionPlans } from '@/lib/scoreCalculator';
-import { collection, addDoc, query, where, orderBy, getDocs, Timestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, orderBy, getDocs, Timestamp, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function AssessmentTakePage() {
@@ -18,17 +18,16 @@ export default function AssessmentTakePage() {
   const assessmentId = params?.id as string;
   
   const [template, setTemplate] = useState<AssessmentTemplate | null>(null);
+  const [userAssessment, setUserAssessment] = useState<UserAssessment | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'assessment' | 'results' | 'history'>('assessment');
+  const [activeTab, setActiveTab] = useState<'assessment' | 'results'>('assessment');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [assessmentStarted, setAssessmentStarted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, Answer>>({});
-  const [latestAssessment, setLatestAssessment] = useState<Assessment | null>(null);
-  const [assessmentHistory, setAssessmentHistory] = useState<Assessment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<string | null>(null);
@@ -76,6 +75,50 @@ export default function AssessmentTakePage() {
         // Extract unique categories from questions
         const uniqueCategories = Array.from(new Set(templateQuestions.map(q => q.category)));
         setCategories(uniqueCategories);
+
+        // Fetch or create UserAssessment for this template
+        if (userProfile) {
+          const userAssessmentQuery = query(
+            collection(db, 'userAssessments'),
+            where('userId', '==', userProfile.uid),
+            where('assessmentTemplateId', '==', assessmentId)
+          );
+          const userAssessmentSnapshot = await getDocs(userAssessmentQuery);
+
+          if (!userAssessmentSnapshot.empty) {
+            // Load existing assessment
+            const existingAssessment = {
+              id: userAssessmentSnapshot.docs[0].id,
+              ...userAssessmentSnapshot.docs[0].data()
+            } as UserAssessment;
+            setUserAssessment(existingAssessment);
+            
+            // Load responses only if in-progress (not for completed)
+            if (existingAssessment.status === 'in-progress' && existingAssessment.responses) {
+              setResponses(existingAssessment.responses);
+            } else if (existingAssessment.status === 'completed' && existingAssessment.responses) {
+              // For completed assessments, load responses for viewing only
+              setResponses(existingAssessment.responses);
+            }
+          } else {
+            // Create new UserAssessment
+            const newUserAssessment: Omit<UserAssessment, 'id'> = {
+              userId: userProfile.uid,
+              userName: userProfile.name,
+              userEmail: userProfile.email,
+              assessmentTemplateId: assessmentId,
+              assessmentName: templateData.name,
+              assessmentVersion: templateData.version,
+              createdAt: Timestamp.now(),
+              responses: {},
+              categoryScores: {},
+              overallScore: 0,
+              status: 'in-progress'
+            };
+            const docRef = await addDoc(collection(db, 'userAssessments'), newUserAssessment);
+            setUserAssessment({ id: docRef.id, ...newUserAssessment } as UserAssessment);
+          }
+        }
         
       } catch (error) {
         console.error('Error fetching assessment:', error);
@@ -88,7 +131,10 @@ export default function AssessmentTakePage() {
     };
 
     fetchAssessment();
-  }, [assessmentId, router]);
+  }, [assessmentId, router, userProfile]);
+
+  // Determine if assessment is read-only based on status
+  const isReadOnly = userAssessment?.status === 'completed';
 
   // Get filtered questions based on selected categories
   const filteredQuestions = selectedCategories.length === 0
@@ -101,19 +147,16 @@ export default function AssessmentTakePage() {
   // Helper function to check if a category is completed
   const isCategoryCompleted = (category: string) => {
     const categoryQuestions = questions.filter(q => q.category === category);
-    // Check current responses OR latest assessment responses
+    // Check current responses
     const currentComplete = categoryQuestions.every(q => responses[q.id] !== undefined);
-    const latestComplete = latestAssessment 
-      ? categoryQuestions.every(q => latestAssessment.responses[q.id] !== undefined)
-      : false;
-    return currentComplete || latestComplete;
+    return currentComplete;
   };
 
   // Check if category is saved in Firestore
   const isCategorySaved = (category: string) => {
-    if (!latestAssessment) return false;
+    if (!userAssessment || userAssessment.status === 'in-progress') return false;
     const categoryQuestions = questions.filter(q => q.category === category);
-    return categoryQuestions.every(q => latestAssessment.responses[q.id] !== undefined);
+    return categoryQuestions.every(q => userAssessment.responses[q.id] !== undefined);
   };
 
   // Check if category is unsaved (completed but not in Firestore)
@@ -130,62 +173,11 @@ export default function AssessmentTakePage() {
     return categories.find(cat => !isCategoryCompleted(cat)) || null;
   };
 
-  // Fetch latest assessment and history
-  useEffect(() => {
-    const fetchAssessments = async () => {
-      if (!userProfile) return;
-
-      try {
-        const q = query(
-          collection(db, 'assessments'),
-          where('userId', '==', userProfile.uid),
-          orderBy('createdAt', 'desc')
-        );
-
-        const querySnapshot = await getDocs(q);
-        const assessments = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Assessment[];
-
-        setAssessmentHistory(assessments);
-        if (assessments.length > 0) {
-          setLatestAssessment(assessments[0]);
-        }
-      } catch (error: any) {
-        console.error('Error fetching assessments:', error);
-        // Silently handle index building errors - assessments will load once index is ready
-      }
-    };
-
-    fetchAssessments();
-    
-    // Load saved responses from localStorage and merge with latest assessment
-    try {
-      const saved = localStorage.getItem('assessment_responses');
-      let localResponses = {};
-      if (saved) {
-        localResponses = JSON.parse(saved);
-      }
-      
-      // Merge with latest assessment responses if they exist
-      // This ensures we don't lose previously saved category responses
-      if (assessmentHistory.length > 0 && assessmentHistory[0].responses) {
-        const mergedResponses = {
-          ...assessmentHistory[0].responses, // Start with saved responses
-          ...localResponses, // Override with any local changes
-        };
-        setResponses(mergedResponses);
-      } else if (Object.keys(localResponses).length > 0) {
-        setResponses(localResponses);
-      }
-    } catch (error) {
-      console.error('Error loading from localStorage:', error);
-    }
-  }, [userProfile, assessmentHistory]);
-
   // Navigation warning for unsaved work
   useEffect(() => {
+    // Don't warn if assessment is completed (read-only)
+    if (isReadOnly) return;
+    
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (unsavedCategories.size > 0) {
         e.preventDefault();
@@ -195,10 +187,11 @@ export default function AssessmentTakePage() {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [unsavedCategories]);
+  }, [unsavedCategories, isReadOnly]);
 
   const handleSignOut = async () => {
-    if (unsavedCategories.size > 0) {
+    // Don't warn if assessment is read-only (completed)
+    if (!isReadOnly && unsavedCategories.size > 0) {
       const confirmLeave = confirm(
         `⚠️ You have ${unsavedCategories.size} unsaved categor${unsavedCategories.size > 1 ? 'ies' : 'y'}!\n\n` +
         `Your progress will be lost if you sign out now.\n\n` +
@@ -220,7 +213,13 @@ export default function AssessmentTakePage() {
     router.push('/login');
   };
 
-  const handleAnswer = (value: string | number | string[]) => {
+  const handleAnswer = async (value: string | number | string[]) => {
+    // Don't allow answers if assessment is completed
+    if (userAssessment?.status === 'completed') {
+      alert('This assessment is already completed. You cannot modify your answers.');
+      return;
+    }
+
     const question = currentQuestion;
     let scoreWeight = 0.5;
 
@@ -251,7 +250,43 @@ export default function AssessmentTakePage() {
     
     setResponses(newResponses);
 
-    // Save to localStorage for persistence
+    // Save to UserAssessment in Firestore
+    if (userAssessment) {
+      try {
+        const { categoryScores, overallScore } = calculateScore(newResponses, questions);
+        
+        // Check if all questions are answered
+        const allAnswered = questions.every(q => newResponses[q.id] !== undefined);
+        
+        await updateDoc(doc(db, 'userAssessments', userAssessment.id), {
+          responses: newResponses,
+          categoryScores,
+          overallScore,
+          status: allAnswered ? 'completed' : 'in-progress',
+          ...(allAnswered && { completedAt: Timestamp.now() })
+        });
+
+        // Update local state
+        setUserAssessment({
+          ...userAssessment,
+          responses: newResponses,
+          categoryScores,
+          overallScore,
+          status: allAnswered ? 'completed' : 'in-progress',
+          ...(allAnswered && { completedAt: Timestamp.now() })
+        });
+
+        if (allAnswered) {
+          // Clear localStorage as we've saved everything
+          localStorage.removeItem('assessment_responses');
+          alert('🎉 Assessment completed! All your answers have been saved.');
+        }
+      } catch (error) {
+        console.error('Error saving to UserAssessment:', error);
+      }
+    }
+
+    // Save to localStorage for backup
     try {
       localStorage.setItem('assessment_responses', JSON.stringify(newResponses));
     } catch (error) {
@@ -278,7 +313,7 @@ export default function AssessmentTakePage() {
   };
 
   const handleSubmitAssessment = async () => {
-    if (!userProfile) {
+    if (!userProfile || !userAssessment) {
       alert('Error: User profile not loaded. Please refresh the page and try again.');
       return;
     }
@@ -287,41 +322,39 @@ export default function AssessmentTakePage() {
     try {
       const { categoryScores, overallScore } = calculateScore(responses, questions);
 
-      // Get the latest version number for this user
-      const q = query(
-        collection(db, 'assessments'),
-        where('userId', '==', userProfile.uid),
-        orderBy('version', 'desc')
-      );
-      const querySnapshot = await getDocs(q);
-      const latestVersion = querySnapshot.empty ? 0 : querySnapshot.docs[0].data().version;
-      const newVersion = latestVersion + 1;
+      // Check if all questions are answered
+      const allAnswered = questions.every(q => responses[q.id] !== undefined);
 
-      const assessment: Omit<Assessment, 'id'> = {
-        userId: userProfile.uid,
-        userName: userProfile.name,
-        userEmail: userProfile.email,
+      // Update the UserAssessment with final scores and mark as completed if all answered
+      await updateDoc(doc(db, 'userAssessments', userAssessment.id), {
         responses,
         categoryScores,
         overallScore,
-        version: newVersion,
-        createdAt: Timestamp.now(),
-      };
+        status: allAnswered ? 'completed' : 'in-progress',
+        ...(allAnswered && { completedAt: Timestamp.now() })
+      });
 
-      const docRef = await addDoc(collection(db, 'assessments'), assessment);
-      
-      const newAssessment = { id: docRef.id, ...assessment } as Assessment;
-      setLatestAssessment(newAssessment);
+      // Update local state
+      setUserAssessment({
+        ...userAssessment,
+        responses,
+        categoryScores,
+        overallScore,
+        status: allAnswered ? 'completed' : 'in-progress',
+        ...(allAnswered && { completedAt: Timestamp.now() })
+      });
+
       setShowResults(true);
       setActiveTab('results');
       setViewMode('saved');
       
-      // Refresh history
-      setAssessmentHistory([newAssessment, ...assessmentHistory]);
-      
       // Clear unsaved categories and localStorage after successful submission
       setUnsavedCategories(new Set());
       localStorage.removeItem('assessment_responses');
+
+      if (allAnswered) {
+        alert('🎉 Assessment completed! Your responses have been saved.');
+      }
     } catch (error) {
       console.error('Error submitting assessment:', error);
       alert('Failed to submit assessment. Please try again.');
@@ -375,6 +408,9 @@ export default function AssessmentTakePage() {
   };
 
   const toggleCategory = (category: string) => {
+    // Don't allow toggling if assessment is completed (read-only)
+    if (isReadOnly) return;
+    
     const completed = isCategoryCompleted(category);
     
     if (completed) {
@@ -385,14 +421,7 @@ export default function AssessmentTakePage() {
       setCurrentQuestionIndex(0);
       setShowResults(false);
       
-      // Load responses from latest assessment or current responses
-      if (latestAssessment && latestAssessment.responses) {
-        // Merge latest assessment responses with current responses
-        setResponses(prev => ({
-          ...prev,
-          ...latestAssessment.responses
-        }));
-      }
+      // Load responses from current state (already loaded)
     } else {
       // Normal toggle for incomplete categories
       setSelectedCategories(prev => 
@@ -404,6 +433,13 @@ export default function AssessmentTakePage() {
   };
 
   const startAssessment = () => {
+    // For completed assessments, just view mode
+    if (isReadOnly) {
+      setAssessmentStarted(true);
+      setCurrentQuestionIndex(0);
+      return;
+    }
+    
     if (selectedCategories.length === 0) {
       // If no categories selected, use all questions
       setSelectedCategories([]);
@@ -507,17 +543,6 @@ export default function AssessmentTakePage() {
                     }`}
                   >
                     📊 Results
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('history')}
-                    data-tab="history"
-                    className={`py-4 px-6 text-sm font-medium border-b-2 transition ${
-                      activeTab === 'history'
-                        ? 'border-blue-600 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    📈 History
                   </button>
                 </nav>
               </div>
@@ -700,11 +725,28 @@ export default function AssessmentTakePage() {
                         <div className="flex justify-center pt-4">
                           <button
                             onClick={startAssessment}
-                            className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-lg text-lg"
+                            className={`px-8 py-3 font-semibold rounded-lg transition shadow-lg text-lg ${
+                              isReadOnly 
+                                ? 'bg-gray-600 text-white hover:bg-gray-700'
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                            }`}
                           >
-                            🚀 Get Started
+                            {isReadOnly ? '👁️ View Assessment' : '🚀 Get Started'}
                           </button>
                         </div>
+                        
+                        {isReadOnly && (
+                          <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                              <p className="text-sm text-amber-800 font-medium">
+                                This assessment is completed. You can view your answers but cannot modify them.
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <>
@@ -768,13 +810,39 @@ export default function AssessmentTakePage() {
                     
                     {/* Progress Bar */}
                     <div>
+                      {userAssessment?.status === 'completed' && (
+                        <div className="mb-4 p-4 bg-green-50 border-2 border-green-500 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0">
+                              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-bold text-green-900 text-lg">Assessment Completed</h3>
+                              <p className="text-sm text-green-700">
+                                This assessment is complete and submitted. You can review your answers but cannot modify them.
+                              </p>
+                              {userAssessment.completedAt && (
+                                <p className="text-xs text-green-600 mt-1">
+                                  Completed on {userAssessment.completedAt.toDate().toLocaleDateString()} at {userAssessment.completedAt.toDate().toLocaleTimeString()}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       <div className="flex justify-between text-sm text-gray-600 mb-2">
                         <span>Question {currentQuestionIndex + 1} of {filteredQuestions.length}</span>
                         <span>{Math.round(progress)}% Complete</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            userAssessment?.status === 'completed' ? 'bg-green-600' : 'bg-blue-600'
+                          }`}
                           style={{ width: `${progress}%` }}
                         />
                       </div>
@@ -790,11 +858,12 @@ export default function AssessmentTakePage() {
                         onNext={() => setCurrentQuestionIndex(Math.min(filteredQuestions.length - 1, currentQuestionIndex + 1))}
                         isFirst={currentQuestionIndex === 0}
                         isLast={currentQuestionIndex === filteredQuestions.length - 1}
+                        isCompleted={userAssessment?.status === 'completed'}
                       />
                     )}
 
-                    {/* Submit Button */}
-                    {(allAnswered || unsavedCategories.size > 0) && (
+                    {/* Submit Button - Only show if not read-only (completed) */}
+                    {!isReadOnly && (allAnswered || unsavedCategories.size > 0) && (
                       <div id="submit-assessment-btn" className="flex flex-col items-center pt-6 border-t">
                         <div className="mb-4 flex items-center gap-2 text-green-600">
                           <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -822,7 +891,7 @@ export default function AssessmentTakePage() {
                       </div>
                     )}
 
-                    {filteredQuestions.length > 0 && !allAnswered && (
+                    {!isReadOnly && filteredQuestions.length > 0 && !allAnswered && (
                       <div className="text-center text-sm text-gray-500">
                         Answer all questions to submit assessment
                       </div>
@@ -835,7 +904,7 @@ export default function AssessmentTakePage() {
                 {/* Results Tab */}
                 {activeTab === 'results' && (
                   <ResultsView 
-                    assessment={latestAssessment} 
+                    assessment={userAssessment} 
                     onReset={resetAssessment} 
                     categoryResults={categoryResults}
                     currentCategory={currentCategory}
@@ -844,14 +913,6 @@ export default function AssessmentTakePage() {
                     questions={questions}
                     categories={categories}
                   />
-                )}
-
-                {/* History Tab */}
-                {activeTab === 'history' && (
-                  <HistoryView assessments={assessmentHistory} onViewResult={(assessment) => {
-                    setLatestAssessment(assessment);
-                    setActiveTab('results');
-                  }} />
                 )}
               </div>
             </div>
@@ -946,7 +1007,7 @@ export default function AssessmentTakePage() {
 }
 
 // Question Component
-function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onNext, isFirst, isLast }: any) {
+function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onNext, isFirst, isLast, isCompleted }: any) {
   const [tempValue, setTempValue] = useState(currentAnswer || (question.type === 'scale' ? 5 : undefined));
 
   useEffect(() => {
@@ -955,6 +1016,14 @@ function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onN
   }, [currentAnswer, question.id, question.type]);
 
   const handleSubmit = () => {
+    if (isCompleted) {
+      // Just move to next if completed
+      if (!isLast) {
+        onNext();
+      }
+      return;
+    }
+
     // Validate based on question type
     const isValid = tempValue !== undefined && 
                     tempValue !== null && 
@@ -967,7 +1036,7 @@ function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onN
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6">
+    <div className={`rounded-lg p-6 ${isCompleted ? 'bg-gray-50' : 'bg-gradient-to-br from-blue-50 to-indigo-50'}`}>
       {currentAnswer !== undefined && currentAnswer !== null && (
         <div className="mb-4 bg-green-100 border border-green-400 rounded-lg p-3 flex items-center gap-2">
           <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
@@ -996,8 +1065,9 @@ function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onN
             min={question.min}
             max={question.max}
             value={tempValue || 5}
-            onChange={(e) => setTempValue(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            onChange={(e) => !isCompleted && setTempValue(Number(e.target.value))}
+            disabled={isCompleted}
+            className={`w-full h-2 bg-gray-200 rounded-lg appearance-none ${isCompleted ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
           />
           <div className="text-center text-2xl font-bold text-blue-600">
             {tempValue || 5}
@@ -1011,10 +1081,13 @@ function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onN
           {question.options.map((option: any) => (
             <button
               key={option.value}
-              onClick={() => setTempValue(option.value)}
+              onClick={() => !isCompleted && setTempValue(option.value)}
+              disabled={isCompleted}
               className={`w-full text-left p-4 rounded-lg border-2 transition ${
                 tempValue === option.value
                   ? 'border-blue-600 bg-blue-50'
+                  : isCompleted
+                  ? 'border-gray-200 bg-gray-100 cursor-not-allowed'
                   : 'border-gray-200 hover:border-gray-300 bg-white'
               }`}
             >
@@ -1046,15 +1119,19 @@ function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onN
               <button
                 key={option.value}
                 onClick={() => {
+                  if (isCompleted) return;
                   const current = Array.isArray(tempValue) ? tempValue : [];
                   const newValue = isChecked
                     ? current.filter(v => v !== option.value)
                     : [...current, option.value];
                   setTempValue(newValue);
                 }}
+                disabled={isCompleted}
                 className={`w-full text-left p-4 rounded-lg border-2 transition ${
                   isChecked
                     ? 'border-blue-600 bg-blue-50'
+                    : isCompleted
+                    ? 'border-gray-200 bg-gray-100 cursor-not-allowed'
                     : 'border-gray-200 hover:border-gray-300 bg-white'
                 }`}
               >
@@ -1087,18 +1164,28 @@ function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onN
         >
           ← Previous
         </button>
-        <button
-          onClick={handleSubmit}
-          disabled={
-            tempValue === undefined || 
-            tempValue === null || 
-            (typeof tempValue === 'string' && tempValue === '') || 
-            (Array.isArray(tempValue) && tempValue.length === 0)
-          }
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLast ? 'Save Answer' : 'Next →'}
-        </button>
+        {isCompleted ? (
+          <button
+            onClick={() => !isLast && onNext()}
+            disabled={isLast}
+            className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLast ? 'Review Complete' : 'Next →'}
+          </button>
+        ) : (
+          <button
+            onClick={handleSubmit}
+            disabled={
+              tempValue === undefined || 
+              tempValue === null || 
+              (typeof tempValue === 'string' && tempValue === '') || 
+              (Array.isArray(tempValue) && tempValue.length === 0)
+            }
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLast ? 'Save Answer' : 'Next →'}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1115,7 +1202,7 @@ function ResultsView({
   questions,
   categories
 }: { 
-  assessment: Assessment | null; 
+  assessment: UserAssessment | null; 
   onReset: () => void;
   categoryResults?: Record<string, { recommendations: any[], resources: any[] }>;
   currentCategory?: string | null;
@@ -1443,55 +1530,4 @@ function ResultsView({
   );
 }
 
-// History View Component
-function HistoryView({ assessments, onViewResult }: { assessments: Assessment[]; onViewResult: (assessment: Assessment) => void }) {
-  if (assessments.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-600">No assessment history yet.</p>
-      </div>
-    );
-  }
 
-  return (
-    <div className="space-y-4">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">Assessment History</h3>
-      <div className="space-y-3">
-        {assessments.map((assessment, idx) => {
-          const date = assessment.createdAt?.toDate?.() || new Date();
-          const skillLevel = getSkillLevel(assessment.overallScore);
-          
-          return (
-            <div key={assessment.id || idx} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl font-bold text-blue-600">{assessment.overallScore.toFixed(1)}</span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${skillLevel.color} bg-opacity-10`}>
-                      {skillLevel.label}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    {date.toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
-                </div>
-                <button
-                  onClick={() => onViewResult(assessment)}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
-                >
-                  View Details
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}

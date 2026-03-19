@@ -119,20 +119,9 @@ function AssessmentsContent() {
   };
 
   const handleAssessmentClick = (template: AssessmentTemplate) => {
-    const status = getAssessmentStatus(template.id);
-    
-    if (status === 'completed') {
-      // Navigate to results page
-      const userAssessment = userAssessments.find(
-        ua => ua.assessmentTemplateId === template.id && ua.status === 'completed'
-      );
-      if (userAssessment) {
-        router.push(`/assessment/result?id=${userAssessment.id}`);
-      }
-    } else {
-      // Navigate to the assessment page (for both in-progress and not-taken)
-      router.push(`/assessments/${template.id}`);
-    }
+    // Always navigate to the assessment page
+    // The assessment page will handle showing read-only mode for completed assessments
+    router.push(`/assessments/${template.id}`);
   };
 
   const handleSignOut = async () => {
@@ -305,91 +294,6 @@ function AssessmentsContent() {
                 </div>
               );
             })}
-          </div>
-        )}
-
-        {/* History Section */}
-        {userAssessments.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Assessment History</h2>
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Assessment
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Version
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Score
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {userAssessments.map(assessment => (
-                    <tr key={assessment.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {assessment.assessmentName}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
-                          {assessment.assessmentVersion}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(assessment.status)}`}>
-                          {getStatusText(assessment.status)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {assessment.status === 'completed' 
-                            ? `${Math.round(assessment.overallScore)}%` 
-                            : '-'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {assessment.createdAt.toDate().toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {assessment.status === 'completed' ? (
-                          <Link
-                            href={`/assessment/result?id=${assessment.id}`}
-                            className="text-blue-600 hover:text-blue-900"
-                          >
-                            View Results
-                          </Link>
-                        ) : (
-                          <Link
-                            href={`/assessments/${assessment.assessmentTemplateId}`}
-                            className="text-blue-600 hover:text-blue-900"
-                          >
-                            Continue
-                          </Link>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
         )}
       </main>
