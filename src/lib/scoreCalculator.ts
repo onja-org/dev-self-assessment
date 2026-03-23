@@ -1,5 +1,5 @@
 import { Answer, Assessment, ActionPlan, QuestionOption, Question } from '@/types';
-import { QUESTIONS, CATEGORIES, getSkillLevel } from './constants';
+import { QUESTIONS, CATEGORIES, getSkillLevel, OTHER_OPTION_CONFIG } from './constants';
 
 export const calculateScore = (responses: Record<string, Answer>, questions?: Question[]): {
   categoryScores: Record<string, number>;

@@ -213,7 +213,7 @@ export default function AssessmentTakePage() {
     router.push('/login');
   };
 
-  const handleAnswer = async (value: string | number | string[]) => {
+  const handleAnswer = async (value: string | number | string[], otherText?: string) => {
     // Don't allow answers if assessment is completed
     if (userAssessment?.status === 'completed') {
       alert('This assessment is already completed. You cannot modify your answers.');
@@ -227,15 +227,24 @@ export default function AssessmentTakePage() {
       scoreWeight = typeof value === 'number' ? value / 10 : 0.5;
     } else if (question.options) {
       if (Array.isArray(value)) {
-        const weights = value.map(v => 
-          question.options?.find(opt => opt.value === v)?.scoreWeight || 0
-        );
+        const weights = value.map(v => {
+          // Handle "other" option with default score
+          if (v === 'other') {
+            return question.type === 'checkbox' || question.type === 'tech-stack' ? 0.18 : 0.5;
+          }
+          return question.options?.find(opt => opt.value === v)?.scoreWeight || 0;
+        });
         scoreWeight = weights.length > 0 
           ? weights.reduce((a, b) => a + b, 0) / weights.length 
           : 0.5;
       } else {
-        const option = question.options.find(opt => opt.value === value);
-        scoreWeight = option?.scoreWeight || 0.5;
+        // Handle "other" option for multiple-choice
+        if (value === 'other') {
+          scoreWeight = 0.5;
+        } else {
+          const option = question.options.find(opt => opt.value === value);
+          scoreWeight = option?.scoreWeight || 0.5;
+        }
       }
     }
 
@@ -245,6 +254,7 @@ export default function AssessmentTakePage() {
         value,
         scoreWeight,
         recommendations: [],
+        ...(otherText && { otherText }), // Include otherText if provided
       }
     };
     
@@ -1009,11 +1019,24 @@ export default function AssessmentTakePage() {
 // Question Component
 function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onNext, isFirst, isLast, isCompleted }: any) {
   const [tempValue, setTempValue] = useState(currentAnswer || (question.type === 'scale' ? 5 : undefined));
+  const [otherText, setOtherText] = useState('');
+  const [charCount, setCharCount] = useState(0);
+  const MAX_CHAR_LIMIT = 500;
 
   useEffect(() => {
     // Initialize with current answer or default for scale
     setTempValue(currentAnswer || (question.type === 'scale' ? 5 : undefined));
+    // Reset other text when question changes
+    setOtherText('');
+    setCharCount(0);
   }, [currentAnswer, question.id, question.type]);
+
+  const handleOtherTextChange = (text: string) => {
+    if (text.length <= MAX_CHAR_LIMIT) {
+      setOtherText(text);
+      setCharCount(text.length);
+    }
+  };
 
   const handleSubmit = () => {
     if (isCompleted) {
@@ -1025,13 +1048,24 @@ function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onN
     }
 
     // Validate based on question type
-    const isValid = tempValue !== undefined && 
-                    tempValue !== null && 
-                    !(typeof tempValue === 'string' && tempValue === '') &&
-                    !(Array.isArray(tempValue) && tempValue.length === 0);
+    let isValid = tempValue !== undefined && 
+                  tempValue !== null && 
+                  !(typeof tempValue === 'string' && tempValue === '') &&
+                  !(Array.isArray(tempValue) && tempValue.length === 0);
+
+    // Additional validation for "Other" option
+    if (question.allowOther) {
+      if (tempValue === 'other' || (Array.isArray(tempValue) && tempValue.includes('other'))) {
+        // Require at least 3 characters for Other option
+        if (!otherText || otherText.trim().length < 3) {
+          isValid = false;
+        }
+      }
+    }
     
     if (isValid) {
-      onAnswer(tempValue);
+      // Pass both value and otherText to parent
+      onAnswer(tempValue, otherText);
     }
   };
 
@@ -1107,6 +1141,61 @@ function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onN
               </div>
             </button>
           ))}
+          
+          {/* Other Option */}
+          {question.allowOther && (
+            <div>
+              <button
+                onClick={() => !isCompleted && setTempValue('other')}
+                disabled={isCompleted}
+                className={`w-full text-left p-4 rounded-lg border-2 transition ${
+                  tempValue === 'other'
+                    ? 'border-blue-600 bg-blue-50'
+                    : isCompleted
+                    ? 'border-gray-200 bg-gray-100 cursor-not-allowed'
+                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                }`}
+              >
+                <div className="flex items-start">
+                  <div className={`flex-shrink-0 w-5 h-5 rounded-full border-2 mr-3 mt-0.5 ${
+                    tempValue === 'other'
+                      ? 'border-blue-600 bg-blue-600'
+                      : 'border-gray-300'
+                  }`}>
+                    {tempValue === 'other' && (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-gray-900">Other (please specify)</span>
+                </div>
+              </button>
+              
+              {/* Text input for Other */}
+              {tempValue === 'other' && !isCompleted && (
+                <div className="mt-3 ml-8">
+                  <textarea
+                    value={otherText}
+                    onChange={(e) => handleOtherTextChange(e.target.value)}
+                    placeholder="Please describe your approach or answer (minimum 3 characters)..."
+                    disabled={isCompleted}
+                    className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition resize-none"
+                    rows={3}
+                  />
+                  <div className="flex justify-between items-center mt-2 text-sm">
+                    <span className={`${otherText.trim().length < 3 ? 'text-red-600' : 'text-green-600'}`}>
+                      {otherText.trim().length < 3 && 'Minimum 3 characters required'}
+                      {otherText.trim().length >= 3 && '✓ Valid'}
+                    </span>
+                    <span className={`${charCount > MAX_CHAR_LIMIT - 50 ? 'text-orange-600 font-semibold' : 'text-gray-500'}`}>
+                      {charCount}/{MAX_CHAR_LIMIT}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1143,7 +1232,7 @@ function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onN
                   }`}>
                     {isChecked && (
                       <svg className="w-full h-full text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
                   </div>
@@ -1152,6 +1241,69 @@ function AssessmentQuestion({ question, currentAnswer, onAnswer, onPrevious, onN
               </button>
             );
           })}
+          
+          {/* Other Option for checkbox/tech-stack */}
+          {question.allowOther && (
+            <div>
+              <button
+                onClick={() => {
+                  if (isCompleted) return;
+                  const current = Array.isArray(tempValue) ? tempValue : [];
+                  const isOtherChecked = current.includes('other');
+                  const newValue = isOtherChecked
+                    ? current.filter(v => v !== 'other')
+                    : [...current, 'other'];
+                  setTempValue(newValue);
+                }}
+                disabled={isCompleted}
+                className={`w-full text-left p-4 rounded-lg border-2 transition ${
+                  Array.isArray(tempValue) && tempValue.includes('other')
+                    ? 'border-blue-600 bg-blue-50'
+                    : isCompleted
+                    ? 'border-gray-200 bg-gray-100 cursor-not-allowed'
+                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                }`}
+              >
+                <div className="flex items-start">
+                  <div className={`flex-shrink-0 w-5 h-5 rounded border-2 mr-3 mt-0.5 ${
+                    Array.isArray(tempValue) && tempValue.includes('other')
+                      ? 'border-blue-600 bg-blue-600'
+                      : 'border-gray-300'
+                  }`}>
+                    {Array.isArray(tempValue) && tempValue.includes('other') && (
+                      <svg className="w-full h-full text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-gray-900">Other (please specify)</span>
+                </div>
+              </button>
+              
+              {/* Text input for Other in checkbox */}
+              {Array.isArray(tempValue) && tempValue.includes('other') && !isCompleted && (
+                <div className="mt-3 ml-8">
+                  <textarea
+                    value={otherText}
+                    onChange={(e) => handleOtherTextChange(e.target.value)}
+                    placeholder="Please describe your technology or approach (minimum 3 characters)..."
+                    disabled={isCompleted}
+                    className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition resize-none"
+                    rows={3}
+                  />
+                  <div className="flex justify-between items-center mt-2 text-sm">
+                    <span className={`${otherText.trim().length < 3 ? 'text-red-600' : 'text-green-600'}`}>
+                      {otherText.trim().length < 3 && 'Minimum 3 characters required'}
+                      {otherText.trim().length >= 3 && '✓ Valid'}
+                    </span>
+                    <span className={`${charCount > MAX_CHAR_LIMIT - 50 ? 'text-orange-600 font-semibold' : 'text-gray-500'}`}>
+                      {charCount}/{MAX_CHAR_LIMIT}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1516,6 +1668,58 @@ function ResultsView({
           </div>
         </div>
       )}
+
+      {/* Your Responses Section */}
+      <div className="bg-white rounded-lg p-6">
+        <h3 className="text-xl font-bold text-gray-900 mb-4">📝 Your Detailed Responses</h3>
+        <div className="space-y-4">
+          {(() => {
+            const categoryToShow = viewingCategory && viewingCategory !== 'all' ? viewingCategory : null;
+            const relevantQuestions = categoryToShow
+              ? questions.filter(q => q.category === categoryToShow && assessment.responses[q.id])
+              : questions.filter(q => assessment.responses[q.id]);
+            
+            // Group by category
+            const grouped = relevantQuestions.reduce((acc, q) => {
+              if (!acc[q.category]) acc[q.category] = [];
+              acc[q.category].push(q);
+              return acc;
+            }, {} as Record<string, typeof questions>);
+
+            return Object.entries(grouped).map(([cat, catQuestions]) => (
+              <div key={cat} className="border border-gray-200 rounded-lg p-4">
+                <h4 className="font-semibold text-blue-600 mb-3">{cat}</h4>
+                <div className="space-y-3">
+                  {catQuestions.map(q => {
+                    const response = assessment.responses[q.id];
+                    const hasOther = response.value === 'other' || (Array.isArray(response.value) && response.value.includes('other'));
+                    
+                    return (
+                      <div key={q.id} className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-sm font-medium text-gray-700 mb-2">{q.title}</p>
+                        <div className="ml-2">
+                          <p className="text-sm text-gray-900">
+                            <strong>Your answer:</strong>{' '}
+                            {Array.isArray(response.value)
+                              ? response.value.map(v => v === 'other' ? '✏️ Other (custom)' : v).join(', ')
+                              : response.value === 'other' ? '✏️ Other (custom)' : response.value.toString()}
+                          </p>
+                          {response.otherText && (
+                            <div className="mt-2 p-2 bg-blue-50 border-l-3 border-blue-400 rounded">
+                              <p className="text-xs font-semibold text-blue-800 mb-1">💬 Your custom response:</p>
+                              <p className="text-sm text-gray-700 italic">"{response.otherText}"</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ));
+          })()}
+        </div>
+      </div>
 
       {/* New Assessment Button */}
       <div className="text-center pt-4">

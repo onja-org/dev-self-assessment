@@ -525,6 +525,104 @@ export default function TeamComparison() {
                 </div>
               </div>
             </div>
+
+            {/* Other Responses Section */}
+            <div className="bg-white rounded-lg shadow p-6 mt-6">
+              <h2 className="text-xl font-bold mb-4">📝 Custom "Other" Responses</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Review custom answers provided by team members when they selected "Other"
+              </p>
+              
+              {(() => {
+                // Collect all "other" responses from all assessments
+                const otherResponses: Array<{
+                  userName: string;
+                  userEmail: string;
+                  questionId: string;
+                  questionTitle: string;
+                  category: string;
+                  otherText: string;
+                  value: string | number | string[];
+                }> = [];
+
+                assessments.forEach(assessment => {
+                  Object.entries(assessment.responses).forEach(([questionId, answer]) => {
+                    if (answer.otherText) {
+                      const question = selectedTemplate?.questions.find(q => q.id === questionId);
+                      if (question) {
+                        otherResponses.push({
+                          userName: assessment.userName,
+                          userEmail: assessment.userEmail,
+                          questionId,
+                          questionTitle: question.title,
+                          category: question.category,
+                          otherText: answer.otherText,
+                          value: answer.value,
+                        });
+                      }
+                    }
+                  });
+                });
+
+                if (otherResponses.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No custom "Other" responses yet.</p>
+                      <p className="text-sm mt-2">Responses will appear here when team members provide custom answers.</p>
+                    </div>
+                  );
+                }
+
+                // Group by question
+                const groupedByQuestion = otherResponses.reduce((acc, response) => {
+                  if (!acc[response.questionId]) {
+                    acc[response.questionId] = {
+                      questionTitle: response.questionTitle,
+                      category: response.category,
+                      responses: [],
+                    };
+                  }
+                  acc[response.questionId].responses.push(response);
+                  return acc;
+                }, {} as Record<string, { questionTitle: string; category: string; responses: typeof otherResponses }>);
+
+                return (
+                  <div className="space-y-6">
+                    {Object.entries(groupedByQuestion).map(([questionId, data]) => (
+                      <div key={questionId} className="border border-gray-200 rounded-lg p-4">
+                        <div className="mb-3">
+                          <div className="text-xs font-semibold text-blue-600 mb-1">
+                            {data.category}
+                          </div>
+                          <h3 className="font-semibold text-gray-900">{data.questionTitle}</h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {data.responses.length} custom response{data.responses.length > 1 ? 's' : ''}
+                          </p>
+                        </div>
+                        <div className="space-y-3">
+                          {data.responses.map((response, idx) => (
+                            <div key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <div className="font-medium text-gray-900">{response.userName}</div>
+                                  <div className="text-xs text-gray-500">{response.userEmail}</div>
+                                </div>
+                                <div className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded">
+                                  Custom Response
+                                </div>
+                              </div>
+                              <div className="text-sm text-gray-700 bg-white p-3 rounded border border-gray-200 mt-2">
+                                "{response.otherText}"
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
             </>
             )}
           </div>

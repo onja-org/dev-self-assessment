@@ -29,11 +29,13 @@ export interface Question {
   options?: QuestionOption[];
   followUpQuestion?: string;
   hint?: string;
+  allowOther?: boolean; // Enable "Other" option for multiple-choice and checkbox questions
 }
 
 export interface Answer {
   value: string | number | string[];
-  other?: string;
+  other?: string; // For legacy tech-stack follow-ups
+  otherText?: string; // For "Other" option custom text input
   followUp?: string;
   recommendations: string[];
   scoreWeight: number;

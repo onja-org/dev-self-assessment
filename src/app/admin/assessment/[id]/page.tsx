@@ -265,9 +265,15 @@ export default function AdminAssessmentDetailPage() {
                                 <p className="text-gray-700 mb-1">
                                   <strong>Answer:</strong>{' '}
                                   {Array.isArray(response.value)
-                                    ? response.value.join(', ')
-                                    : response.value.toString()}
+                                    ? response.value.map(v => v === 'other' ? '✏️ Other (custom)' : v).join(', ')
+                                    : response.value === 'other' ? '✏️ Other (custom)' : response.value.toString()}
                                 </p>
+                                {response.otherText && (
+                                  <div className="mt-2 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+                                    <p className="text-sm font-semibold text-blue-900 mb-1">💬 Custom Response:</p>
+                                    <p className="text-gray-800 italic">"{response.otherText}"</p>
+                                  </div>
+                                )}
                                 {response.followUp && (
                                   <p className="text-gray-700 mb-1">
                                     <strong>Follow-up:</strong> {response.followUp}

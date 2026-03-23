@@ -15,6 +15,25 @@ export const CATEGORIES = {
   DEBUGGING: 'Debugging & Problem Analysis',
 } as const;
 
+// Default configuration for "Other" option
+export const OTHER_OPTION_CONFIG = {
+  scoreWeight: 0.5, // Neutral score for multiple-choice
+  checkboxScoreWeight: 0.18, // Neutral score for checkbox/tech-stack
+  recommendations: [
+    'Document your approach and share with the team',
+    'Research best practices in this area',
+    'Connect with others using similar approaches',
+    'Create a knowledge base article about your experience',
+  ],
+  mentorExplanation: "Thanks for sharing your unique approach! Every developer's journey is different, and it's great that you're exploring your own path. Here are some general recommendations to help you continue growing in this area.",
+  resources: [
+    { title: 'Developer Roadmaps', url: 'https://roadmap.sh/', type: 'docs' as const, description: 'Explore structured learning paths' },
+    { title: 'freeCodeCamp', url: 'https://www.freecodecamp.org/', type: 'course' as const, description: 'Free comprehensive development courses' },
+    { title: 'MDN Web Docs', url: 'https://developer.mozilla.org/', type: 'docs' as const, description: 'Comprehensive web development documentation' },
+    { title: 'Stack Overflow', url: 'https://stackoverflow.com/', type: 'article' as const, description: 'Community-driven Q&A for developers' },
+  ],
+};
+
 export const QUESTIONS: Question[] = [
   // ─────────────────────────────────────────────────────────────────────────────
   // QUESTION 1 — Language Proficiency (Scale)
@@ -39,6 +58,7 @@ export const QUESTIONS: Question[] = [
     type: 'tech-stack',
     followUpQuestion: 'How many years of experience do you have with each?',
     hint: 'Select the technologies you use regularly or have significant experience with',
+    allowOther: true,
     options: [
       {
         value: 'react',
@@ -557,6 +577,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.DEBUGGING,
     type: 'multiple-choice',
     hint: 'Think about your systematic approach, tool usage, and problem isolation skills',
+    allowOther: true,
     options: [
       {
         value: 'console-only',
@@ -672,6 +693,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.LEARNING,
     type: 'multiple-choice',
     hint: 'Consider your learning initiative, methods, and knowledge sharing',
+    allowOther: true,
     options: [
       {
         value: 'wait',
@@ -840,6 +862,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.COLLABORATION,
     type: 'multiple-choice',
     hint: "Quality code reviews are about learning together, not just catching bugs",
+    allowOther: true,
     options: [
       {
         value: 'rarely',
@@ -929,6 +952,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.CODE_QUALITY,
     type: 'multiple-choice',
     hint: "Tests are your safety net - they give you confidence to refactor and iterate",
+    allowOther: true,
     options: [
       {
         value: 'no-tests',
@@ -1032,6 +1056,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.COMMUNICATION,
     type: 'multiple-choice',
     hint: "Healthy disagreement drives better solutions. It's about the best outcome, not being right.",
+    allowOther: true,
     options: [
       {
         value: 'avoid',
@@ -1148,6 +1173,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.PROBLEM_SOLVING,
     type: 'multiple-choice',
     hint: 'Think about designing scalable, maintainable systems, not just writing code',
+    allowOther: true,
     options: [
       {
         value: 'none',
@@ -1263,6 +1289,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.LEARNING,
     type: 'checkbox',
     hint: 'The best developers continuously learn through multiple channels',
+    allowOther: true,
     options: [
       {
         value: 'blogs',
@@ -1445,6 +1472,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.COMMUNICATION,
     type: 'multiple-choice',
     hint: 'Good documentation is a gift to your future self and your teammates',
+    allowOther: true,
     options: [
       {
         value: 'minimal',
@@ -1523,6 +1551,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.CORE_CONCEPTS,
     type: 'multiple-choice',
     hint: 'OOP is about modeling real-world concepts with encapsulation, inheritance, and polymorphism',
+    allowOther: true,
     options: [
       {
         value: 'unfamiliar',
@@ -1599,6 +1628,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.ALGORITHMS,
     type: 'multiple-choice',
     hint: "Understanding DS&A helps you choose the right tool and optimize performance",
+    allowOther: true,
     options: [
       {
         value: 'basics-only',
@@ -1676,6 +1706,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.VERSION_CONTROL,
     type: 'multiple-choice',
     hint: "Git is more than commits - it's about collaboration, history, and workflow",
+    allowOther: true,
     options: [
       {
         value: 'basic-commands',
@@ -1752,6 +1783,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.CODE_QUALITY,
     type: 'multiple-choice',
     hint: 'Clean code is about readability, maintainability, and future-you being happy',
+    allowOther: true,
     options: [
       {
         value: 'make-it-work',
@@ -1829,6 +1861,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.CORE_CONCEPTS,
     type: 'multiple-choice',
     hint: 'Async is everywhere in modern development - API calls, file operations, database queries',
+    allowOther: true,
     options: [
       {
         value: 'callbacks-only',
@@ -1906,6 +1939,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.CORE_CONCEPTS,
     type: 'multiple-choice',
     hint: 'Good API design is about intuitive, consistent, and well-documented interfaces',
+    allowOther: true,
     options: [
       {
         value: 'consume-only',
@@ -1982,6 +2016,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.CODE_QUALITY,
     type: 'multiple-choice',
     hint: "Security isn't just the security team's job - every developer writes secure (or insecure) code",
+    allowOther: true,
     options: [
       {
         value: 'minimal',
@@ -2059,6 +2094,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.PROBLEM_SOLVING,
     type: 'multiple-choice',
     hint: 'Premature optimization is bad, but ignoring performance is worse. Balance is key.',
+    allowOther: true,
     options: [
       {
         value: 'dont-think',
@@ -2136,6 +2172,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.TECHNICAL_SKILLS,
     type: 'multiple-choice',
     hint: 'DevOps bridges development and operations - automate testing, deployment, monitoring',
+    allowOther: true,
     options: [
       {
         value: 'no-experience',
@@ -2212,6 +2249,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.PROBLEM_SOLVING,
     type: 'multiple-choice',
     hint: 'Your problem-solving process matters as much as the solution',
+    allowOther: true,
     options: [
       {
         value: 'trial-error',
@@ -2294,6 +2332,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.COLLABORATION,
     type: 'multiple-choice',
     hint: 'Pairing is a superpower - two minds catch bugs one mind misses, and knowledge spreads fast',
+    allowOther: true,
     options: [
       {
         value: 'uncomfortable',
@@ -2370,6 +2409,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.COMMUNICATION,
     type: 'multiple-choice',
     hint: 'Translating complexity into clear business impact is a key senior developer skill',
+    allowOther: true,
     options: [
       {
         value: 'struggle',
@@ -2446,6 +2486,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.CORE_CONCEPTS,
     type: 'multiple-choice',
     hint: 'Functional programming techniques like immutability and pure functions reduce bugs dramatically',
+    allowOther: true,
     options: [
       {
         value: 'unfamiliar',
@@ -2522,6 +2563,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.ALGORITHMS,
     type: 'checkbox',
     hint: 'Knowing the right structure to use is a core engineering competency',
+    allowOther: true,
     options: [
       {
         value: 'arrays-strings',
@@ -2636,6 +2678,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.VERSION_CONTROL,
     type: 'multiple-choice',
     hint: 'As codebases grow, repo structure and branching strategy become critical engineering decisions',
+    allowOther: true,
     options: [
       {
         value: 'single-repo',
@@ -2713,6 +2756,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.DEBUGGING,
     type: 'multiple-choice',
     hint: 'Production bugs are harder - no breakpoints, real user data, and time pressure',
+    allowOther: true,
     options: [
       {
         value: 'restart-hope',
@@ -2790,6 +2834,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.CODE_QUALITY,
     type: 'multiple-choice',
     hint: "Accessible software is better software for everyone - not just users with disabilities",
+    allowOther: true,
     options: [
       {
         value: 'unaware',
@@ -2866,6 +2911,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.LEARNING,
     type: 'multiple-choice',
     hint: "Teaching others is the fastest way to solidify your own understanding - it's not just altruism",
+    allowOther: true,
     options: [
       {
         value: 'receiver',
@@ -2942,6 +2988,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.CORE_CONCEPTS,
     type: 'multiple-choice',
     hint: "How your app fails is as important as how it succeeds - users judge reliability above features",
+    allowOther: true,
     options: [
       {
         value: 'ignore',
@@ -3019,6 +3066,7 @@ export const QUESTIONS: Question[] = [
     category: CATEGORIES.COMMUNICATION,
     type: 'multiple-choice',
     hint: 'Accurate estimation and scope management are critical professional skills often overlooked in technical training',
+    allowOther: true,
     options: [
       {
         value: 'avoid',
