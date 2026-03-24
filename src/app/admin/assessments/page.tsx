@@ -61,6 +61,7 @@ function AdminAssessmentsContent() {
   });
   
   const [submitting, setSubmitting] = useState(false);
+  const [savingQuestion, setSavingQuestion] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -232,6 +233,7 @@ function AdminAssessmentsContent() {
       }
     }
     
+    setSavingQuestion(true);
     const previousQuestionCount = managingTemplate.questions.length;
     
     // Clean the question data by removing undefined values
@@ -295,6 +297,8 @@ function AdminAssessmentsContent() {
     } catch (error) {
       console.error('Error saving question:', error);
       alert('Failed to save question');
+    } finally {
+      setSavingQuestion(false);
     }
   };
 
@@ -1119,16 +1123,21 @@ function AdminAssessmentsContent() {
                     setShowAddQuestionModal(false);
                     setEditingQuestion(null);
                   }}
-                  className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  disabled={savingQuestion}
+                  className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveQuestion}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  disabled={savingQuestion}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  {editingQuestion ? 'Update Question' : 'Add Question'}
+                  {savingQuestion && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  )}
+                  {savingQuestion ? 'Saving...' : (editingQuestion ? 'Update Question' : 'Add Question')}
                 </button>
               </div>
             </div>
