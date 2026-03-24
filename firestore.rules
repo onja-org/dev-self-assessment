@@ -86,5 +86,22 @@ service cloud.firestore {
       // Allow admins to delete score levels
       allow delete: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // Only admins can create notifications
+      allow create: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      
+      // Users can update their own notifications (to mark as read/dismissed)
+      allow update: if request.auth != null && 
+                      request.auth.uid == resource.data.userId &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'dismissed']);
+      
+      // Only admins can delete notifications
+      allow delete: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
   }
 }

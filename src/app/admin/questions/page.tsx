@@ -402,7 +402,7 @@ export default function QuestionManagement() {
                   >
                     + Add Question
                   </button>
-                  <button
+                  {/* <button
                     onClick={handleSyncCategories}
                     className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium whitespace-nowrap"
                   >
@@ -414,7 +414,7 @@ export default function QuestionManagement() {
                     className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium whitespace-nowrap disabled:opacity-50"
                   >
                     {migratingQuestions ? 'Migrating...' : '📥 Migrate Built-in Questions'}
-                  </button>
+                  </button> */}
                 </div>
                 <p className="text-xs text-gray-600">
                   💡 Categories are auto-synced from questions. Use "Sync Categories" to manually update or manage them in the <Link href="/admin/categories" className="text-blue-600 hover:underline">Categories</Link> tab.

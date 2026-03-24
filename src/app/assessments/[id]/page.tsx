@@ -6,10 +6,11 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect, useMemo } from 'react';
 import { CATEGORIES, getSkillLevel } from '@/lib/constants';
-import { Answer, Assessment, Question, AssessmentTemplate, UserAssessment } from '@/types';
+import { Answer, Assessment, Question, AssessmentTemplate, UserAssessment, Notification } from '@/types';
 import { calculateScore, getTopRecommendations, generateActionPlans } from '@/lib/scoreCalculator';
 import { collection, addDoc, query, where, orderBy, getDocs, Timestamp, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getNotificationsForAssessment, dismissNotification } from '@/lib/notifications';
 
 export default function AssessmentTakePage() {
   const { userProfile, signOut } = useAuth();
@@ -36,6 +37,8 @@ export default function AssessmentTakePage() {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completedCategory, setCompletedCategory] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'saved' | 'preview'>('saved');
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNewQuestionsOnly, setShowNewQuestionsOnly] = useState(false);
 
   // Fetch assessment template and load questions from it
   useEffect(() => {
@@ -119,6 +122,15 @@ export default function AssessmentTakePage() {
             setUserAssessment({ id: docRef.id, ...newUserAssessment } as UserAssessment);
           }
         }
+
+        // Fetch notifications for this assessment
+        if (userProfile) {
+          const assessmentNotifications = await getNotificationsForAssessment(
+            userProfile.uid,
+            assessmentId
+          );
+          setNotifications(assessmentNotifications.filter(n => !n.dismissed));
+        }
         
       } catch (error) {
         console.error('Error fetching assessment:', error);
@@ -136,10 +148,37 @@ export default function AssessmentTakePage() {
   // Determine if assessment is read-only based on status
   const isReadOnly = userAssessment?.status === 'completed';
 
+  // Get unread notifications and new questions info
+  const unreadNotifications = notifications.filter(n => !n.read && !n.dismissed);
+  const hasNewQuestions = unreadNotifications.length > 0;
+  const newQuestionsCount = hasNewQuestions ? unreadNotifications[0].questionsAdded : 0;
+  const previousQuestionCount = hasNewQuestions ? unreadNotifications[0].previousQuestionCount : 0;
+
+  // Identify new questions (questions added after user completed/saved)
+  const getNewQuestions = (): Question[] => {
+    if (!hasNewQuestions || !userAssessment?.questionCountAtCompletion) {
+      return [];
+    }
+    // New questions are those that weren't in the original set
+    // We'll assume they're at the end, but ideally we'd track by ID
+    const existingQuestionIds = new Set(Object.keys(userAssessment.responses || {}));
+    return questions.filter(q => !existingQuestionIds.has(q.id));
+  };
+
+  const newQuestions = getNewQuestions();
+  const hasUnansweredNewQuestions = newQuestions.some(q => !responses[q.id]);
+
   // Get filtered questions based on selected categories
-  const filteredQuestions = selectedCategories.length === 0
-    ? questions 
-    : questions.filter(q => selectedCategories.includes(q.category));
+  const getFilteredQuestions = () => {
+    let baseQuestions = showNewQuestionsOnly ? newQuestions : questions;
+    
+    if (selectedCategories.length === 0) {
+      return baseQuestions;
+    }
+    return baseQuestions.filter(q => selectedCategories.includes(q.category));
+  };
+
+  const filteredQuestions = getFilteredQuestions();
 
   const currentQuestion = filteredQuestions[currentQuestionIndex];
   const progress = filteredQuestions.length > 0 ? ((currentQuestionIndex + 1) / filteredQuestions.length) * 100 : 0;
@@ -213,6 +252,13 @@ export default function AssessmentTakePage() {
     router.push('/login');
   };
 
+  const handleDismissNotification = async (notificationId: string) => {
+    const success = await dismissNotification(notificationId);
+    if (success) {
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    }
+  };
+
   const handleAnswer = async (value: string | number | string[], otherText?: string) => {
     // Don't allow answers if assessment is completed
     if (userAssessment?.status === 'completed') {
@@ -273,6 +319,7 @@ export default function AssessmentTakePage() {
           categoryScores,
           overallScore,
           status: allAnswered ? 'completed' : 'in-progress',
+          questionCountAtCompletion: questions.length, // Track current question count
           ...(allAnswered && { completedAt: Timestamp.now() })
         });
 
@@ -283,6 +330,7 @@ export default function AssessmentTakePage() {
           categoryScores,
           overallScore,
           status: allAnswered ? 'completed' : 'in-progress',
+          questionCountAtCompletion: questions.length,
           ...(allAnswered && { completedAt: Timestamp.now() })
         });
 
@@ -341,6 +389,7 @@ export default function AssessmentTakePage() {
         categoryScores,
         overallScore,
         status: allAnswered ? 'completed' : 'in-progress',
+        questionCountAtCompletion: questions.length, // Track question count for future updates
         ...(allAnswered && { completedAt: Timestamp.now() })
       });
 
@@ -351,6 +400,7 @@ export default function AssessmentTakePage() {
         categoryScores,
         overallScore,
         status: allAnswered ? 'completed' : 'in-progress',
+        questionCountAtCompletion: questions.length,
         ...(allAnswered && { completedAt: Timestamp.now() })
       });
 
@@ -559,9 +609,77 @@ export default function AssessmentTakePage() {
 
               {/* Tab Content */}
               <div className="p-6">
+                {/* New Questions Notification Banner */}
+                {hasNewQuestions && unreadNotifications.length > 0 && (
+                  <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-400 rounded-lg p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3 flex-1">
+                        <div className="bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl flex-shrink-0">
+                          🔔
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-blue-900 mb-1">Assessment Updated!</h4>
+                          <p className="text-sm text-blue-700 mb-3">
+                            {unreadNotifications[0].message}
+                          </p>
+                          {activeTab === 'assessment' && hasUnansweredNewQuestions && (
+                            <div className="flex gap-2 mt-3">
+                              <button
+                                onClick={() => {
+                                  setShowNewQuestionsOnly(true);
+                                  setSelectedCategories([]);
+                                  setAssessmentStarted(true);
+                                  setCurrentQuestionIndex(0);
+                                }}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition text-sm"
+                              >
+                                Answer {newQuestionsCount} New Question{newQuestionsCount > 1 ? 's' : ''}
+                              </button>
+                              {showNewQuestionsOnly && (
+                                <button
+                                  onClick={() => setShowNewQuestionsOnly(false)}
+                                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition text-sm"
+                                >
+                                  Show All Questions
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDismissNotification(unreadNotifications[0].id)}
+                        className="text-blue-400 hover:text-blue-600 transition flex-shrink-0"
+                        title="Dismiss notification"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Assessment Tab */}
                 {activeTab === 'assessment' && (
                   <div className="space-y-6">
+                    {/* New Questions Mode Indicator */}
+                    {showNewQuestionsOnly && (
+                      <div className="bg-blue-100 border-2 border-blue-300 rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-blue-600 font-semibold">📌 Showing only {newQuestionsCount} new question{newQuestionsCount > 1 ? 's' : ''}</span>
+                          </div>
+                          <button
+                            onClick={() => setShowNewQuestionsOnly(false)}
+                            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            Show all questions →
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     {!assessmentStarted ? (
                       /* Category Selection */
                       <div className="space-y-6">

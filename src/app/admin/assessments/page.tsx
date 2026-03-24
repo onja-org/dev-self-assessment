@@ -8,6 +8,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { AssessmentTemplate, Question, QuestionType, QuestionOption } from '@/types';
 import Link from 'next/link';
+import { createNotificationsForAssessmentUpdate } from '@/lib/notifications';
+
+interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  order: number;
+}
 
 export default function AdminAssessmentsPage() {
   return (
@@ -22,6 +30,7 @@ function AdminAssessmentsContent() {
   const router = useRouter();
   const [templates, setTemplates] = useState<AssessmentTemplate[]>([]);
   const [globalQuestions, setGlobalQuestions] = useState<Question[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<AssessmentTemplate | null>(null);
@@ -79,8 +88,20 @@ function AdminAssessmentsContent() {
         ...doc.data()
       })) as Question[];
 
+      // Fetch all categories
+      const categoriesQuery = query(
+        collection(db, 'categories'),
+        orderBy('order', 'asc')
+      );
+      const categoriesSnapshot = await getDocs(categoriesQuery);
+      const fetchedCategories = categoriesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Category[];
+
       setTemplates(fetchedTemplates);
       setGlobalQuestions(fetchedQuestions);
+      setCategories(fetchedCategories);
     } catch (error) {
       console.error('Error fetching data:', error);
       alert('Failed to load data');
@@ -185,9 +206,65 @@ function AdminAssessmentsContent() {
   const handleSaveQuestion = async () => {
     if (!managingTemplate) return;
     
+    // Validate required fields
+    if (!questionFormData.title.trim()) {
+      alert('Question title is required');
+      return;
+    }
+    
+    if (!questionFormData.category) {
+      alert('Please select a category');
+      return;
+    }
+    
+    // Validate options for multiple-choice, checkbox, and tech-stack questions
+    if (questionFormData.type === 'multiple-choice' || questionFormData.type === 'checkbox' || questionFormData.type === 'tech-stack') {
+      if (!questionFormData.options || questionFormData.options.length === 0) {
+        alert('Please add at least one option for this question type');
+        return;
+      }
+      
+      // Check if all options have labels
+      const hasEmptyLabels = questionFormData.options.some(opt => !opt.label.trim());
+      if (hasEmptyLabels) {
+        alert('All options must have a label');
+        return;
+      }
+    }
+    
+    const previousQuestionCount = managingTemplate.questions.length;
+    
+    // Clean the question data by removing undefined values
+    const cleanedQuestionData: Question = {
+      id: questionFormData.id,
+      title: questionFormData.title,
+      category: questionFormData.category,
+      type: questionFormData.type,
+      hint: questionFormData.hint || ''
+    };
+    
+    // Only add type-specific fields if they have values
+    if (questionFormData.type === 'scale') {
+      cleanedQuestionData.min = questionFormData.min ?? 1;
+      cleanedQuestionData.max = questionFormData.max ?? 10;
+    } else if (questionFormData.type === 'multiple-choice' || questionFormData.type === 'checkbox' || questionFormData.type === 'tech-stack') {
+      cleanedQuestionData.options = questionFormData.options || [];
+    }
+    
+    if (questionFormData.allowOther !== undefined) {
+      cleanedQuestionData.allowOther = questionFormData.allowOther;
+    }
+    
+    if (questionFormData.followUpQuestion) {
+      cleanedQuestionData.followUpQuestion = questionFormData.followUpQuestion;
+    }
+    
     const updatedQuestions = editingQuestion
-      ? managingTemplate.questions.map(q => q.id === editingQuestion.id ? questionFormData : q)
-      : [...managingTemplate.questions, questionFormData];
+      ? managingTemplate.questions.map(q => q.id === editingQuestion.id ? cleanedQuestionData : q)
+      : [...managingTemplate.questions, cleanedQuestionData];
+    
+    const isAddingNewQuestion = !editingQuestion;
+    const newQuestionCount = updatedQuestions.length;
 
     try {
       await updateDoc(doc(db, 'assessmentTemplates', managingTemplate.id), {
@@ -195,10 +272,26 @@ function AdminAssessmentsContent() {
         updatedAt: Timestamp.now()
       });
 
+      // Create notifications if new questions were added
+      if (isAddingNewQuestion && newQuestionCount > previousQuestionCount) {
+        const notificationResult = await createNotificationsForAssessmentUpdate(
+          managingTemplate.id,
+          managingTemplate.name,
+          newQuestionCount
+        );
+        
+        if (notificationResult.success && notificationResult.notificationCount > 0) {
+          alert(`Question added! ${notificationResult.notificationCount} user${notificationResult.notificationCount > 1 ? 's have' : ' has'} been notified about the update.`);
+        } else {
+          alert('Question added!');
+        }
+      } else {
+        alert(editingQuestion ? 'Question updated!' : 'Question added!');
+      }
+
       setManagingTemplate({...managingTemplate, questions: updatedQuestions});
       setShowAddQuestionModal(false);
       fetchData();
-      alert(editingQuestion ? 'Question updated!' : 'Question added!');
     } catch (error) {
       console.error('Error saving question:', error);
       alert('Failed to save question');
@@ -305,11 +398,12 @@ function AdminAssessmentsContent() {
               >
                 📊 Overview
               </Link>
-              <button
+              <Link
+              href="/admin/assessments"
                 className="px-4 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600"
               >
                 📋 Assessments
-              </button>
+              </Link>
               <Link
                 href="/admin/questions"
                 className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -683,14 +777,35 @@ function AdminAssessmentsContent() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category *
                 </label>
-                <input
-                  type="text"
-                  value={questionFormData.category}
-                  onChange={(e) => setQuestionFormData({ ...questionFormData, category: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Frontend, Backend, DevOps"
-                  required
-                />
+                {categories.length === 0 ? (
+                  <div className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    ⚠️ No categories found. Please{' '}
+                    <Link href="/admin/categories" className="font-semibold underline hover:text-amber-800">
+                      create categories
+                    </Link>
+                    {' '}first.
+                  </div>
+                ) : (
+                  <select
+                    value={questionFormData.category}
+                    onChange={(e) => setQuestionFormData({ ...questionFormData, category: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Select a category...</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  Manage categories in the{' '}
+                  <Link href="/admin/categories" className="text-blue-600 hover:underline">
+                    Categories tab
+                  </Link>
+                </p>
               </div>
 
               {/* Question Type */}
@@ -837,22 +952,124 @@ function AdminAssessmentsContent() {
 
                             <div>
                               <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Recommendations (comma-separated)
+                                Recommendations (one per line)
                               </label>
                               <textarea
-                                value={option.recommendations.join(', ')}
+                                value={option.recommendations.join('\n')}
                                 onChange={(e) => {
                                   const newOptions = [...(questionFormData.options || [])];
                                   newOptions[index] = {
                                     ...option,
-                                    recommendations: e.target.value.split(',').map(r => r.trim()).filter(r => r)
+                                    recommendations: e.target.value.split('\n').map(r => r.trim()).filter(r => r)
                                   };
                                   setQuestionFormData({ ...questionFormData, options: newOptions });
                                 }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
-                                rows={2}
-                                placeholder="Action item 1, Action item 2, ..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm resize-y"
+                                rows={3}
+                                placeholder="Enter recommendations, one per line..."
                               />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-2">
+                                Resources
+                              </label>
+                              <div className="space-y-2">
+                                {(option.resources || []).map((resource, resIdx) => (
+                                  <div key={resIdx} className="flex gap-2 items-start border border-gray-200 rounded p-2">
+                                    <div className="flex-1 grid grid-cols-2 gap-2">
+                                      <input
+                                        type="text"
+                                        value={resource.title}
+                                        onChange={(e) => {
+                                          const newOptions = [...(questionFormData.options || [])];
+                                          const newResources = [...(option.resources || [])];
+                                          newResources[resIdx] = { ...resource, title: e.target.value };
+                                          newOptions[index] = { ...option, resources: newResources };
+                                          setQuestionFormData({ ...questionFormData, options: newOptions });
+                                        }}
+                                        className="px-2 py-1 border border-gray-300 rounded text-xs"
+                                        placeholder="Resource title"
+                                      />
+                                      <input
+                                        type="url"
+                                        value={resource.url}
+                                        onChange={(e) => {
+                                          const newOptions = [...(questionFormData.options || [])];
+                                          const newResources = [...(option.resources || [])];
+                                          newResources[resIdx] = { ...resource, url: e.target.value };
+                                          newOptions[index] = { ...option, resources: newResources };
+                                          setQuestionFormData({ ...questionFormData, options: newOptions });
+                                        }}
+                                        className="px-2 py-1 border border-gray-300 rounded text-xs"
+                                        placeholder="https://..."
+                                      />
+                                      <select
+                                        value={resource.type}
+                                        onChange={(e) => {
+                                          const newOptions = [...(questionFormData.options || [])];
+                                          const newResources = [...(option.resources || [])];
+                                          newResources[resIdx] = { ...resource, type: e.target.value as any };
+                                          newOptions[index] = { ...option, resources: newResources };
+                                          setQuestionFormData({ ...questionFormData, options: newOptions });
+                                        }}
+                                        className="px-2 py-1 border border-gray-300 rounded text-xs"
+                                      >
+                                        <option value="article">Article</option>
+                                        <option value="video">Video</option>
+                                        <option value="course">Course</option>
+                                        <option value="docs">Docs</option>
+                                        <option value="github">GitHub</option>
+                                        <option value="book">Book</option>
+                                        <option value="roadmap">Roadmap</option>
+                                      </select>
+                                      <input
+                                        type="text"
+                                        value={resource.description || ''}
+                                        onChange={(e) => {
+                                          const newOptions = [...(questionFormData.options || [])];
+                                          const newResources = [...(option.resources || [])];
+                                          newResources[resIdx] = { ...resource, description: e.target.value };
+                                          newOptions[index] = { ...option, resources: newResources };
+                                          setQuestionFormData({ ...questionFormData, options: newOptions });
+                                        }}
+                                        className="px-2 py-1 border border-gray-300 rounded text-xs"
+                                        placeholder="Description (optional)"
+                                      />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newOptions = [...(questionFormData.options || [])];
+                                        const newResources = [...(option.resources || [])];
+                                        newResources.splice(resIdx, 1);
+                                        newOptions[index] = { ...option, resources: newResources };
+                                        setQuestionFormData({ ...questionFormData, options: newOptions });
+                                      }}
+                                      className="text-red-600 hover:text-red-800 text-xs px-2"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newOptions = [...(questionFormData.options || [])];
+                                    const newResources = [...(option.resources || []), { 
+                                      title: '', 
+                                      url: '', 
+                                      type: 'article' as const, 
+                                      description: '' 
+                                    }];
+                                    newOptions[index] = { ...option, resources: newResources };
+                                    setQuestionFormData({ ...questionFormData, options: newOptions });
+                                  }}
+                                  className="text-sm text-blue-600 hover:text-blue-800"
+                                >
+                                  + Add Resource
+                                </button>
+                              </div>
                             </div>
                           </div>
                           

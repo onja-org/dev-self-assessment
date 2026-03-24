@@ -100,7 +100,7 @@ export default function CategoriesPage() {
           createdAt: new Date()
         });
       }
-      
+
       setShowAddModal(false);
       fetchCategories();
     } catch (error) {
@@ -132,13 +132,13 @@ export default function CategoriesPage() {
       const questionCategories = Array.from(
         new Set(questionsSnapshot.docs.map(doc => doc.data().category).filter(Boolean))
       );
-      
+
       // Get existing categories
       const categoriesSnapshot = await getDocs(collection(db, 'categories'));
       const existingCategories = new Map(
         categoriesSnapshot.docs.map(doc => [doc.data().name, { id: doc.id, ...doc.data() }])
       );
-      
+
       let addedCount = 0;
       // Add any missing categories
       for (const categoryName of questionCategories) {
@@ -152,7 +152,7 @@ export default function CategoriesPage() {
           addedCount++;
         }
       }
-      
+
       if (addedCount > 0) {
         alert(`Synced ${addedCount} new categories from questions!`);
       } else {
@@ -254,93 +254,85 @@ export default function CategoriesPage() {
               </div>
             ) : (
               <>
-            {/* Header Section */}
-            <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Question Categories</h1>
-                <p className="mt-2 text-gray-600">
-                  Manage categories that organize assessment questions
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button
+                {/* Header Section */}
+                <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Question Categories</h1>
+                    <p className="mt-2 text-gray-600">
+                      Manage categories that organize assessment questions
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    {/* <button
                   onClick={handleSyncFromQuestions}
                   className="px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition flex items-center gap-2"
                 >
                   <span>🔄</span>
                   <span>Sync from Questions</span>
-                </button>
-                <button
-                  onClick={handleAdd}
-                  className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-lg text-lg flex items-center gap-2"
-                >
-                  <span className="text-2xl">➕</span>
-                  <span>Add Category</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Info Box */}
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
-                💡 <strong>Categories are automatically synced from questions.</strong> When you add a question with a new category in the Questions tab, it will appear here. Use "Sync from Questions" to manually refresh.
-              </p>
-            </div>
-
-            {/* Categories List */}
-            <div className="bg-white rounded-lg shadow">
-              {categories.length === 0 ? (
-                <div className="p-12 text-center">
-                  <div className="mb-4">
-                    <span className="text-6xl">📁</span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No Categories Yet</h3>
-                  <p className="text-gray-500 mb-6">Create your first category to organize assessment questions</p>
-                  <button
-                    onClick={handleAdd}
-                    className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-lg font-semibold text-lg"
-                  >
-                    ➕ Create Your First Category
-                  </button>
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-200">
-                  {categories.map((category) => (
-                    <div
-                      key={category.id}
-                      className="p-6 hover:bg-gray-50 transition"
+                </button> */}
+                    <button
+                      onClick={handleAdd}
+                      className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-lg text-lg flex items-center gap-2"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3">
-                            <span className="text-gray-400 font-mono text-sm">#{category.order}</span>
-                            <h3 className="text-xl font-bold text-gray-900">{category.name}</h3>
-                          </div>
-                          {category.description && (
-                            <p className="mt-2 text-gray-600">{category.description}</p>
-                          )}
-                        </div>
-                        <div className="flex gap-2 ml-4">
-                          <button
-                            onClick={() => handleEdit(category)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
-                          >
-                            ✏️ Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(category)}
-                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
-                          >
-                            🗑️ Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                      ➕ Add Category
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
-            </>
+
+                {/* Categories List */}
+                <div className="bg-white rounded-lg shadow">
+                  {categories.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <div className="mb-4">
+                        <span className="text-6xl">📁</span>
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">No Categories Yet</h3>
+                      <p className="text-gray-500 mb-6">Create your first category to organize assessment questions</p>
+                      <button
+                        onClick={handleAdd}
+                        className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-lg font-semibold text-lg"
+                      >
+                        ➕ Create Your First Category
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-200">
+                      {categories.map((category) => (
+                        <div
+                          key={category.id}
+                          className="p-6 hover:bg-gray-50 transition"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3">
+                                <span className="text-gray-400 font-mono text-sm">#{category.order}</span>
+                                <h3 className="text-xl font-bold text-gray-900">{category.name}</h3>
+                              </div>
+                              {category.description && (
+                                <p className="mt-2 text-gray-600">{category.description}</p>
+                              )}
+                            </div>
+                            <div className="flex gap-2 ml-4">
+                              <button
+                                onClick={() => handleEdit(category)}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
+                              >
+                                ✏️ Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete(category)}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
+                              >
+                                🗑️ Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </div>
         </main>

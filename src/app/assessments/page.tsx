@@ -6,8 +6,9 @@ import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { AssessmentTemplate, UserAssessment } from '@/types';
+import { AssessmentTemplate, UserAssessment, Notification } from '@/types';
 import Link from 'next/link';
+import { getNotificationsForAssessment } from '@/lib/notifications';
 
 export default function AssessmentsPage() {
   return (
@@ -22,6 +23,7 @@ function AssessmentsContent() {
   const router = useRouter();
   const [templates, setTemplates] = useState<AssessmentTemplate[]>([]);
   const [userAssessments, setUserAssessments] = useState<UserAssessment[]>([]);
+  const [notifications, setNotifications] = useState<Map<string, Notification[]>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +61,21 @@ function AssessmentsContent() {
 
         setTemplates(fetchedTemplates);
         setUserAssessments(fetchedUserAssessments);
+
+        // Fetch notifications for each template
+        const notificationsMap = new Map<string, Notification[]>();
+        await Promise.all(
+          fetchedTemplates.map(async (template) => {
+            const templateNotifications = await getNotificationsForAssessment(
+              userProfile.uid,
+              template.id
+            );
+            if (templateNotifications.length > 0) {
+              notificationsMap.set(template.id, templateNotifications);
+            }
+          })
+        );
+        setNotifications(notificationsMap);
       } catch (err: any) {
         console.error('Error fetching assessments:', err);
         setError(err.message || 'Failed to load assessments');
@@ -229,13 +246,27 @@ function AssessmentsContent() {
               const userAssessment = userAssessments.find(
                 ua => ua.assessmentTemplateId === template.id
               );
+              const templateNotifications = notifications.get(template.id) || [];
+              const unreadNotifications = templateNotifications.filter(n => !n.read && !n.dismissed);
+              const hasNewQuestions = unreadNotifications.length > 0;
+              const newQuestionsCount = hasNewQuestions ? unreadNotifications[0].questionsAdded : 0;
               
               return (
                 <div
                   key={template.id}
                   onClick={() => handleAssessmentClick(template)}
-                  className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-blue-300 overflow-hidden"
+                  className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-blue-300 overflow-hidden relative"
                 >
+                  {/* New Questions Badge */}
+                  {hasNewQuestions && (
+                    <div className="absolute top-3 right-3 z-10">
+                      <div className="bg-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1">
+                        <span>🔔</span>
+                        <span>{newQuestionsCount} new question{newQuestionsCount > 1 ? 's' : ''}</span>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">

@@ -69,6 +69,7 @@ export interface UserAssessment {
   categoryScores: Record<string, number>;
   overallScore: number;
   status: 'in-progress' | 'completed';
+  questionCountAtCompletion?: number; // Track how many questions existed when assessment was completed/saved
 }
 
 // Legacy Assessment type (for backward compatibility)
@@ -115,4 +116,19 @@ export interface ScoreLevel {
   order: number; // For sorting
   createdAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: 'assessment_updated' | 'new_questions';
+  assessmentTemplateId: string;
+  assessmentName: string;
+  message: string;
+  questionsAdded: number; // Number of new questions added since user's completion
+  previousQuestionCount: number; // How many questions existed when user completed
+  currentQuestionCount: number; // Current total questions in template
+  createdAt: Timestamp;
+  read: boolean;
+  dismissed: boolean;
 }

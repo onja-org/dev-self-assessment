@@ -9,9 +9,16 @@ export const calculateScore = (responses: Record<string, Answer>, questions?: Qu
   const categoryScores: Record<string, number> = {};
   const categoryTotals: Record<string, { sum: number; count: number }> = {};
 
-  // Initialize category totals
+  // Initialize category totals from CATEGORIES constant
   Object.values(CATEGORIES).forEach(category => {
     categoryTotals[category] = { sum: 0, count: 0 };
+  });
+
+  // Also initialize categories from the actual questions to handle dynamic categories
+  questionSet.forEach(q => {
+    if (!categoryTotals[q.category]) {
+      categoryTotals[q.category] = { sum: 0, count: 0 };
+    }
   });
 
   // Calculate scores per category
@@ -21,6 +28,11 @@ export const calculateScore = (responses: Record<string, Answer>, questions?: Qu
 
     const category = question.category;
     const weight = answer.scoreWeight;
+
+    // Ensure category exists before accessing
+    if (!categoryTotals[category]) {
+      categoryTotals[category] = { sum: 0, count: 0 };
+    }
 
     categoryTotals[category].sum += weight;
     categoryTotals[category].count += 1;

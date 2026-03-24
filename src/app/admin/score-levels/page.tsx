@@ -317,8 +317,7 @@ export default function ScoreLevelsPage() {
                     onClick={handleAdd}
                     className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-lg text-lg flex items-center gap-2"
                   >
-                    <span className="text-2xl">➕</span>
-                    <span>Add Score Level</span>
+                    ➕ Add Score Level
                   </button>
                 </div>
               </div>
