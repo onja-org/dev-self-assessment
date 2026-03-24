@@ -1,14 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { collection, getDocs, addDoc, updateDoc, doc, query, orderBy, Timestamp, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
-import ProtectedRoute from '@/components/ProtectedRoute';
 import { AssessmentTemplate, Question, QuestionType, QuestionOption } from '@/types';
-import Link from 'next/link';
 import { createNotificationsForAssessmentUpdate } from '@/lib/notifications';
+import Link from 'next/link';
 
 interface Category {
   id: string;
@@ -18,16 +16,7 @@ interface Category {
 }
 
 export default function AdminAssessmentsPage() {
-  return (
-    <ProtectedRoute requiredRole="admin">
-      <AdminAssessmentsContent />
-    </ProtectedRoute>
-  );
-}
-
-function AdminAssessmentsContent() {
-  const { userProfile, signOut } = useAuth();
-  const router = useRouter();
+  const { userProfile } = useAuth();
   const [templates, setTemplates] = useState<AssessmentTemplate[]>([]);
   const [globalQuestions, setGlobalQuestions] = useState<Question[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -351,14 +340,9 @@ function AdminAssessmentsContent() {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push('/login');
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
@@ -368,81 +352,7 @@ function AdminAssessmentsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header with Navigation */}
-      <nav className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold text-gray-900">
-                Admin Panel
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Admin: {userProfile?.name}</span>
-              <Link
-                href="/assessments"
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Assessments
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="text-gray-600 hover:text-gray-900 font-medium"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-          <div className="border-t border-gray-200">
-            <nav className="flex -mb-px">
-              <Link
-                href="/admin"
-                className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              >
-                📊 Overview
-              </Link>
-              <Link
-              href="/admin/assessments"
-                className="px-4 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600"
-              >
-                📋 Assessments
-              </Link>
-              <Link
-                href="/admin/questions"
-                className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              >
-                📝 Questions
-              </Link>
-              <Link
-                href="/admin/categories"
-                className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              >
-                🗂️ Categories
-              </Link>
-              <Link
-                href="/admin/score-levels"
-                className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              >
-                🎯 Score Levels
-              </Link>
-              <Link
-                href="/admin/users"
-                className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              >
-                👥 Users
-              </Link>
-              <Link
-                href="/admin/comparison"
-                className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              >
-                📈 Comparison
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </nav>
-
+    <>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Manage Assessment Templates</h2>
@@ -1150,6 +1060,6 @@ function AdminAssessmentsContent() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

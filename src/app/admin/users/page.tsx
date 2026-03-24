@@ -1,12 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { collection, getDocs, updateDoc, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, updateDoc, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import Link from 'next/link';
 
 interface User {
   uid: string;
@@ -17,18 +14,11 @@ interface User {
 }
 
 export default function UsersPage() {
-  const { userProfile, signOut } = useAuth();
-  const router = useRouter();
+  const { userProfile } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [adminIds, setAdminIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (userProfile && userProfile.role !== 'admin') {
-      router.push('/assessments');
-    }
-  }, [userProfile, router]);
 
   useEffect(() => {
     fetchUsers();
@@ -118,98 +108,15 @@ export default function UsersPage() {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push('/login');
-  };
-
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <nav className="bg-white shadow-sm sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex items-center space-x-4">
-                <h1 className="text-xl font-bold text-gray-900">
-                  Admin Panel
-                </h1>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-700">Admin: {userProfile?.name}</span>
-                <Link
-                  href="/assessments"
-                  className="text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  Assessments
-                </Link>
-                <button
-                  onClick={handleSignOut}
-                  className="text-gray-600 hover:text-gray-900 font-medium"
-                >
-                  Sign Out
-                </button>
-              </div>
-            </div>
-            {/* Navigation Tabs */}
-            <div className="border-t border-gray-200">
-              <nav className="flex -mb-px">
-                <Link
-                  href="/admin"
-                  className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                >
-                  📊 Overview
-                </Link>
-                <Link
-                  href="/admin/assessments"
-                  className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                >
-                  📋 Assessments
-                </Link>
-                <Link
-                  href="/admin/questions"
-                  className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                >
-                  📝 Questions
-                </Link>
-                <Link
-                  href="/admin/categories"
-                  className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                >
-                  🗂️ Categories
-                </Link>
-                <Link
-                  href="/admin/score-levels"
-                  className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                >
-                  🎯 Score Levels
-                </Link>
-                <Link
-                  href="/admin/comparison"
-                  className="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                >
-                  📈 Comparison
-                </Link>
-                  <Link
-                  href="/admin/users"
-                  className="px-4 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600"
-                >
-                  👥 Users
-                </Link>
-              </nav>
-            </div>
+    <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div className="px-4 sm:px-0">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-3 text-gray-600">Loading users...</span>
           </div>
-        </nav>
-
-        {/* Main Content */}
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 sm:px-0">
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-3 text-gray-600">Loading users...</span>
-              </div>
-            ) : (
+        ) : (
               <>
                 {/* Header Section */}
                 <div className="mb-6">
@@ -378,7 +285,5 @@ export default function UsersPage() {
             )}
           </div>
         </main>
-      </div>
-    </ProtectedRoute>
   );
 }
