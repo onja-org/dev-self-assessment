@@ -113,8 +113,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Access restricted to @onja.org email addresses only.');
     }
 
-    // Determine role based on email
-    const role: 'developer' | 'admin' = email === 'adria.trepat@onja.org' || email === 'rinon.ten@onja.org' ? 'admin' : 'developer';
+    // Determine role based on admin email list
+    const ADMIN_EMAILS = new Set(['adria.trepat@onja.org', 'rinon.ten@onja.org', 'sam.lucas@onja.org', 'ahmed.syed@onja.org']);
+    const role: 'developer' | 'admin' = ADMIN_EMAILS.has(email) ? 'admin' : 'developer';
 
     // Check if user profile exists
     const userDoc = await getDoc(doc(db, 'users', user.uid));

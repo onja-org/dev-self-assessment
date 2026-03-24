@@ -5,9 +5,9 @@ service cloud.firestore {
     // Users collection - users can read/write their own profile
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Allow admins to read all users and update user roles
       allow read: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-      // Allow users to update their own role (for setup-admin page)
-      allow update: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
     
     // Assessments collection (legacy)
@@ -44,9 +44,14 @@ service cloud.firestore {
       allow read: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
     
-    // Admins collection - only admins can read their own admin status
+    // Admins collection
     match /admins/{adminId} {
+      // Users can read their own admin status
       allow read: if request.auth != null && request.auth.uid == adminId;
+      // Admins can read all admin documents and manage admin roles
+      allow read: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow write: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow delete: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
       // Allow users to create their own admin document (for setup-admin page)
       allow create: if request.auth != null && request.auth.uid == adminId;
     }
