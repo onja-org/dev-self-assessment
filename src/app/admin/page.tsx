@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, query, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { AssessmentTemplate, UserAssessment } from '@/types';
@@ -157,6 +157,39 @@ export default function AdminDashboard() {
     link.download = `assessments-summary-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleDeleteAssessment = async (assessment: UserAssessment) => {
+    const confirmMessage = `⚠️ DELETE ASSESSMENT\n\n` +
+      `Developer: ${assessment.userName} (${assessment.userEmail})\n` +
+      `Assessment: ${assessment.assessmentName}\n` +
+      `Score: ${assessment.overallScore.toFixed(1)}/10\n` +
+      `Date: ${assessment.createdAt.toDate().toLocaleDateString()}\n\n` +
+      `This will permanently delete:\n` +
+      `• All assessment responses (${Object.keys(assessment.responses).length} questions)\n` +
+      `• All category scores\n` +
+      `• All related data\n\n` +
+      `THIS ACTION CANNOT BE UNDONE!\n\n` +
+      `Type "DELETE" below to confirm:`;
+
+    const userInput = prompt(confirmMessage);
+    
+    if (userInput === 'DELETE') {
+      try {
+        // Delete from Firestore
+        await deleteDoc(doc(db, 'userAssessments', assessment.id));
+        
+        // Update local state
+        setUserAssessments(prev => prev.filter(a => a.id !== assessment.id));
+        
+        alert('✅ Assessment deleted successfully');
+      } catch (error) {
+        console.error('Error deleting assessment:', error);
+        alert('❌ Error deleting assessment. Please try again.');
+      }
+    } else if (userInput !== null) {
+      alert('Deletion cancelled. You must type "DELETE" exactly to confirm.');
+    }
   };
 
   const exportDetailedReport = () => {
@@ -399,12 +432,21 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td className="px-4 py-4 text-right">
-                            <Link
-                              href={`/admin/assessment/${assessment.id}`}
-                              className="text-blue-600 hover:text-blue-800 font-medium"
-                            >
-                              View Details →
-                            </Link>
+                            <div className="flex items-center justify-end gap-2">
+                              <Link
+                                href={`/admin/assessment/${assessment.id}`}
+                                className="text-blue-600 hover:text-blue-800 font-medium"
+                              >
+                                View Details →
+                              </Link>
+                              <button
+                                onClick={() => handleDeleteAssessment(assessment)}
+                                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition"
+                                title="Delete assessment"
+                              >
+                                🗑️ Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
