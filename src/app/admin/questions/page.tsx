@@ -44,7 +44,6 @@ export default function QuestionManagement() {
             order: existingCategories.size,
             createdAt: new Date()
           });
-          console.log(`Added category: ${categoryName}`);
         }
       }
     } catch (error) {
@@ -84,26 +83,20 @@ export default function QuestionManagement() {
       
       // Track which questions exist in Firestore
       const firestoreIds = new Set(firestoreQuestions.map(q => q.id));
-      console.log('Firestore question IDs:', Array.from(firestoreIds));
-      console.log('Constant question IDs:', CONSTANT_QUESTIONS.map(q => q.id));
       setFirestoreQuestionIds(firestoreIds);
       
-      // For questions that exist in both constants and Firestore, prioritize Firestore version
+      // Only show editable Firestore questions, not built-in constant questions
+      setQuestions(firestoreQuestions);
+      
+      // Sync categories from questions (including constants for category list)
       const constantsOnlyQuestions = CONSTANT_QUESTIONS.filter(q => !firestoreIds.has(q.id));
-      
       const allQuestions = [...firestoreQuestions, ...constantsOnlyQuestions];
-      console.log('Total questions loaded:', allQuestions.length);
-      console.log('Firestore questions:', firestoreQuestions.length);
-      console.log('Constants-only questions:', constantsOnlyQuestions.length);
-      setQuestions(allQuestions);
-      
-      // Sync categories from questions
       await syncCategoriesFromQuestions(allQuestions);
       await fetchCategories();
     } catch (error) {
       console.error('Error fetching questions:', error);
-      // Fallback to constant questions if Firestore fails
-      setQuestions(CONSTANT_QUESTIONS);
+      // Don't fallback to constant questions - just show empty list
+      setQuestions([]);
       setFirestoreQuestionIds(new Set());
     } finally {
       setLoading(false);
@@ -210,7 +203,6 @@ export default function QuestionManagement() {
           const { id, ...questionData } = question;
           // Use setDoc with the original ID to maintain ID consistency
           await setDoc(doc(db, 'questions', id), questionData);
-          console.log(`Migrated question ${id}: ${question.title.substring(0, 30)}...`);
           successCount++;
         } catch (error) {
           console.error(`Failed to migrate question ${question.id}:`, error);
@@ -257,9 +249,6 @@ export default function QuestionManagement() {
                   {questions.length}
                 </div>
                 <div className="text-gray-600">Total Questions</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {questions.filter(q => !firestoreQuestionIds.has(q.id)).length} built-in, {firestoreQuestionIds.size} editable
-                </div>
               </div>
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="text-3xl font-bold text-green-600">
@@ -696,11 +685,16 @@ function QuestionModal({ question, categories, onSave, onClose }: QuestionModalP
                         </label>
                         <input
                           type="number"
-                          step="0.1"
+                          step="any"
                           min="0"
                           max="1"
                           value={option.scoreWeight}
-                          onChange={(e) => handleOptionChange(index, 'scoreWeight', parseFloat(e.target.value))}
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value);
+                            // Clamp value between 0 and 1
+                            const clampedValue = Math.min(Math.max(value, 0), 1);
+                            handleOptionChange(index, 'scoreWeight', clampedValue);
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                         />
                       </div>

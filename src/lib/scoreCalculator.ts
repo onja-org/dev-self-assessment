@@ -41,7 +41,8 @@ export const calculateScore = (responses: Record<string, Answer>, questions?: Qu
   // Convert to 0-10 scale
   Object.entries(categoryTotals).forEach(([category, { sum, count }]) => {
     if (count > 0) {
-      categoryScores[category] = Math.round((sum / count) * 10 * 10) / 10; // Round to 1 decimal
+      const rawScore = Math.round((sum / count) * 10 * 10) / 10; // Round to 1 decimal
+      categoryScores[category] = Math.min(rawScore, 10); // Cap at 10.0 maximum
     } else {
       categoryScores[category] = 0;
     }
@@ -49,9 +50,10 @@ export const calculateScore = (responses: Record<string, Answer>, questions?: Qu
 
   // Calculate overall score as average of category scores
   const scores = Object.values(categoryScores).filter(score => score > 0);
-  const overallScore = scores.length > 0
+  const rawOverallScore = scores.length > 0
     ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
     : 0;
+  const overallScore = Math.min(rawOverallScore, 10); // Cap at 10.0 maximum
 
   return { categoryScores, overallScore };
 };

@@ -294,6 +294,9 @@ export default function AssessmentTakePage() {
       }
     }
 
+    // Clamp scoreWeight to 0.0-1.0 range to prevent scores from exceeding 10/10
+    scoreWeight = Math.min(Math.max(scoreWeight, 0), 1);
+
     const newResponses = {
       ...responses,
       [question.id]: {
