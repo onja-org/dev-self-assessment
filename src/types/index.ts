@@ -2,6 +2,33 @@ import { Timestamp } from 'firebase/firestore';
 
 export type QuestionType = 'scale' | 'multiple-choice' | 'checkbox' | 'tech-stack';
 
+export type ResourceType = 'article' | 'video' | 'course' | 'docs' | 'github' | 'book' | 'roadmap';
+
+// Standalone Resource (stored in resources collection)
+export interface Resource {
+  id: string;
+  title: string;
+  url: string;
+  type: ResourceType;
+  description?: string;
+  categoryId: string; // Associated category
+  // Optional metadata for enhanced filtering and recommendations
+  tags?: string[];
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  duration?: string; // e.g., "10 min", "2 hours", "4 weeks"
+  author?: string;
+  createdAt: Timestamp | any;
+  updatedAt?: Timestamp | any;
+}
+
+// Inline resource object (for backward compatibility)
+export interface InlineResource {
+  title: string;
+  url: string;
+  type: ResourceType;
+  description?: string;
+}
+
 export interface QuestionOption {
   value: string;
   label: string;
@@ -9,12 +36,9 @@ export interface QuestionOption {
   scoreWeight: number;
   yearOneRecommendations?: string[];
   mentorExplanation: string;
-  resources: Array<{
-    title: string;
-    url: string;
-    type: 'article' | 'video' | 'course' | 'docs' | 'github' | 'book' | 'roadmap';
-    description?: string;
-  }>;
+  // Supports both inline resources (backward compatible) and resource IDs
+  resources: Array<InlineResource>;
+  resourceIds?: string[]; // References to Resource collection
   isCorrect?: boolean;
   isCommonMistake?: boolean;
 }

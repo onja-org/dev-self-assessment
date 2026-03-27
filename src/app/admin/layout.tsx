@@ -37,6 +37,7 @@ export default function AdminLayout({
     { href: '/admin', label: '📊 Overview' },
     { href: '/admin/assessments', label: '📋 Assessments' },
     { href: '/admin/questions', label: '📝 Questions' },
+    { href: '/admin/resources', label: '📚 Resources' },
     { href: '/admin/categories', label: '🗂️ Categories' },
     { href: '/admin/score-levels', label: '🎯 Score Levels' },
     { href: '/admin/users', label: '👥 Users' },

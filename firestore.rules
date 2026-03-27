@@ -80,6 +80,18 @@ service cloud.firestore {
       allow delete: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
     
+    // Resources collection
+    match /resources/{resourceId} {
+      // Everyone can read resources
+      allow read: if true;
+      
+      // Only admins can write resources
+      allow write: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      
+      // Allow admins to delete resources
+      allow delete: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
     // Score Levels collection
     match /scoreLevels/{levelId} {
       // Everyone can read score levels

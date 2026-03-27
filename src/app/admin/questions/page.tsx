@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, updateDoc, addDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Question, QuestionOption, QuestionType } from '@/types';
+import { Question, QuestionOption, QuestionType, InlineResource } from '@/types';
 import { QUESTIONS as CONSTANT_QUESTIONS } from '@/lib/constants';
 import Link from 'next/link';
+import ResourcePicker from '@/components/ResourcePicker';
 
 export default function QuestionManagement() {
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -196,16 +197,12 @@ export default function QuestionManagement() {
   const migrateConstantQuestions = async () => {
     setMigratingQuestions(true);
     try {
-      console.log('Starting migration of', CONSTANT_QUESTIONS.length, 'questions...');
-      
       // Get existing Firestore questions to avoid duplicates
       const querySnapshot = await getDocs(collection(db, 'questions'));
       const existingIds = new Set(querySnapshot.docs.map(doc => doc.id));
-      console.log('Existing Firestore question IDs:', Array.from(existingIds));
       
       // Add constant questions that don't exist in Firestore
       const questionsToAdd = CONSTANT_QUESTIONS.filter(q => !existingIds.has(q.id));
-      console.log('Questions to migrate:', questionsToAdd.length);
       
       let successCount = 0;
       for (const question of questionsToAdd) {
@@ -219,14 +216,12 @@ export default function QuestionManagement() {
           console.error(`Failed to migrate question ${question.id}:`, error);
         }
       }
-      
-      console.log(`Migration completed: ${successCount}/${questionsToAdd.length} questions migrated`);
+
       alert(`Successfully migrated ${successCount}/${questionsToAdd.length} questions to Firestore!`);
       
       // Refresh the list and sync categories
       await fetchQuestions();
     } catch (error) {
-      console.error('Error during migration:', error);
       alert('Failed to migrate questions. Check console for details. You may need to set up admin access first.');
     } finally {
       setMigratingQuestions(false);
@@ -740,85 +735,11 @@ function QuestionModal({ question, categories, onSave, onClose }: QuestionModalP
                         <label className="block text-xs font-medium text-gray-700 mb-2">
                           Resources
                         </label>
-                        <div className="space-y-2">
-                          {(option.resources || []).map((resource, resIdx) => (
-                            <div key={resIdx} className="flex gap-2 items-start border border-gray-200 rounded p-2">
-                              <div className="flex-1 grid grid-cols-2 gap-2">
-                                <input
-                                  type="text"
-                                  value={resource.title}
-                                  onChange={(e) => {
-                                    const newResources = [...(option.resources || [])];
-                                    newResources[resIdx] = { ...resource, title: e.target.value };
-                                    handleOptionChange(index, 'resources', newResources);
-                                  }}
-                                  className="px-2 py-1 border border-gray-300 rounded text-xs"
-                                  placeholder="Resource title"
-                                />
-                                <input
-                                  type="url"
-                                  value={resource.url}
-                                  onChange={(e) => {
-                                    const newResources = [...(option.resources || [])];
-                                    newResources[resIdx] = { ...resource, url: e.target.value };
-                                    handleOptionChange(index, 'resources', newResources);
-                                  }}
-                                  className="px-2 py-1 border border-gray-300 rounded text-xs"
-                                  placeholder="https://..."
-                                />
-                                <select
-                                  value={resource.type}
-                                  onChange={(e) => {
-                                    const newResources = [...(option.resources || [])];
-                                    newResources[resIdx] = { ...resource, type: e.target.value as any };
-                                    handleOptionChange(index, 'resources', newResources);
-                                  }}
-                                  className="px-2 py-1 border border-gray-300 rounded text-xs"
-                                >
-                                  <option value="article">Article</option>
-                                  <option value="video">Video</option>
-                                  <option value="course">Course</option>
-                                  <option value="docs">Docs</option>
-                                  <option value="github">GitHub</option>
-                                  <option value="book">Book</option>
-                                  <option value="roadmap">Roadmap</option>
-                                </select>
-                                <input
-                                  type="text"
-                                  value={resource.description || ''}
-                                  onChange={(e) => {
-                                    const newResources = [...(option.resources || [])];
-                                    newResources[resIdx] = { ...resource, description: e.target.value };
-                                    handleOptionChange(index, 'resources', newResources);
-                                  }}
-                                  className="px-2 py-1 border border-gray-300 rounded text-xs"
-                                  placeholder="Description (optional)"
-                                />
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const newResources = [...(option.resources || [])];
-                                  newResources.splice(resIdx, 1);
-                                  handleOptionChange(index, 'resources', newResources);
-                                }}
-                                className="text-red-600 hover:text-red-800 text-xs px-2"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          ))}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newResources = [...(option.resources || []), { title: '', url: '', type: 'article' as const, description: '' }];
-                              handleOptionChange(index, 'resources', newResources);
-                            }}
-                            className="text-sm text-blue-600 hover:text-blue-800"
-                          >
-                            + Add Resource
-                          </button>
-                        </div>
+                        <ResourcePicker
+                          categoryId={formData.category}
+                          selectedResources={option.resources || []}
+                          onResourcesChange={(resources) => handleOptionChange(index, 'resources', resources)}
+                        />
                       </div>
                     </div>
                   </div>
