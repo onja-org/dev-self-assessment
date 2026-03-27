@@ -54,6 +54,7 @@ export interface Question {
   followUpQuestion?: string;
   hint?: string;
   allowOther?: boolean; // Enable "Other" option for multiple-choice and checkbox questions
+  assessmentIds?: string[]; // Array of assessment template IDs this question belongs to. Empty/null = available to all
 }
 
 export interface Answer {

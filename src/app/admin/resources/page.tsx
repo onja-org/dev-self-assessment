@@ -202,7 +202,7 @@ export default function ResourcesPage() {
   }
 
   return (
-    <div className="p-8">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Learning Resources</h1>
         <p className="text-gray-600">Manage learning resources for assessment questions</p>
@@ -540,6 +540,6 @@ export default function ResourcesPage() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }

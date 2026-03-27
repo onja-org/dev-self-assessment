@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, addDoc, updateDoc, doc, query, orderBy, Timestamp, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, doc, query, orderBy, Timestamp, deleteDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { AssessmentTemplate, Question, QuestionType, QuestionOption } from '@/types';
 import { createNotificationsForAssessmentUpdate } from '@/lib/notifications';
 import Link from 'next/link';
+import ResourcePicker from '@/components/ResourcePicker';
 
 interface Category {
   id: string;
@@ -258,6 +259,38 @@ export default function AdminAssessmentsPage() {
     const newQuestionCount = updatedQuestions.length;
 
     try {
+      // Save question to global questions collection
+      const questionRef = doc(db, 'questions', cleanedQuestionData.id);
+      const existingQuestionDoc = await getDocs(query(collection(db, 'questions')));
+      const existingQuestion = existingQuestionDoc.docs.find(d => d.id === cleanedQuestionData.id);
+      
+      if (existingQuestion) {
+        // Update existing question's assessmentIds
+        const currentAssessmentIds = existingQuestion.data().assessmentIds || [];
+        if (!currentAssessmentIds.includes(managingTemplate.id)) {
+          await updateDoc(questionRef, {
+            ...cleanedQuestionData,
+            assessmentIds: [...currentAssessmentIds, managingTemplate.id],
+            updatedAt: Timestamp.now()
+          });
+        } else {
+          // Just update the question data
+          await updateDoc(questionRef, {
+            ...cleanedQuestionData,
+            updatedAt: Timestamp.now()
+          });
+        }
+      } else {
+        // Create new question
+        await setDoc(questionRef, {
+          ...cleanedQuestionData,
+          assessmentIds: [managingTemplate.id],
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
+        });
+      }
+
+      // Update the assessment template with the questions
       await updateDoc(doc(db, 'assessmentTemplates', managingTemplate.id), {
         questions: updatedQuestions,
         updatedAt: Timestamp.now()
@@ -293,22 +326,37 @@ export default function AdminAssessmentsPage() {
 
   const handleDeleteQuestion = async (questionId: string) => {
     if (!managingTemplate) return;
-    if (!confirm('Are you sure you want to delete this question from this assessment?')) return;
+    if (!confirm('Are you sure you want to remove this question from this assessment?')) return;
 
     const updatedQuestions = managingTemplate.questions.filter(q => q.id !== questionId);
 
     try {
+      // Remove from assessment template
       await updateDoc(doc(db, 'assessmentTemplates', managingTemplate.id), {
         questions: updatedQuestions,
         updatedAt: Timestamp.now()
       });
 
+      // Update question's assessmentIds in questions collection
+      const questionRef = doc(db, 'questions', questionId);
+      const questionsSnapshot = await getDocs(collection(db, 'questions'));
+      const questionDoc = questionsSnapshot.docs.find(d => d.id === questionId);
+      
+      if (questionDoc) {
+        const currentAssessmentIds = questionDoc.data().assessmentIds || [];
+        const updatedAssessmentIds = currentAssessmentIds.filter((id: string) => id !== managingTemplate.id);
+        await updateDoc(questionRef, {
+          assessmentIds: updatedAssessmentIds,
+          updatedAt: Timestamp.now()
+        });
+      }
+
       setManagingTemplate({...managingTemplate, questions: updatedQuestions});
       fetchData();
       alert('Question removed from assessment!');
     } catch (error) {
-      console.error('Error deleting question:', error);
-      alert('Failed to delete question');
+      console.error('Error removing question:', error);
+      alert('Failed to remove question');
     }
   };
 
@@ -570,20 +618,101 @@ export default function AdminAssessmentsPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
-              <div className="mb-4">
+              {/* Action Buttons */}
+              <div className="mb-6 flex gap-3">
                 <button
                   onClick={handleAddQuestion}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
                 >
-                  + Add New Question
+                  <span>+</span> Create New Question
                 </button>
+              </div>
+
+              {/* Available Questions from Question Bank */}
+              {globalQuestions.length > 0 && (
+                <div className="mb-8 bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <span>📚</span> Question Bank ({globalQuestions.filter(gq => !managingTemplate.questions.some(q => q.id === gq.id)).length} available)
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Select questions from your question bank to add to this assessment:
+                  </p>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {globalQuestions
+                      .filter(gq => !managingTemplate.questions.some(q => q.id === gq.id))
+                      .map(globalQuestion => (
+                        <div key={globalQuestion.id} className="bg-white border border-gray-200 rounded-lg p-3 flex justify-between items-start hover:border-blue-400 transition-colors">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-0.5 rounded">
+                                {globalQuestion.category}
+                              </span>
+                              <span className="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded">
+                                {globalQuestion.type}
+                              </span>
+                              {globalQuestion.assessmentIds && globalQuestion.assessmentIds.length > 0 && (
+                                <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded">
+                                  Used in {globalQuestion.assessmentIds.length} assessment{globalQuestion.assessmentIds.length > 1 ? 's' : ''}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm font-medium text-gray-900">{globalQuestion.title}</p>
+                            {globalQuestion.hint && (
+                              <p className="text-xs text-gray-500 mt-1">💡 {globalQuestion.hint.substring(0, 80)}...</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={async () => {
+                              const updatedQuestions = [...managingTemplate.questions, globalQuestion];
+                              try {
+                                await updateDoc(doc(db, 'assessmentTemplates', managingTemplate.id), {
+                                  questions: updatedQuestions,
+                                  updatedAt: Timestamp.now()
+                                });
+                                
+                                // Update question's assessmentIds
+                                const questionRef = doc(db, 'questions', globalQuestion.id);
+                                const currentAssessmentIds = globalQuestion.assessmentIds || [];
+                                if (!currentAssessmentIds.includes(managingTemplate.id)) {
+                                  await updateDoc(questionRef, {
+                                    assessmentIds: [...currentAssessmentIds, managingTemplate.id],
+                                    updatedAt: Timestamp.now()
+                                  });
+                                }
+                                
+                                setManagingTemplate({...managingTemplate, questions: updatedQuestions});
+                                fetchData(); // Refresh to update the question bank
+                                alert('Question added to assessment!');
+                              } catch (error) {
+                                console.error('Error adding question:', error);
+                                alert('Failed to add question');
+                              }
+                            }}
+                            className="ml-3 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors whitespace-nowrap"
+                          >
+                            + Add
+                          </button>
+                        </div>
+                      ))}
+                    {globalQuestions.filter(gq => !managingTemplate.questions.some(q => q.id === gq.id)).length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-4">All available questions are already added to this assessment.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Current Assessment Questions */}
+              <div className="mb-2">
+                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <span>📋</span> Questions in This Assessment ({managingTemplate?.questions?.length || 0})
+                </h3>
               </div>
 
               {!managingTemplate?.questions || managingTemplate?.questions?.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
                   <div className="text-6xl mb-4">📝</div>
                   <p className="text-lg font-semibold mb-2">No Questions Yet</p>
-                  <p>Add your first question to this assessment.</p>
+                  <p>Create a new question or add from the question bank above.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -894,102 +1023,15 @@ export default function AdminAssessmentsPage() {
                               <label className="block text-xs font-medium text-gray-700 mb-2">
                                 Resources
                               </label>
-                              <div className="space-y-2">
-                                {(option.resources || []).map((resource, resIdx) => (
-                                  <div key={resIdx} className="flex gap-2 items-start border border-gray-200 rounded p-2">
-                                    <div className="flex-1 grid grid-cols-2 gap-2">
-                                      <input
-                                        type="text"
-                                        value={resource.title}
-                                        onChange={(e) => {
-                                          const newOptions = [...(questionFormData.options || [])];
-                                          const newResources = [...(option.resources || [])];
-                                          newResources[resIdx] = { ...resource, title: e.target.value };
-                                          newOptions[index] = { ...option, resources: newResources };
-                                          setQuestionFormData({ ...questionFormData, options: newOptions });
-                                        }}
-                                        className="px-2 py-1 border border-gray-300 rounded text-xs"
-                                        placeholder="Resource title"
-                                      />
-                                      <input
-                                        type="url"
-                                        value={resource.url}
-                                        onChange={(e) => {
-                                          const newOptions = [...(questionFormData.options || [])];
-                                          const newResources = [...(option.resources || [])];
-                                          newResources[resIdx] = { ...resource, url: e.target.value };
-                                          newOptions[index] = { ...option, resources: newResources };
-                                          setQuestionFormData({ ...questionFormData, options: newOptions });
-                                        }}
-                                        className="px-2 py-1 border border-gray-300 rounded text-xs"
-                                        placeholder="https://..."
-                                      />
-                                      <select
-                                        value={resource.type}
-                                        onChange={(e) => {
-                                          const newOptions = [...(questionFormData.options || [])];
-                                          const newResources = [...(option.resources || [])];
-                                          newResources[resIdx] = { ...resource, type: e.target.value as any };
-                                          newOptions[index] = { ...option, resources: newResources };
-                                          setQuestionFormData({ ...questionFormData, options: newOptions });
-                                        }}
-                                        className="px-2 py-1 border border-gray-300 rounded text-xs"
-                                      >
-                                        <option value="article">Article</option>
-                                        <option value="video">Video</option>
-                                        <option value="course">Course</option>
-                                        <option value="docs">Docs</option>
-                                        <option value="github">GitHub</option>
-                                        <option value="book">Book</option>
-                                        <option value="roadmap">Roadmap</option>
-                                      </select>
-                                      <input
-                                        type="text"
-                                        value={resource.description || ''}
-                                        onChange={(e) => {
-                                          const newOptions = [...(questionFormData.options || [])];
-                                          const newResources = [...(option.resources || [])];
-                                          newResources[resIdx] = { ...resource, description: e.target.value };
-                                          newOptions[index] = { ...option, resources: newResources };
-                                          setQuestionFormData({ ...questionFormData, options: newOptions });
-                                        }}
-                                        className="px-2 py-1 border border-gray-300 rounded text-xs"
-                                        placeholder="Description (optional)"
-                                      />
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const newOptions = [...(questionFormData.options || [])];
-                                        const newResources = [...(option.resources || [])];
-                                        newResources.splice(resIdx, 1);
-                                        newOptions[index] = { ...option, resources: newResources };
-                                        setQuestionFormData({ ...questionFormData, options: newOptions });
-                                      }}
-                                      className="text-red-600 hover:text-red-800 text-xs px-2"
-                                    >
-                                      ✕
-                                    </button>
-                                  </div>
-                                ))}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const newOptions = [...(questionFormData.options || [])];
-                                    const newResources = [...(option.resources || []), { 
-                                      title: '', 
-                                      url: '', 
-                                      type: 'article' as const, 
-                                      description: '' 
-                                    }];
-                                    newOptions[index] = { ...option, resources: newResources };
-                                    setQuestionFormData({ ...questionFormData, options: newOptions });
-                                  }}
-                                  className="text-sm text-blue-600 hover:text-blue-800"
-                                >
-                                  + Add Resource
-                                </button>
-                              </div>
+                              <ResourcePicker
+                                categoryId={questionFormData.category}
+                                selectedResources={option.resources || []}
+                                onResourcesChange={(resources) => {
+                                  const newOptions = [...(questionFormData.options || [])];
+                                  newOptions[index] = { ...option, resources };
+                                  setQuestionFormData({ ...questionFormData, options: newOptions });
+                                }}
+                              />
                             </div>
                           </div>
                           

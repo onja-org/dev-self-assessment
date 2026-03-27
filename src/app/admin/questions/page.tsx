@@ -331,6 +331,9 @@ export default function QuestionManagement() {
                         Type
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
+                        Used In
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                         Options
                       </th>
                       <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">
@@ -377,6 +380,17 @@ export default function QuestionManagement() {
                           </td>
                           <td className="px-4 py-4 text-sm text-gray-600 capitalize">
                             {question.type}
+                          </td>
+                          <td className="px-4 py-4">
+                            {question.assessmentIds && question.assessmentIds.length > 0 ? (
+                              <span className="inline-block px-2 py-1 text-xs font-medium text-purple-600 bg-purple-100 rounded">
+                                {question.assessmentIds.length} assessment{question.assessmentIds.length > 1 ? 's' : ''}
+                              </span>
+                            ) : (
+                              <span className="inline-block px-2 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded">
+                                Global / Available
+                              </span>
+                            )}
                           </td>
                           <td className="px-4 py-4 text-sm text-gray-600">
                             {question.options ? `${question.options.length} options` : '-'}
