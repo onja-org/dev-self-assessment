@@ -1,18 +1,19 @@
 import { Question } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 
 export const APP_NAME = 'Developer Self-Assessment';
 
 export const CATEGORIES = {
   TECHNICAL_SKILLS: 'Technical Skills',
-  PROBLEM_SOLVING: 'Problem Solving',
+  TECHNICAL_KNOWLEDGE: 'Technical Knowledge & Understanding',
+  PROBLEM_SOLVING: 'Problem Solving & Debugging',
+  ALGORITHMS: 'Data Structures & Algorithms',
+  VERSION_CONTROL: 'Version Control & Git',
   COLLABORATION: 'Collaboration',
   COMMUNICATION: 'Communication',
   LEARNING: 'Learning & Growth',
-  CORE_CONCEPTS: 'Core Programming Concepts',
-  CODE_QUALITY: 'Code Quality & Best Practices',
-  VERSION_CONTROL: 'Version Control & Git',
-  ALGORITHMS: 'Data Structures & Algorithms',
-  DEBUGGING: 'Debugging & Problem Analysis',
+  PRECISION: 'Precision & Attention to Detail',
+  INDEPENDENCE: 'Independence & Autonomy',
 } as const;
 
 // Default configuration for "Other" option
@@ -39,7 +40,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 1 — Language Proficiency (Scale)
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q1',
+    id: uuidv4(),
     title: 'How would you rate your proficiency in your primary programming language(s)?',
     category: CATEGORIES.TECHNICAL_SKILLS,
     type: 'scale',
@@ -52,7 +53,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 2 — Tech Stack (multi-select with 16 options)
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q2',
+    id: uuidv4(),
     title: 'Which technologies do you currently work with? (Select all that apply)',
     category: CATEGORIES.TECHNICAL_SKILLS,
     type: 'tech-stack',
@@ -572,45 +573,20 @@ export const QUESTIONS: Question[] = [
   // QUESTION 3 — Debugging
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q3',
+    id: uuidv4(),
     title: 'How comfortable are you with debugging complex issues?',
-    category: CATEGORIES.DEBUGGING,
+    category: CATEGORIES.PROBLEM_SOLVING,
     type: 'multiple-choice',
     hint: 'Think about your systematic approach, tool usage, and problem isolation skills',
     allowOther: true,
     options: [
       {
-        value: 'console-only',
-        label: "I mostly use console.log and get stuck often",
-        recommendations: ['Learn to use Chrome DevTools debugger', 'Practice reading stack traces', 'Study systematic debugging approaches'],
-        scoreWeight: 0.15,
-        isCommonMistake: true,
-        mentorExplanation: "Console logging has its place, but it's like trying to fix a car with only a flashlight. Let me help you level up! Learning proper debugging tools will 10x your efficiency. Start with browser DevTools - they're incredibly powerful.",
-        resources: [
-          { title: 'Chrome DevTools Tutorial', url: 'https://developer.chrome.com/docs/devtools/', type: 'docs', description: 'Master browser debugging' },
-          { title: 'Debugging JavaScript', url: 'https://javascript.info/debugging-chrome', type: 'article' },
-          { title: 'VS Code Debugging', url: 'https://code.visualstudio.com/docs/editor/debugging', type: 'docs' },
-        ],
-      },
-      {
-        value: 'basic-tools',
-        label: 'I use debugger breakpoints but struggle with complex issues',
-        recommendations: ['Learn to trace through async code', 'Practice binary search debugging', 'Study error patterns'],
-        scoreWeight: 0.35,
-        mentorExplanation: "Good start! You've got the basics. Now let's sharpen your systematic approach. Break big problems into smaller pieces - that's the secret. Use breakpoints strategically, not everywhere.",
-        resources: [
-          { title: 'Debugging Techniques', url: 'https://blog.regehr.org/archives/199', type: 'article', description: 'Systematic debugging strategies' },
-          { title: 'Async Debugging', url: 'https://developer.chrome.com/blog/async-call-stack/', type: 'article' },
-          { title: 'Problem Solving Patterns', url: 'https://www.freecodecamp.org/news/how-to-think-like-a-programmer-lessons-in-problem-solving-d1d8bf1de7d2/', type: 'article' },
-        ],
-      },
-      {
         value: 'intermediate',
         label: 'I can solve most issues with research and systematic debugging',
         recommendations: ['Learn advanced debugging patterns', 'Study memory profiling', 'Practice debugging production issues'],
-        scoreWeight: 0.6,
+        scoreWeight: 0.7,
         isCorrect: true,
-        mentorExplanation: "Solid debugging skills! You're thinking systematically, which is exactly right. Keep building your mental models of how systems work - that intuition is gold.",
+        mentorExplanation: "You're thinking systematically, which is the right foundation. The next step is building deeper mental models - when you understand how the system works underneath, debugging becomes pattern recognition. Keep pushing into the harder bugs; that's where the real learning happens.",
         resources: [
           { title: 'Advanced Debugging Techniques', url: 'https://www.youtube.com/watch?v=_Wp68Y9cc_U', type: 'video' },
           { title: 'Memory Profiling', url: 'https://developer.chrome.com/docs/devtools/memory-problems/', type: 'docs' },
@@ -618,16 +594,15 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'advanced',
-        label: 'I independently solve complex issues using multiple techniques',
-        recommendations: ['Mentor others in debugging', 'Document debugging strategies', 'Create debugging tools'],
-        scoreWeight: 0.8,
-        isCorrect: true,
-        mentorExplanation: 'Excellent! You have a strong debugging toolkit. Now share this knowledge - teach others your systematic approach. Your debugging skills are a superpower!',
+        value: 'use-logging',
+        label: 'I use logging extensively but struggle with complex async issues',
+        recommendations: ['Learn async debugging techniques', 'Master promise rejection handling', 'Use async stack traces', 'Learn event loop debugging'],
+        scoreWeight: 0.55,
+        mentorExplanation: "Async code trips everyone up at first. The trick is understanding that async stack traces work differently - DevTools can show them if you enable async stack tracing. Also, get really comfortable with the event loop; once you see how promises queue up, async bugs make way more sense.",
         resources: [
-          { title: 'Building Custom Debuggers', url: 'https://blog.repl.it/clui', type: 'article' },
-          { title: 'Advanced Node Debugging', url: 'https://nodejs.org/en/docs/guides/debugging-getting-started/', type: 'docs' },
-          { title: 'Performance Profiling', url: 'https://web.dev/chrome-devtools-performance/', type: 'article' },
+          { title: 'Async Debugging in Chrome', url: 'https://developer.chrome.com/blog/async-call-stack/', type: 'article' },
+          { title: 'Understanding the Event Loop', url: 'https://www.youtube.com/watch?v=8aGhZQkoFbQ', type: 'video', description: 'Classic event loop explanation' },
+          { title: 'Debugging Promises', url: 'https://javascript.info/promise-error-handling', type: 'article' },
         ],
       },
       {
@@ -636,7 +611,7 @@ export const QUESTIONS: Question[] = [
         recommendations: ['Create debugging workshops', 'Write technical blog posts', 'Build internal debugging tools'],
         scoreWeight: 1.0,
         isCorrect: true,
-        mentorExplanation: "You're a debugging wizard! Consider sharing your expertise through talks, blog posts, or internal workshops. The community needs this knowledge!",
+        mentorExplanation: "This level of debugging skill is rare and valuable. You've built the intuition that lets you jump between layers - from application code down to network packets. Share what you know; most developers never learn to think across the full stack like this.",
         resources: [
           { title: 'Writing Technical Posts', url: 'https://www.freecodecamp.org/news/how-to-write-a-great-technical-blog-post-414c414b67f6/', type: 'article' },
           { title: 'System-Level Debugging', url: 'https://jvns.ca/blog/2021/04/03/what-problems-do-people-solve-with-strace/', type: 'article' },
@@ -644,12 +619,50 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
+        value: 'console-only',
+        label: "I mostly use console.log and get stuck often",
+        recommendations: ['Learn to use Chrome DevTools debugger', 'Practice reading stack traces', 'Study systematic debugging approaches'],
+        scoreWeight: 0.1,
+        isCommonMistake: true,
+        mentorExplanation: "Console.log works, but you're missing out on huge time savings. The debugger lets you pause execution and inspect everything at that moment - way faster than littering code with logs. Spend an hour learning DevTools breakpoints and you'll never look back.",
+        resources: [
+          { title: 'Chrome DevTools Tutorial', url: 'https://developer.chrome.com/docs/devtools/', type: 'docs', description: 'Master browser debugging' },
+          { title: 'Debugging JavaScript', url: 'https://javascript.info/debugging-chrome', type: 'article' },
+          { title: 'VS Code Debugging', url: 'https://code.visualstudio.com/docs/editor/debugging', type: 'docs' },
+        ],
+      },
+      {
+        value: 'reproduce-first',
+        label: 'I focus on reproducing issues reliably before fixing them',
+        recommendations: ['Document reproduction steps', 'Create automated tests from bugs', 'Build debugging test suites', 'Share reproduction techniques'],
+        scoreWeight: 0.82,
+        isCorrect: true,
+        mentorExplanation: "This is the right instinct. A bug you can reproduce consistently is already halfway fixed. The developers who skip this step end up with bugs that resurface later. Bonus points if you turn your reproduction steps into a test case before fixing.",
+        resources: [
+          { title: 'Bug Reproduction Best Practices', url: 'https://www.browserstack.com/guide/how-to-reproduce-bugs', type: 'article' },
+          { title: 'Regression Testing', url: 'https://martinfowler.com/bliki/RegressionTest.html', type: 'article' },
+          { title: 'Test-Driven Debugging', url: 'https://kentcdodds.com/blog/test-driven-development', type: 'article' },
+        ],
+      },
+      {
+        value: 'basic-tools',
+        label: 'I use debugger breakpoints but struggle with complex issues',
+        recommendations: ['Learn to trace through async code', 'Practice binary search debugging', 'Study error patterns'],
+        scoreWeight: 0.4,
+        mentorExplanation: "Breakpoints are good, but debugging is more about strategy than tools. When you hit a complex bug, narrow down where it's happening first (binary search: is it in this half of the code or that half?). Then zoom in. Most developers go too deep too fast.",
+        resources: [
+          { title: 'Debugging Techniques', url: 'https://blog.regehr.org/archives/199', type: 'article', description: 'Systematic debugging strategies' },
+          { title: 'Async Debugging', url: 'https://developer.chrome.com/blog/async-call-stack/', type: 'article' },
+          { title: 'Problem Solving Patterns', url: 'https://www.freecodecamp.org/news/how-to-think-like-a-programmer-lessons-in-problem-solving-d1d8bf1de7d2/', type: 'article' },
+        ],
+      },
+      {
         value: 'struggle-alone',
         label: 'I struggle with issues alone for extended periods',
         recommendations: ['Learn when to ask for help', 'Practice rubber duck debugging', 'Set time limits for independent debugging', 'Build debugging documentation habits'],
-        scoreWeight: 0.22,
+        scoreWeight: 0.25,
         isCommonMistake: true,
-        mentorExplanation: "Persistence is good, but knowing when to ask for help is crucial! Set a 30-minute rule - if you're stuck for 30 minutes, ask someone or explain the problem out loud (rubber duck debugging). Fresh perspectives save hours!",
+        mentorExplanation: "Independence is good, but there's a difference between persistence and stubbornness. If you've been stuck for an hour, you're probably missing context. Talk it through with someone (or a rubber duck). The act of explaining often surfaces the issue, and fresh eyes catch things you've gone blind to.",
         resources: [
           { title: 'Rubber Duck Debugging', url: 'https://en.wikipedia.org/wiki/Rubber_duck_debugging', type: 'article', description: 'Explain problems out loud to solve them' },
           { title: 'How to Ask Good Questions', url: 'https://stackoverflow.com/help/how-to-ask', type: 'docs', description: 'Get better help by asking better questions' },
@@ -657,28 +670,16 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'use-logging',
-        label: 'I use logging extensively but struggle with complex async issues',
-        recommendations: ['Learn async debugging techniques', 'Master promise rejection handling', 'Use async stack traces', 'Learn event loop debugging'],
-        scoreWeight: 0.38,
-        mentorExplanation: "Async debugging is tricky! Learn about async stack traces in DevTools, understand the event loop, and use proper promise rejection handlers. Async/await makes debugging easier than callbacks!",
-        resources: [
-          { title: 'Async Debugging in Chrome', url: 'https://developer.chrome.com/blog/async-call-stack/', type: 'article' },
-          { title: 'Understanding the Event Loop', url: 'https://www.youtube.com/watch?v=8aGhZQkoFbQ', type: 'video', description: 'Classic event loop explanation' },
-          { title: 'Debugging Promises', url: 'https://javascript.info/promise-error-handling', type: 'article' },
-        ],
-      },
-      {
-        value: 'reproduce-first',
-        label: 'I focus on reproducing issues reliably before fixing them',
-        recommendations: ['Document reproduction steps', 'Create automated tests from bugs', 'Build debugging test suites', 'Share reproduction techniques'],
-        scoreWeight: 0.72,
+        value: 'advanced',
+        label: 'I independently solve complex issues using multiple techniques',
+        recommendations: ['Mentor others in debugging', 'Document debugging strategies', 'Create debugging tools'],
+        scoreWeight: 0.92,
         isCorrect: true,
-        mentorExplanation: "Excellent approach! If you can reproduce it, you can fix it. This methodical approach prevents bugs from coming back. Next level: turn each reproduction into an automated test!",
+        mentorExplanation: 'Strong debugging chops. You know when to use the profiler versus the network tab versus stepping through code. This skill multiplies when you teach it - showing junior devs your process makes them way more effective and takes pressure off you.',
         resources: [
-          { title: 'Bug Reproduction Best Practices', url: 'https://www.browserstack.com/guide/how-to-reproduce-bugs', type: 'article' },
-          { title: 'Regression Testing', url: 'https://martinfowler.com/bliki/RegressionTest.html', type: 'article' },
-          { title: 'Test-Driven Debugging', url: 'https://kentcdodds.com/blog/test-driven-development', type: 'article' },
+          { title: 'Building Custom Debuggers', url: 'https://blog.repl.it/clui', type: 'article' },
+          { title: 'Advanced Node Debugging', url: 'https://nodejs.org/en/docs/guides/debugging-getting-started/', type: 'docs' },
+          { title: 'Performance Profiling', url: 'https://web.dev/chrome-devtools-performance/', type: 'article' },
         ],
       },
     ],
@@ -688,7 +689,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 4 — Learning Approach
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q4',
+    id: uuidv4(),
     title: 'How do you approach learning a new technology or framework?',
     category: CATEGORIES.LEARNING,
     type: 'multiple-choice',
@@ -696,24 +697,25 @@ export const QUESTIONS: Question[] = [
     allowOther: true,
     options: [
       {
-        value: 'wait',
-        label: 'I wait for formal training or assignments',
-        recommendations: ['Take initiative in learning', 'Set personal learning goals', 'Start a small personal project'],
-        scoreWeight: 0.2,
-        mentorExplanation: 'Waiting for assignments limits your growth. The best developers are curious self-learners. Start small - pick one thing this week to explore on your own! Even 30 minutes a day makes a difference.',
+        value: 'peer-learning',
+        label: 'I learn best through pair programming and collaboration',
+        recommendations: ['Start a peer learning group', 'Organize study sessions', 'Practice mob programming', 'Facilitate knowledge sharing'],
+        scoreWeight: 0.65,
+        isCorrect: true,
+        mentorExplanation: "Collaborative learning works because you get real-time feedback and see how others think through problems. The social accountability helps too - you actually show up and do the work. Try mob programming sometime; it's surprisingly effective for complex problems.",
         resources: [
-          { title: 'Learning How to Learn', url: 'https://www.coursera.org/learn/learning-how-to-learn', type: 'course', description: 'Master effective learning techniques' },
-          { title: 'How to Learn Programming', url: 'https://www.freecodecamp.org/news/how-to-learn-programming/', type: 'article' },
-          { title: 'Developer Roadmaps', url: 'https://roadmap.sh/', type: 'docs', description: 'Structured learning paths' },
+          { title: 'Pair Programming Guide', url: 'https://martinfowler.com/articles/on-pair-programming.html', type: 'article' },
+          { title: 'Mob Programming', url: 'https://www.youtube.com/watch?v=dVqUcNKVbYg', type: 'video' },
+          { title: 'Learning Communities', url: 'https://www.freecodecamp.org/news/how-to-learn-programming/', type: 'article' },
         ],
       },
       {
         value: 'reactive',
         label: 'I learn when I encounter a problem that needs solving',
         recommendations: ['Complement just-in-time learning with structured study', 'Build foundational knowledge'],
-        scoreWeight: 0.35,
+        scoreWeight: 0.25,
         isCommonMistake: true,
-        mentorExplanation: "Just-in-time learning works, but it leaves gaps. Balance it with structured learning to build strong fundamentals. You'll solve problems faster with a solid base.",
+        mentorExplanation: "Just-in-time learning feels efficient but leaves gaps in your foundation. You end up relearning the same concepts in different contexts. Spend some time on fundamentals - understanding how things work makes future problems easier to solve.",
         resources: [
           { title: 'Deliberate Practice', url: 'https://fs.blog/deliberate-practice-guide/', type: 'article' },
           { title: 'Spaced Repetition', url: 'https://ncase.me/remember/', type: 'article', description: 'Effective learning technique' },
@@ -721,11 +723,24 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
+        value: 'teach-to-learn',
+        label: 'I learn by teaching and creating educational content',
+        recommendations: ['Scale your teaching impact', 'Create comprehensive courses', 'Start a tech blog or YouTube channel', 'Mentor formally'],
+        scoreWeight: 0.87,
+        isCorrect: true,
+        mentorExplanation: "Teaching forces you to understand at a deeper level - you can't hand-wave over the parts you don't fully get. Plus you're helping others while you learn. Write, speak, create videos - pick what works for you and keep doing it.",
+        resources: [
+          { title: 'Feynman Technique', url: 'https://fs.blog/feynman-technique/', type: 'article', description: 'Learn by teaching' },
+          { title: 'Creating Technical Content', url: 'https://developers.google.com/tech-writing', type: 'course' },
+          { title: 'Learning in Public', url: 'https://www.swyx.io/learn-in-public/', type: 'article' },
+        ],
+      },
+      {
         value: 'basics',
         label: 'I learn the basics through tutorials when needed',
         recommendations: ['Go deeper than tutorials', 'Build projects from scratch', 'Read official documentation'],
-        scoreWeight: 0.45,
-        mentorExplanation: "Tutorials are a good start, but they can create 'tutorial hell.' Try building something without a tutorial next time - that's where real learning happens! Struggle is part of learning.",
+        scoreWeight: 0.35,
+        mentorExplanation: "Tutorials get you started, but they're training wheels. At some point you need to fall a few times to really learn. Pick a small project and build it without following along - the struggle is where learning actually happens.",
         resources: [
           { title: 'Escaping Tutorial Hell', url: 'https://www.freecodecamp.org/news/how-to-escape-tutorial-purgatory-as-a-new-developer-or-at-any-time-in-your-career/', type: 'article' },
           { title: 'Project-Based Learning', url: 'https://github.com/practical-tutorials/project-based-learning', type: 'github' },
@@ -733,43 +748,80 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'structured',
-        label: 'I follow structured courses and build practice projects',
-        recommendations: ['Mix structured learning with exploration', 'Share your learnings', 'Teach others'],
-        scoreWeight: 0.6,
+        value: 'theory-practice',
+        label: 'I balance theoretical study with practical application',
+        recommendations: ['Continue the balance', 'Teach the theory-practice connection', 'Create learning frameworks', 'Mentor using both approaches'],
+        scoreWeight: 0.8,
         isCorrect: true,
-        mentorExplanation: 'Great approach! Structured learning builds solid foundations. Now amplify it by teaching others - explaining concepts solidifies your understanding like nothing else.',
+        mentorExplanation: "This is the sweet spot. Theory gives you the mental models to understand why things work; practice cements it. People who skip theory hit walls; people who skip practice never ship. You're doing both.",
         resources: [
-          { title: 'Learning in Public', url: 'https://www.swyx.io/learn-in-public/', type: 'article', description: 'Accelerate learning by sharing' },
-          { title: 'Tech Blog Writing Guide', url: 'https://www.freecodecamp.org/news/developer-blog-guide/', type: 'article' },
-          { title: 'Teach to Learn', url: 'https://fs.blog/feynman-technique/', type: 'article', description: 'Feynman Technique' },
+          { title: 'Theory and Practice', url: 'https://teachingcommons.stanford.edu/resources/learning/learning-activities/theory-practice', type: 'article' },
+          { title: 'Computer Science Fundamentals', url: 'https://github.com/ossu/computer-science', type: 'github', description: 'Free CS education' },
+          { title: 'Applying CS Theory', url: 'https://www.youtube.com/c/BenEater', type: 'video', description: 'Theory to hardware' },
         ],
       },
       {
-        value: 'proactive',
-        label: 'I proactively explore new tech and build meaningful side projects',
-        recommendations: ['Share knowledge with your team', 'Contribute to open source', 'Create technical content'],
-        scoreWeight: 0.75,
-        yearOneRecommendations: ['Complete 2-3 substantial side projects', 'Present learnings to the team'],
-        isCorrect: true,
-        mentorExplanation: "Excellent! You're a self-driven learner. Your side projects are your laboratory. Now maximize impact by sharing what you discover - blog posts, talks, or mentoring!",
+        value: 'wait',
+        label: 'I wait for formal training or assignments',
+        recommendations: ['Take initiative in learning', 'Set personal learning goals', 'Start a small personal project'],
+        scoreWeight: 0.08,
+        mentorExplanation: "Waiting for permission to learn puts your growth in someone else's hands. The developers who advance fastest are the ones who explore on their own time. Start small - even 30 minutes a day adds up fast.",
         resources: [
-          { title: 'Building in Public', url: 'https://www.indiehackers.com/group/build-in-public', type: 'article' },
-          { title: 'Open Source Guide', url: 'https://opensource.guide/how-to-contribute/', type: 'docs' },
-          { title: 'First Timers Only', url: 'https://www.firsttimersonly.com/', type: 'docs' },
+          { title: 'Learning How to Learn', url: 'https://www.coursera.org/learn/learning-how-to-learn', type: 'course', description: 'Master effective learning techniques' },
+          { title: 'How to Learn Programming', url: 'https://www.freecodecamp.org/news/how-to-learn-programming/', type: 'article' },
+          { title: 'Developer Roadmaps', url: 'https://roadmap.sh/', type: 'docs', description: 'Structured learning paths' },
+        ],
+      },
+      {
+        value: 'experiment',
+        label: 'I learn by experimenting and breaking things in safe environments',
+        recommendations: ['Document your experiments', 'Share learnings from failures', 'Build lab environments', 'Teach experimental mindset'],
+        scoreWeight: 0.73,
+        isCorrect: true,
+        mentorExplanation: "Breaking things is underrated as a learning method. When something fails, you learn way more than when it just works. Keep a lab environment where you can safely destroy stuff. Document what breaks and why - future you will thank you.",
+        resources: [
+          { title: 'Learning by Doing', url: 'https://www.freecodecamp.org/news/how-to-learn-programming/', type: 'article' },
+          { title: 'Build a Home Lab', url: 'https://www.reddit.com/r/homelab/', type: 'article', description: 'Safe environment for experiments' },
+          { title: 'Keeping a Learning Journal', url: 'https://www.fast.ai/posts/2017-09-08-learning.html', type: 'article' },
+        ],
+      },
+      {
+        value: 'tutorial-hell',
+        label: 'I follow many tutorials but struggle to build without them',
+        recommendations: ['Break free from tutorial dependency', 'Build projects from scratch', 'Learn to read documentation', 'Start with small original ideas'],
+        scoreWeight: 0.17,
+        isCommonMistake: true,
+        mentorExplanation: "Tutorial hell is real - you watch someone build, think you understand, then freeze when facing a blank editor. The fix: stop mid-tutorial and build the rest yourself. Use docs, not more tutorials. The discomfort means you're actually learning.",
+        resources: [
+          { title: 'Escaping Tutorial Hell', url: 'https://www.freecodecamp.org/news/how-to-escape-tutorial-purgatory-as-a-new-developer-or-at-any-time-in-your-career/', type: 'article', description: 'Break free from tutorial dependency' },
+          { title: 'Learn by Building', url: 'https://github.com/practical-tutorials/project-based-learning', type: 'github' },
+          { title: 'Reading Documentation Effectively', url: 'https://documentation.divio.com/', type: 'article' },
         ],
       },
       {
         value: 'deep-dive',
         label: 'I deeply research topics, read source code, and experiment extensively',
         recommendations: ['Share your deep knowledge', 'Mentor others', 'Contribute to docs and libraries'],
-        scoreWeight: 0.88,
+        scoreWeight: 0.93,
         isCorrect: true,
-        mentorExplanation: "You're diving deep - that's how experts are made! Reading source code is underrated and incredibly valuable. Keep this up and share your insights!",
+        mentorExplanation: "Reading source code separates good developers from great ones. You're learning from the best implementations, not just using APIs. This depth shows up in how you solve problems. Keep sharing what you find - most developers never go this deep.",
         resources: [
           { title: 'Reading Code Effectively', url: 'https://github.com/aredridel/how-to-read-code', type: 'github' },
           { title: 'Speaking at Meetups', url: 'https://www.freecodecamp.org/news/speaking-at-your-first-tech-conference/', type: 'article' },
           { title: 'Creating Technical Content', url: 'https://developers.google.com/tech-writing', type: 'course' },
+        ],
+      },
+      {
+        value: 'structured',
+        label: 'I follow structured courses and build practice projects',
+        recommendations: ['Mix structured learning with exploration', 'Share your learnings', 'Teach others'],
+        scoreWeight: 0.55,
+        isCorrect: true,
+        mentorExplanation: "Structured courses give you a solid path through the fundamentals. The practice projects are what make it stick. Try teaching someone else what you learned - that's when you discover what you actually understand versus what you just memorized.",
+        resources: [
+          { title: 'Learning in Public', url: 'https://www.swyx.io/learn-in-public/', type: 'article', description: 'Accelerate learning by sharing' },
+          { title: 'Tech Blog Writing Guide', url: 'https://www.freecodecamp.org/news/developer-blog-guide/', type: 'article' },
+          { title: 'Teach to Learn', url: 'https://fs.blog/feynman-technique/', type: 'article', description: 'Feynman Technique' },
         ],
       },
       {
@@ -778,7 +830,7 @@ export const QUESTIONS: Question[] = [
         recommendations: ['Become a subject matter expert', 'Speak at conferences', 'Write comprehensive guides'],
         scoreWeight: 1.0,
         isCorrect: true,
-        mentorExplanation: "You're at the expert level! Your contributions shape the community. Consider mentoring developers and leading technical initiatives. Your knowledge multiplies when shared!",
+        mentorExplanation: "You're operating at the community level, which amplifies your impact. When you establish best practices and contribute back, you're shaping how thousands of developers work. This is leadership through teaching. Keep it up.",
         resources: [
           { title: 'Conference Speaking Guide', url: 'https://speaking.io/', type: 'docs' },
           { title: 'Technical Writing for Developers', url: 'https://www.manning.com/books/docs-for-developers', type: 'book' },
@@ -786,68 +838,17 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'tutorial-hell',
-        label: 'I follow many tutorials but struggle to build without them',
-        recommendations: ['Break free from tutorial dependency', 'Build projects from scratch', 'Learn to read documentation', 'Start with small original ideas'],
-        scoreWeight: 0.32,
-        isCommonMistake: true,
-        mentorExplanation: "You're in 'tutorial hell' - a common trap! The solution: stop following tutorials and build something from scratch. Yes, you'll struggle. That struggle IS learning! Use docs, not tutorials.",
-        resources: [
-          { title: 'Escaping Tutorial Hell', url: 'https://www.freecodecamp.org/news/how-to-escape-tutorial-purgatory-as-a-new-developer-or-at-any-time-in-your-career/', type: 'article', description: 'Break free from tutorial dependency' },
-          { title: 'Learn by Building', url: 'https://github.com/practical-tutorials/project-based-learning', type: 'github' },
-          { title: 'Reading Documentation Effectively', url: 'https://documentation.divio.com/', type: 'article' },
-        ],
-      },
-      {
-        value: 'experiment',
-        label: 'I learn by experimenting and breaking things in safe environments',
-        recommendations: ['Document your experiments', 'Share learnings from failures', 'Build lab environments', 'Teach experimental mindset'],
-        scoreWeight: 0.78,
+        value: 'proactive',
+        label: 'I proactively explore new tech and build meaningful side projects',
+        recommendations: ['Share knowledge with your team', 'Contribute to open source', 'Create technical content'],
+        scoreWeight: 0.45,
+        yearOneRecommendations: ['Complete 2-3 substantial side projects', 'Present learnings to the team'],
         isCorrect: true,
-        mentorExplanation: "Experimentation is powerful learning! You're comfortable with failure, which is crucial. Keep a learning journal - document what you tried and what happened. Failed experiments teach as much as successful ones!",
+        mentorExplanation: "Side projects are your laboratory - you learn without constraints or deadlines. The best ones scratch your own itch. Share what you build; even failed projects teach valuable lessons when you write about what didn't work and why.",
         resources: [
-          { title: 'Learning by Doing', url: 'https://www.freecodecamp.org/news/how-to-learn-programming/', type: 'article' },
-          { title: 'Build a Home Lab', url: 'https://www.reddit.com/r/homelab/', type: 'article', description: 'Safe environment for experiments' },
-          { title: 'Keeping a Learning Journal', url: 'https://www.fast.ai/posts/2017-09-08-learning.html', type: 'article' },
-        ],
-      },
-      {
-        value: 'theory-practice',
-        label: 'I balance theoretical study with practical application',
-        recommendations: ['Continue the balance', 'Teach the theory-practice connection', 'Create learning frameworks', 'Mentor using both approaches'],
-        scoreWeight: 0.82,
-        isCorrect: true,
-        mentorExplanation: "Perfect balance! Theory without practice is useless; practice without theory is inefficient. You understand both matter. This depth makes you a strong developer!",
-        resources: [
-          { title: 'Theory and Practice', url: 'https://teachingcommons.stanford.edu/resources/learning/learning-activities/theory-practice', type: 'article' },
-          { title: 'Computer Science Fundamentals', url: 'https://github.com/ossu/computer-science', type: 'github', description: 'Free CS education' },
-          { title: 'Applying CS Theory', url: 'https://www.youtube.com/c/BenEater', type: 'video', description: 'Theory to hardware' },
-        ],
-      },
-      {
-        value: 'peer-learning',
-        label: 'I learn best through pair programming and collaboration',
-        recommendations: ['Start a peer learning group', 'Organize study sessions', 'Practice mob programming', 'Facilitate knowledge sharing'],
-        scoreWeight: 0.73,
-        isCorrect: true,
-        mentorExplanation: "Collaborative learning is highly effective! You're leveraging collective knowledge. Start or join study groups, pair regularly, try mob programming. Teaching others solidifies your own learning!",
-        resources: [
-          { title: 'Pair Programming Guide', url: 'https://martinfowler.com/articles/on-pair-programming.html', type: 'article' },
-          { title: 'Mob Programming', url: 'https://www.youtube.com/watch?v=dVqUcNKVbYg', type: 'video' },
-          { title: 'Learning Communities', url: 'https://www.freecodecamp.org/news/how-to-learn-programming/', type: 'article' },
-        ],
-      },
-      {
-        value: 'teach-to-learn',
-        label: 'I learn by teaching and creating educational content',
-        recommendations: ['Scale your teaching impact', 'Create comprehensive courses', 'Start a tech blog or YouTube channel', 'Mentor formally'],
-        scoreWeight: 0.85,
-        isCorrect: true,
-        mentorExplanation: "Teaching is the ultimate learning tool! When you teach, you truly understand. You're practicing the Feynman Technique naturally. Keep creating content - you're helping countless developers!",
-        resources: [
-          { title: 'Feynman Technique', url: 'https://fs.blog/feynman-technique/', type: 'article', description: 'Learn by teaching' },
-          { title: 'Creating Technical Content', url: 'https://developers.google.com/tech-writing', type: 'course' },
-          { title: 'Learning in Public', url: 'https://www.swyx.io/learn-in-public/', type: 'article' },
+          { title: 'Building in Public', url: 'https://www.indiehackers.com/group/build-in-public', type: 'article' },
+          { title: 'Open Source Guide', url: 'https://opensource.guide/how-to-contribute/', type: 'docs' },
+          { title: 'First Timers Only', url: 'https://www.firsttimersonly.com/', type: 'docs' },
         ],
       },
     ],
@@ -857,7 +858,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 5 — Code Reviews
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q5',
+    id: uuidv4(),
     title: 'How often do you participate in code reviews?',
     category: CATEGORIES.COLLABORATION,
     type: 'multiple-choice',
@@ -865,15 +866,16 @@ export const QUESTIONS: Question[] = [
     allowOther: true,
     options: [
       {
-        value: 'rarely',
-        label: 'Rarely or never',
-        recommendations: ['Start reviewing pull requests regularly', 'Learn code review best practices', 'Ask to be added as a reviewer'],
-        scoreWeight: 0.15,
-        mentorExplanation: "Code reviews are one of the best learning opportunities! Don't wait to be asked - volunteer to review. You'll learn different approaches and improve your own code in the process.",
+        value: 'regularly',
+        label: 'Regularly as part of my workflow',
+        recommendations: ['Mentor juniors through code reviews', 'Establish review standards', 'Share patterns you see'],
+        scoreWeight: 0.68,
+        isCorrect: true,
+        mentorExplanation: "Regular reviews mean you're seeing how the codebase evolves, not just your corner of it. Use reviews to teach - when you explain why something matters, that's mentoring. The comments you leave shape how people code.",
         resources: [
-          { title: "Code Review Best Practices", url: 'https://google.github.io/eng-practices/review/', type: 'docs', description: "Google's code review guide" },
-          { title: 'How to Review Code', url: 'https://www.freecodecamp.org/news/code-review-tips/', type: 'article' },
-          { title: 'Effective Code Reviews', url: 'https://www.youtube.com/watch?v=a9_0UUUNt-Y', type: 'video' },
+          { title: 'Mentoring Through Code Reviews', url: 'https://blog.pragmaticengineer.com/good-code-reviews-better-code-reviews/', type: 'article' },
+          { title: 'Code Review Standards', url: 'https://www.kevinlondon.com/2015/05/05/code-review-best-practices.html', type: 'article' },
+          { title: 'Teaching Through Reviews', url: 'https://kickstarter.engineering/a-guide-to-mindful-communication-in-code-reviews-48aab5282e5e', type: 'article' },
         ],
       },
       {
@@ -882,49 +884,11 @@ export const QUESTIONS: Question[] = [
         recommendations: ['Learn what to look for in code reviews', 'Practice giving constructive feedback', 'Take time to understand context'],
         scoreWeight: 0.28,
         isCommonMistake: true,
-        mentorExplanation: "Rubber-stamp reviews help no one. Take your time, run the code if needed, and ask questions. Good reviews make everyone better! It's okay to say 'I need more time to review this properly.'",
+        mentorExplanation: "Rubber-stamping reviews is worse than not reviewing - it gives false confidence. Actually pull the code and run it. Ask questions when you don't understand. It's fine to say 'I need more time to review this properly' instead of a quick LGTM.",
         resources: [
           { title: 'What to Look for in Code Review', url: 'https://leanpub.com/whattolookforinacodereview', type: 'book' },
           { title: 'Code Review Checklist', url: 'https://github.com/mgreiler/code-review-checklist', type: 'github' },
           { title: 'Giving Constructive Feedback', url: 'https://mtlynch.io/human-code-reviews-1/', type: 'article' },
-        ],
-      },
-      {
-        value: 'sometimes',
-        label: 'Occasionally when asked',
-        recommendations: ['Volunteer for more code reviews', 'Review across different areas', 'Provide constructive feedback'],
-        scoreWeight: 0.42,
-        mentorExplanation: "You're participating, which is good! Make it a habit - review at least one PR daily. It keeps you connected to the codebase and builds relationships with teammates.",
-        resources: [
-          { title: 'Code Review Etiquette', url: 'https://www.alexandra-hill.com/2018/06/25/the-art-of-giving-and-receiving-code-reviews/', type: 'article' },
-          { title: 'Thoughtful Code Reviews', url: 'https://testing.googleblog.com/2017/06/code-health-too-many-comments-on-your.html', type: 'article' },
-          { title: 'Review Small PRs', url: 'https://smallbusinessprogramming.com/optimal-pull-request-size/', type: 'article' },
-        ],
-      },
-      {
-        value: 'regularly',
-        label: 'Regularly as part of my workflow',
-        recommendations: ['Mentor juniors through code reviews', 'Establish review standards', 'Share patterns you see'],
-        scoreWeight: 0.68,
-        isCorrect: true,
-        mentorExplanation: "Excellent! Regular reviews show commitment to code quality. Use reviews as teaching moments - explain the 'why' behind your suggestions. That's where real mentoring happens.",
-        resources: [
-          { title: 'Mentoring Through Code Reviews', url: 'https://blog.pragmaticengineer.com/good-code-reviews-better-code-reviews/', type: 'article' },
-          { title: 'Code Review Standards', url: 'https://www.kevinlondon.com/2015/05/05/code-review-best-practices.html', type: 'article' },
-          { title: 'Teaching Through Reviews', url: 'https://kickstarter.engineering/a-guide-to-mindful-communication-in-code-reviews-48aab5282e5e', type: 'article' },
-        ],
-      },
-      {
-        value: 'proactive',
-        label: 'I actively seek out PRs to review and provide detailed feedback',
-        recommendations: ['Document common patterns', 'Create team review guidelines', 'Host code review workshops'],
-        scoreWeight: 0.83,
-        isCorrect: true,
-        mentorExplanation: "You're making a real impact! Your proactive reviews improve team quality. Consider documenting recurring feedback as team guidelines - automate what you can, focus on what matters.",
-        resources: [
-          { title: 'Building Review Culture', url: 'https://www.netlify.com/blog/2020/03/05/feedback-ladders-how-we-encode-code-reviews-at-netlify/', type: 'article' },
-          { title: 'Advanced Code Review', url: 'https://www.youtube.com/watch?v=PJjmw9TRB7s', type: 'video' },
-          { title: 'Team Code Review Process', url: 'https://github.com/features/code-review/', type: 'docs' },
         ],
       },
       {
@@ -933,115 +897,48 @@ export const QUESTIONS: Question[] = [
         recommendations: ['Create comprehensive guidelines', 'Train team on effective reviews', 'Measure and improve review metrics'],
         scoreWeight: 1.0,
         isCorrect: true,
-        mentorExplanation: "You're a code review leader! Your standards raise the whole team's quality. Keep refining the process and making it a positive learning experience for everyone.",
+        mentorExplanation: "When you set the review culture, you're shaping how the whole team thinks about quality. Good review standards mean everyone gets better, not just individuals. Keep making it a learning experience, not a gate to pass through.",
         resources: [
           { title: 'Code Review Culture', url: 'https://www.pullrequest.com/blog/code-review-best-practices/', type: 'article' },
           { title: 'Review Process Guide', url: 'https://github.com/thoughtbot/guides/tree/main/code-review', type: 'github' },
           { title: 'Measuring Code Reviews', url: 'https://linearb.io/blog/code-review-metrics', type: 'article' },
         ],
       },
-    ],
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // QUESTION 6 — Testing
-  // ─────────────────────────────────────────────────────────────────────────────
-  {
-    id: 'q6',
-    title: 'How confident are you in writing automated tests?',
-    category: CATEGORIES.CODE_QUALITY,
-    type: 'multiple-choice',
-    hint: "Tests are your safety net - they give you confidence to refactor and iterate",
-    allowOther: true,
-    options: [
       {
-        value: 'no-tests',
-        label: 'I rarely or never write tests',
-        recommendations: ['Learn unit testing fundamentals', 'Start with simple test cases', 'Understand the testing pyramid'],
+        value: 'rarely',
+        label: 'Rarely or never',
+        recommendations: ['Start reviewing pull requests regularly', 'Learn code review best practices', 'Ask to be added as a reviewer'],
         scoreWeight: 0.15,
-        mentorExplanation: "Tests might seem like extra work, but they're actually time-savers! They catch bugs early and give you confidence to refactor. Start small - even one test is better than none. Think of tests as documentation that proves your code works.",
+        mentorExplanation: "You're missing one of the best learning opportunities - seeing how experienced developers write code and think through problems. Volunteer to review; you don't have to be an expert to ask good questions. That's how you learn.",
         resources: [
-          { title: 'Testing JavaScript', url: 'https://testingjavascript.com/', type: 'course', description: 'Comprehensive testing course' },
-          { title: 'Unit Testing Basics', url: 'https://www.freecodecamp.org/news/unit-testing-basics/', type: 'article' },
-          { title: 'Testing Best Practices', url: 'https://github.com/goldbergyoni/javascript-testing-best-practices', type: 'github' },
+          { title: "Code Review Best Practices", url: 'https://google.github.io/eng-practices/review/', type: 'docs', description: "Google's code review guide" },
+          { title: 'How to Review Code', url: 'https://www.freecodecamp.org/news/code-review-tips/', type: 'article' },
+          { title: 'Effective Code Reviews', url: 'https://www.youtube.com/watch?v=a9_0UUUNt-Y', type: 'video' },
         ],
       },
       {
-        value: 'when-asked',
-        label: 'I write tests only when specifically asked',
-        recommendations: ['Make testing a habit', 'Learn TDD basics', 'Understand value of tests'],
-        scoreWeight: 0.25,
-        isCommonMistake: true,
-        mentorExplanation: "Testing should be part of 'done,' not an afterthought. Try writing tests as you code - it actually helps you design better APIs. Tests are your first client!",
+        value: 'proactive',
+        label: 'I actively seek out PRs to review and provide detailed feedback',
+        recommendations: ['Document common patterns', 'Create team review guidelines', 'Host code review workshops'],
+        scoreWeight: 0.83,
+        isCorrect: true,
+        mentorExplanation: "Proactive reviewing means you care about the codebase, not just your part of it. The detailed feedback you give makes everyone better. Consider documenting the patterns you see repeatedly - that becomes team knowledge, not just review comments.",
         resources: [
-          { title: 'Test-Driven Development', url: 'https://testdriven.io/blog/modern-tdd/', type: 'article' },
-          { title: 'Testing Mindset', url: 'https://kentcdodds.com/blog/write-tests', type: 'article' },
-          { title: 'Jest Tutorial', url: 'https://jestjs.io/docs/tutorial-react', type: 'docs' },
+          { title: 'Building Review Culture', url: 'https://www.netlify.com/blog/2020/03/05/feedback-ladders-how-we-encode-code-reviews-at-netlify/', type: 'article' },
+          { title: 'Advanced Code Review', url: 'https://www.youtube.com/watch?v=PJjmw9TRB7s', type: 'video' },
+          { title: 'Team Code Review Process', url: 'https://github.com/features/code-review/', type: 'docs' },
         ],
       },
       {
-        value: 'basic',
-        label: 'I write basic unit tests for my code',
-        recommendations: ['Learn integration testing', 'Improve test coverage', 'Practice writing better assertions'],
+        value: 'sometimes',
+        label: 'Occasionally when asked',
+        recommendations: ['Volunteer for more code reviews', 'Review across different areas', 'Provide constructive feedback'],
         scoreWeight: 0.42,
-        mentorExplanation: "Good start! Unit tests are important, but don't stop there. Integration tests catch issues that unit tests miss. Aim for testing behavior, not implementation details.",
+        mentorExplanation: "Occasional reviews are better than none, but you're reactive instead of proactive. Make it a habit - review something every day or two. You stay connected to what's changing and build better working relationships with teammates.",
         resources: [
-          { title: 'Integration Testing', url: 'https://kentcdodds.com/blog/write-tests', type: 'article' },
-          { title: 'Testing Library', url: 'https://testing-library.com/docs/', type: 'docs', description: 'User-centric testing' },
-          { title: 'Test Coverage Guide', url: 'https://martinfowler.com/bliki/TestCoverage.html', type: 'article' },
-        ],
-      },
-      {
-        value: 'comprehensive',
-        label: 'I write comprehensive tests (unit, integration)',
-        recommendations: ['Learn TDD methodology', 'Set up CI/CD pipelines', 'Practice E2E testing'],
-        scoreWeight: 0.68,
-        yearOneRecommendations: ['Achieve 80%+ code coverage', 'Implement E2E testing'],
-        isCorrect: true,
-        mentorExplanation: "Excellent testing habits! You understand the value of different test types. Next level: try TDD - write the test first. It changes how you think about design!",
-        resources: [
-          { title: 'Test-Driven Development', url: 'https://www.youtube.com/watch?v=Jv2uxzhPFl4', type: 'video' },
-          { title: 'E2E Testing with Cypress', url: 'https://www.cypress.io/', type: 'docs' },
-          { title: 'CI/CD Best Practices', url: 'https://www.atlassian.com/continuous-delivery/principles/continuous-integration-vs-delivery-vs-deployment', type: 'article' },
-        ],
-      },
-      {
-        value: 'tdd',
-        label: 'I practice TDD and write test-first code',
-        recommendations: ['Advocate for testing', 'Mentor others in TDD', 'Share testing patterns'],
-        scoreWeight: 0.85,
-        isCorrect: true,
-        mentorExplanation: "You're practicing TDD - that's advanced! The red-green-refactor cycle is powerful. Share your approach with the team, but remember: TDD is a tool, not a religion. Use it wisely.",
-        resources: [
-          { title: 'Growing Object-Oriented Software', url: 'http://www.growing-object-oriented-software.com/', type: 'book' },
-          { title: 'TDD Best Practices', url: 'https://kentcdodds.com/blog/common-mistakes-with-react-testing-library', type: 'article' },
-          { title: 'Testing Workshops', url: 'https://testingjavascript.com/', type: 'course' },
-        ],
-      },
-      {
-        value: 'advanced',
-        label: 'I advocate for testing and help establish testing standards',
-        recommendations: ['Lead testing initiatives', 'Create testing workshops', 'Build testing infrastructure'],
-        scoreWeight: 0.92,
-        isCorrect: true,
-        mentorExplanation: "You're a testing champion! Your advocacy improves team quality. Keep making testing easier and more valuable - that's how you build testing culture.",
-        resources: [
-          { title: 'Building Testing Culture', url: 'https://martinfowler.com/articles/testing-culture.html', type: 'article' },
-          { title: 'Testing Strategy', url: 'https://martinfowler.com/bliki/TestPyramid.html', type: 'article' },
-          { title: 'Advanced Testing Patterns', url: 'https://testingjavascript.com/', type: 'course' },
-        ],
-      },
-      {
-        value: 'expert',
-        label: 'I implement comprehensive testing strategies across the organization',
-        recommendations: ['Speak about testing at conferences', 'Write about testing practices', 'Build testing tools'],
-        scoreWeight: 1.0,
-        isCorrect: true,
-        mentorExplanation: "You're a testing expert! Your organizational impact is huge. Consider sharing your knowledge through talks, blog posts, or building tools that make testing easier for everyone.",
-        resources: [
-          { title: 'Test Automation University', url: 'https://testautomationu.applitools.com/', type: 'course' },
-          { title: 'Testing at Scale', url: 'https://www.youtube.com/watch?v=4bpJZNhsZ_g', type: 'video' },
-          { title: 'Writing About Testing', url: 'https://kentcdodds.com/blog/', type: 'article' },
+          { title: 'Code Review Etiquette', url: 'https://www.alexandra-hill.com/2018/06/25/the-art-of-giving-and-receiving-code-reviews/', type: 'article' },
+          { title: 'Thoughtful Code Reviews', url: 'https://testing.googleblog.com/2017/06/code-health-too-many-comments-on-your.html', type: 'article' },
+          { title: 'Review Small PRs', url: 'https://smallbusinessprogramming.com/optimal-pull-request-size/', type: 'article' },
         ],
       },
     ],
@@ -1051,7 +948,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 7 — Technical Disagreements
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q7',
+    id: uuidv4(),
     title: 'How do you handle technical disagreements with team members?',
     category: CATEGORIES.COMMUNICATION,
     type: 'multiple-choice',
@@ -1059,37 +956,12 @@ export const QUESTIONS: Question[] = [
     allowOther: true,
     options: [
       {
-        value: 'avoid',
-        label: 'I tend to avoid confrontation and stay quiet',
-        recommendations: ['Practice assertive communication', 'Learn conflict resolution skills', 'Prepare your points beforehand'],
-        scoreWeight: 0.25,
-        mentorExplanation: "Your perspective matters! Avoiding disagreement means missing opportunities to improve. Start small - try sharing one concern in your next meeting. Frame it as a question if that helps: 'What about...?'",
-        resources: [
-          { title: 'Assertive Communication', url: 'https://www.mindtools.com/CommSkll/AssertiveCommunication.htm', type: 'article' },
-          { title: 'Crucial Conversations', url: 'https://www.amazon.com/Crucial-Conversations-Talking-Stakes-Second/dp/1469266822', type: 'book' },
-          { title: 'Speaking Up at Work', url: 'https://hbr.org/2016/01/how-to-speak-up-when-its-your-turn', type: 'article' },
-        ],
-      },
-      {
-        value: 'defer',
-        label: 'I usually defer to more senior developers',
-        recommendations: ['Build confidence in your opinions', 'Prepare data to support your views', 'Ask clarifying questions'],
-        scoreWeight: 0.42,
-        isCommonMistake: true,
-        mentorExplanation: "Experience matters, but so does fresh perspective! Senior doesn't always mean right. Challenge ideas respectfully - bring data, ask 'why', propose alternatives. That's how you grow!",
-        resources: [
-          { title: 'Disagree and Commit', url: 'https://en.wikipedia.org/wiki/Disagree_and_commit', type: 'article' },
-          { title: 'Technical Decision Making', url: 'https://www.youtube.com/watch?v=jsNnlu0B1-0', type: 'video' },
-          { title: 'Building Technical Confidence', url: 'https://charity.wtf/2019/01/04/engineering-management-the-pendulum-or-the-ladder/', type: 'article' },
-        ],
-      },
-      {
         value: 'discuss',
         label: 'I discuss openly and seek consensus',
         recommendations: ['Document decision-making processes', 'Facilitate technical discussions', 'Use RFCs for big decisions'],
-        scoreWeight: 0.72,
+        scoreWeight: 0.7,
         isCorrect: true,
-        mentorExplanation: "Great approach! Open discussion and consensus-seeking create better solutions. Keep it constructive - focus on the problem, not personalities. 'Strong opinions, loosely held' is a good mindset.",
+        mentorExplanation: "Open discussion works because everyone's input gets heard and weighed. The consensus process builds buy-in - people support decisions they helped shape. Document the reasoning; future-you will appreciate knowing why that choice was made.",
         resources: [
           { title: 'RFC Process', url: 'https://github.com/rust-lang/rfcs', type: 'github', description: 'Example RFC process' },
           { title: 'Architecture Decision Records', url: 'https://adr.github.io/', type: 'docs' },
@@ -1097,16 +969,67 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
+        value: 'defer',
+        label: 'I usually defer to more senior developers',
+        recommendations: ['Build confidence in your opinions', 'Prepare data to support your views', 'Ask clarifying questions'],
+        scoreWeight: 0.55,
+        isCommonMistake: true,
+        mentorExplanation: "Experience matters, but junior doesn't mean wrong. You might see something they missed. Frame it as questions if that's easier: 'What about X approach?' or 'Have we considered Y?' That's how you learn and sometimes you'll be right.",
+        resources: [
+          { title: 'Disagree and Commit', url: 'https://en.wikipedia.org/wiki/Disagree_and_commit', type: 'article' },
+          { title: 'Technical Decision Making', url: 'https://www.youtube.com/watch?v=jsNnlu0B1-0', type: 'video' },
+          { title: 'Building Technical Confidence', url: 'https://charity.wtf/2019/01/04/engineering-management-the-pendulum-or-the-ladder/', type: 'article' },
+        ],
+      },
+      {
+        value: 'data-driven',
+        label: 'I resolve disagreements with data, experiments, and proof-of-concepts',
+        recommendations: ['Teach data-driven decision making', 'Build experimentation culture', 'Create decision frameworks', 'Document outcomes'],
+        scoreWeight: 0.92,
+        isCorrect: true,
+        mentorExplanation: "This is the engineering approach - let data decide. Quick POCs settle debates fast and everyone learns something regardless of the outcome. 'Let's test both and measure' beats endless debate every time.",
+        resources: [
+          { title: 'Data-Driven Decisions', url: 'https://basecamp.com/gettingreal/10.1-make-opinionated-software', type: 'article' },
+          { title: 'A/B Testing', url: 'https://www.optimizely.com/optimization-glossary/ab-testing/', type: 'docs' },
+          { title: 'Engineering Experiments', url: 'https://increment.com/testing/i-test-in-production/', type: 'article' },
+        ],
+      },
+      {
+        value: 'avoid',
+        label: 'I tend to avoid confrontation and stay quiet',
+        recommendations: ['Practice assertive communication', 'Learn conflict resolution skills', 'Prepare your points beforehand'],
+        scoreWeight: 0.1,
+        mentorExplanation: "Staying quiet means missing opportunities to improve the work. Your different perspective has value. Start small - share one concern as a question. Most technical disagreements aren't personal; they're about finding the best solution.",
+        resources: [
+          { title: 'Assertive Communication', url: 'https://www.mindtools.com/CommSkll/AssertiveCommunication.htm', type: 'article' },
+          { title: 'Crucial Conversations', url: 'https://www.amazon.com/Crucial-Conversations-Talking-Stakes-Second/dp/1469266822', type: 'book' },
+          { title: 'Speaking Up at Work', url: 'https://hbr.org/2016/01/how-to-speak-up-when-its-your-turn', type: 'article' },
+        ],
+      },
+      {
         value: 'facilitate',
         label: 'I facilitate productive discussions and help find balanced solutions',
         recommendations: ['Mentor others in communication', 'Create decision frameworks', 'Document patterns'],
-        scoreWeight: 0.87,
+        scoreWeight: 0.82,
         isCorrect: true,
-        mentorExplanation: "You're a great technical communicator! Facilitating balanced solutions is a leadership skill. Keep building bridges between different viewpoints - that's invaluable.",
+        mentorExplanation: "Facilitating disagreements is leadership - you're helping people talk through problems productively. Good facilitators summarize positions, find common ground, and keep discussions on track. Teams need this skill badly.",
         resources: [
           { title: 'Facilitation Skills', url: 'https://www.atlassian.com/team-playbook/plays', type: 'docs' },
           { title: 'Technical Leadership', url: 'https://www.thestaffeng.com/', type: 'article' },
           { title: 'Decision Making Frameworks', url: 'https://untools.co/', type: 'docs' },
+        ],
+      },
+      {
+        value: 'stubborn',
+        label: 'I strongly defend my ideas and rarely change my mind',
+        recommendations: ['Practice intellectual humility', 'Seek contrary evidence', 'Learn disagreement frameworks', 'Focus on outcomes over ego'],
+        scoreWeight: 0.4,
+        isCommonMistake: true,
+        mentorExplanation: "Being right feels good, but being effective matters more. The best engineers change their minds when shown better evidence. Try this: actively look for reasons your idea might be wrong before defending it. Ego is expensive.",
+        resources: [
+          { title: 'Intellectual Humility', url: 'https://hbr.org/2016/12/the-case-for-intellectual-humility', type: 'article' },
+          { title: 'Strong Opinions Weakly Held', url: 'https://medium.com/@ameet/strong-opinions-weakly-held-a-framework-for-thinking-6530d417e364', type: 'article' },
+          { title: 'Disagree Better', url: 'https://www.youtube.com/watch?v=kgk0q7OyC6Y', type: 'video' },
         ],
       },
       {
@@ -1115,7 +1038,7 @@ export const QUESTIONS: Question[] = [
         recommendations: ['Establish decision-making processes', 'Coach others in healthy disagreement', 'Scale your influence'],
         scoreWeight: 1.0,
         isCorrect: true,
-        mentorExplanation: "You're a technical leader! Your ability to navigate disagreements and drive decisions is crucial. Keep fostering healthy debate culture - it makes teams stronger.",
+        mentorExplanation: "Leading technical decisions means balancing many inputs and driving to resolution. You're not dictating; you're synthesizing viewpoints and making the call when needed. Document the rationale - decisions made with incomplete information need context for future readers.",
         resources: [
           { title: "Staff Engineer's Path", url: 'https://www.oreilly.com/library/view/the-staff-engineers/9781098118723/', type: 'book' },
           { title: 'Technical Decision Making', url: 'https://www.youtube.com/watch?v=jsNnlu0B1-0', type: 'video' },
@@ -1123,38 +1046,12 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'stubborn',
-        label: 'I strongly defend my ideas and rarely change my mind',
-        recommendations: ['Practice intellectual humility', 'Seek contrary evidence', 'Learn disagreement frameworks', 'Focus on outcomes over ego'],
-        scoreWeight: 0.3,
-        isCommonMistake: true,
-        mentorExplanation: "Strong opinions are good, but 'loosely held' is key! Being right isn't as important as finding the best solution. Practice saying 'I was wrong' - it's a strength, not weakness. Listen more than you speak.",
-        resources: [
-          { title: 'Intellectual Humility', url: 'https://hbr.org/2016/12/the-case-for-intellectual-humility', type: 'article' },
-          { title: 'Strong Opinions Weakly Held', url: 'https://medium.com/@ameet/strong-opinions-weakly-held-a-framework-for-thinking-6530d417e364', type: 'article' },
-          { title: 'Disagree Better', url: 'https://www.youtube.com/watch?v=kgk0q7OyC6Y', type: 'video' },
-        ],
-      },
-      {
-        value: 'data-driven',
-        label: 'I resolve disagreements with data, experiments, and proof-of-concepts',
-        recommendations: ['Teach data-driven decision making', 'Build experimentation culture', 'Create decision frameworks', 'Document outcomes'],
-        scoreWeight: 0.88,
-        isCorrect: true,
-        mentorExplanation: "Excellent! Data beats opinions. You're solving disagreements scientifically - try it and see! This approach builds consensus and learning. Keep promoting experimentation culture!",
-        resources: [
-          { title: 'Data-Driven Decisions', url: 'https://basecamp.com/gettingreal/10.1-make-opinionated-software', type: 'article' },
-          { title: 'A/B Testing', url: 'https://www.optimizely.com/optimization-glossary/ab-testing/', type: 'docs' },
-          { title: 'Engineering Experiments', url: 'https://increment.com/testing/i-test-in-production/', type: 'article' },
-        ],
-      },
-      {
         value: 'passive-aggressive',
         label: 'I agree publicly but express concerns privately or ignore decisions',
         recommendations: ['Practice direct communication', 'Learn to disagree constructively', 'Build trust with team', 'Address concerns openly'],
-        scoreWeight: 0.28,
+        scoreWeight: 0.25,
         isCommonMistake: true,
-        mentorExplanation: "This damages trust and prevents good solutions. Practice speaking up constructively in the moment. If you disagree, say so respectfully with reasoning. Amazon's 'Disagree and Commit' principle is worth learning!",
+        mentorExplanation: "This pattern kills team trust and makes problems worse. If you disagree, say so in the room with your reasoning. 'Disagree and commit' means voicing concerns, then supporting the decision once made. Silent resentment helps no one.",
         resources: [
           { title: 'Disagree and Commit', url: 'https://en.wikipedia.org/wiki/Disagree_and_commit', type: 'article' },
           { title: 'Radical Candor', url: 'https://www.radicalcandor.com/', type: 'book', description: 'Direct and kind communication' },
@@ -1168,7 +1065,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 8 — System Design
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q8',
+    id: uuidv4(),
     title: 'Which best describes your experience with system design and architecture?',
     category: CATEGORIES.PROBLEM_SOLVING,
     type: 'multiple-choice',
@@ -1176,37 +1073,13 @@ export const QUESTIONS: Question[] = [
     allowOther: true,
     options: [
       {
-        value: 'none',
-        label: 'No experience, I work on assigned tasks',
-        recommendations: ['Study basic software architecture patterns', 'Learn about system design fundamentals', 'Read about design principles'],
-        scoreWeight: 0.18,
-        mentorExplanation: "System design might seem advanced, but start thinking about it now! Even small tasks involve design choices. Why this pattern? What if we needed to scale it? Ask these questions!",
-        resources: [
-          { title: 'System Design Primer', url: 'https://github.com/donnemartin/system-design-primer', type: 'github', description: 'Comprehensive system design guide' },
-          { title: 'Software Architecture Patterns', url: 'https://www.oreilly.com/library/view/software-architecture-patterns/9781491971437/', type: 'book' },
-          { title: 'Design Patterns Explained', url: 'https://refactoring.guru/design-patterns', type: 'article' },
-        ],
-      },
-      {
-        value: 'learning',
-        label: 'Learning through project involvement',
-        recommendations: ['Take a system design course', 'Practice designing small systems', 'Study real-world architectures'],
-        scoreWeight: 0.42,
-        mentorExplanation: "Learning by doing is great! Now complement it with studying proven patterns. Understanding WHY systems are designed certain ways is as important as HOW to build them.",
-        resources: [
-          { title: 'Designing Data-Intensive Applications', url: 'https://dataintensive.net/', type: 'book', description: 'Essential system design book' },
-          { title: 'System Design Interview', url: 'https://www.youtube.com/c/SystemDesignInterview', type: 'video' },
-          { title: 'Microservices Patterns', url: 'https://microservices.io/patterns/index.html', type: 'docs' },
-        ],
-      },
-      {
         value: 'design',
         label: 'I design features and components',
         recommendations: ['Study scalability patterns', 'Design larger system architectures', 'Learn about trade-offs'],
-        scoreWeight: 0.65,
+        scoreWeight: 0.82,
         yearOneRecommendations: ['Lead architectural decisions for a feature', 'Present design proposals'],
         isCorrect: true,
-        mentorExplanation: "Good! You're thinking about design. Next level: understand trade-offs. Every design choice has consequences - there's no 'perfect' solution, only appropriate ones. Start documenting your design decisions and reasoning.",
+        mentorExplanation: "You're designing at the component level, which is solid. Next step: understand the system-level implications. How does your component fit into the larger picture? What happens at scale? Every design decision has trade-offs - start documenting them.",
         resources: [
           { title: 'Architecture Decision Records', url: 'https://adr.github.io/', type: 'docs' },
           { title: 'Clean Architecture', url: 'https://www.amazon.com/Clean-Architecture-Craftsmans-Software-Structure/dp/0134494164', type: 'book' },
@@ -1214,16 +1087,15 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'architect',
-        label: 'I design and architect systems',
-        recommendations: ['Mentor others in architecture', 'Document architectural decisions', 'Study distributed systems'],
-        scoreWeight: 0.85,
-        isCorrect: true,
-        mentorExplanation: "You're an architect! Your system-level thinking is valuable. Keep studying emerging patterns, but also teach others your thought process - that's how you scale your impact.",
+        value: 'learning',
+        label: 'Learning through project involvement',
+        recommendations: ['Take a system design course', 'Practice designing small systems', 'Study real-world architectures'],
+        scoreWeight: 0.42,
+        mentorExplanation: "Hands-on learning is effective, but study the patterns behind what you're building. Why this database? Why this architecture? Understanding the 'why' makes you dangerous - you can apply it to new problems.",
         resources: [
-          { title: 'Fundamentals of Software Architecture', url: 'https://www.oreilly.com/library/view/fundamentals-of-software/9781492043447/', type: 'book' },
-          { title: 'Distributed Systems', url: 'https://www.distributed-systems.net/', type: 'course' },
-          { title: "Martin Fowler's Blog", url: 'https://martinfowler.com/', type: 'article', description: 'Architecture insights' },
+          { title: 'Designing Data-Intensive Applications', url: 'https://dataintensive.net/', type: 'book', description: 'Essential system design book' },
+          { title: 'System Design Interview', url: 'https://www.youtube.com/c/SystemDesignInterview', type: 'video' },
+          { title: 'Microservices Patterns', url: 'https://microservices.io/patterns/index.html', type: 'docs' },
         ],
       },
       {
@@ -1232,7 +1104,7 @@ export const QUESTIONS: Question[] = [
         recommendations: ['Share architecture knowledge', 'Lead organization-wide initiatives', 'Speak at conferences'],
         scoreWeight: 1.0,
         isCorrect: true,
-        mentorExplanation: "You're an architecture expert! Your experience with distributed systems is rare and valuable. Consider sharing through talks, blog posts, or mentoring - the industry needs this expertise!",
+        mentorExplanation: "Distributed systems expertise is rare. You understand CAP theorem isn't theoretical - it's every day trade-offs. Share this knowledge; most developers never work at this level. Write, speak, mentor. Your experience is valuable.",
         resources: [
           { title: 'Designing Distributed Systems', url: 'https://www.amazon.com/Designing-Distributed-Systems-Patterns-Paradigms/dp/1491983647', type: 'book' },
           { title: 'Papers We Love', url: 'https://paperswelove.org/', type: 'article', description: 'Computer science papers' },
@@ -1240,24 +1112,23 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'copy-paste',
-        label: 'I mostly copy solutions from Stack Overflow without understanding design',
-        recommendations: ['Learn fundamental design principles', 'Understand before implementing', 'Study why solutions work', 'Build foundational knowledge'],
-        scoreWeight: 0.12,
-        isCommonMistake: true,
-        mentorExplanation: "Stack Overflow is a tool, not a teacher! Before copying, understand WHY that solution works. What problem does it solve? What are the trade-offs? Start with fundamentals - design patterns, SOLID principles. Understanding beats copying!",
+        value: 'none',
+        label: 'No experience, I work on assigned tasks',
+        recommendations: ['Study basic software architecture patterns', 'Learn about system design fundamentals', 'Read about design principles'],
+        scoreWeight: 0.25,
+        mentorExplanation: "Even small tasks involve design choices. Start thinking architecturally: why this approach over that one? What if this needed to handle 10x traffic? Ask these questions; they'll change how you code.",
         resources: [
-          { title: 'Design Patterns for Humans', url: 'https://github.com/kamranahmedse/design-patterns-for-humans', type: 'github', description: 'Simple design pattern explanations' },
-          { title: 'SOLID Principles', url: 'https://www.digitalocean.com/community/conceptual-articles/s-o-l-i-d-the-first-five-principles-of-object-oriented-design', type: 'article' },
-          { title: 'Refactoring Guru', url: 'https://refactoring.guru/', type: 'docs', description: 'Design patterns and refactoring' },
+          { title: 'System Design Primer', url: 'https://github.com/donnemartin/system-design-primer', type: 'github', description: 'Comprehensive system design guide' },
+          { title: 'Software Architecture Patterns', url: 'https://www.oreilly.com/library/view/software-architecture-patterns/9781491971437/', type: 'book' },
+          { title: 'Design Patterns Explained', url: 'https://refactoring.guru/design-patterns', type: 'article' },
         ],
       },
       {
         value: 'monolith-only',
         label: 'I only have experience with monolithic architectures',
         recommendations: ['Learn microservices patterns', 'Study distributed systems concepts', 'Understand service boundaries', 'Learn API design'],
-        scoreWeight: 0.48,
-        mentorExplanation: "Monoliths aren't bad - they're often the right choice! But understanding alternatives makes you versatile. Learn microservices, understand the trade-offs. Not every project needs microservices, but knowing when to use them is valuable.",
+        scoreWeight: 0.7,
+        mentorExplanation: "Monoliths get a bad rap but they're often the right choice - simple, fast to develop, easy to debug. Learn microservices so you understand the trade-offs, not because you need to use them everywhere. Many 'microservices' should have stayed monoliths.",
         resources: [
           { title: 'Monolith vs Microservices', url: 'https://martinfowler.com/articles/microservices.html', type: 'article' },
           { title: 'Microservices Patterns', url: 'https://microservices.io/patterns/index.html', type: 'docs' },
@@ -1265,12 +1136,38 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
+        value: 'architect',
+        label: 'I design and architect systems',
+        recommendations: ['Mentor others in architecture', 'Document architectural decisions', 'Study distributed systems'],
+        scoreWeight: 0.92,
+        isCorrect: true,
+        mentorExplanation: "System-level thinking is your strength. You're balancing requirements, constraints, and trade-offs. Keep learning patterns, but also teach your process - how you think through design problems is more valuable than the solutions themselves.",
+        resources: [
+          { title: 'Fundamentals of Software Architecture', url: 'https://www.oreilly.com/library/view/fundamentals-of-software/9781492043447/', type: 'book' },
+          { title: 'Distributed Systems', url: 'https://www.distributed-systems.net/', type: 'course' },
+          { title: "Martin Fowler's Blog", url: 'https://martinfowler.com/', type: 'article', description: 'Architecture insights' },
+        ],
+      },
+      {
+        value: 'copy-paste',
+        label: 'I mostly copy solutions from Stack Overflow without understanding design',
+        recommendations: ['Learn fundamental design principles', 'Understand before implementing', 'Study why solutions work', 'Build foundational knowledge'],
+        scoreWeight: 0.1,
+        isCommonMistake: true,
+        mentorExplanation: "Copying code without understanding is like copying someone's homework - you miss the learning. Before implementing a solution, understand the problem it solves. Why does this work? What would break it? That understanding is what separates developers from coders.",
+        resources: [
+          { title: 'Design Patterns for Humans', url: 'https://github.com/kamranahmedse/design-patterns-for-humans', type: 'github', description: 'Simple design pattern explanations' },
+          { title: 'SOLID Principles', url: 'https://www.digitalocean.com/community/conceptual-articles/s-o-l-i-d-the-first-five-principles-of-object-oriented-design', type: 'article' },
+          { title: 'Refactoring Guru', url: 'https://refactoring.guru/', type: 'docs', description: 'Design patterns and refactoring' },
+        ],
+      },
+      {
         value: 'over-engineer',
         label: 'I tend to over-engineer solutions with unnecessary complexity',
         recommendations: ['Practice YAGNI principle', 'Start simple, evolve as needed', 'Learn when to add abstraction', 'Focus on solving actual problems'],
-        scoreWeight: 0.35,
+        scoreWeight: 0.4,
         isCommonMistake: true,
-        mentorExplanation: "Simplicity is sophisticated! 'You Aren't Gonna Need It' (YAGNI) is crucial. Build for today's requirements, not imagined future ones. Good architecture emerges from simple solutions that evolve. Premature optimization is the root of all evil!",
+        mentorExplanation: "Complexity is easy; simplicity is hard. Build for today's requirements, not imagined future ones. Every abstraction layer you add is cognitive overhead for everyone. YAGNI (You Aren't Gonna Need It) isn't about being lazy - it's about being pragmatic.",
         resources: [
           { title: 'YAGNI Principle', url: 'https://martinfowler.com/bliki/Yagni.html', type: 'article' },
           { title: 'Simple Made Easy', url: 'https://www.infoq.com/presentations/Simple-Made-Easy/', type: 'video', description: 'Classic Rich Hickey talk' },
@@ -1284,7 +1181,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 9 — Staying Current (checkbox)
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q9',
+    id: uuidv4(),
     title: 'How do you stay current with industry trends and best practices? (Select all that apply)',
     category: CATEGORIES.LEARNING,
     type: 'checkbox',
@@ -1292,71 +1189,11 @@ export const QUESTIONS: Question[] = [
     allowOther: true,
     options: [
       {
-        value: 'blogs',
-        label: 'Read tech blogs and articles regularly',
-        recommendations: ['Create a curated reading list', 'Share interesting articles with team'],
-        scoreWeight: 0.15,
-        mentorExplanation: "Reading is great for staying informed! Pro tip: Don't just consume - take notes, try examples, share what you learn.",
-        resources: [
-          { title: 'Developer Blog List', url: 'https://github.com/kilimchoi/engineering-blogs', type: 'github' },
-          { title: 'Hacker News', url: 'https://news.ycombinator.com/', type: 'article' },
-          { title: 'Dev.to Community', url: 'https://dev.to/', type: 'article' },
-        ],
-      },
-      {
-        value: 'courses',
-        label: 'Take online courses',
-        recommendations: ['Complete course projects', 'Apply learnings to real work', 'Mix free and paid courses'],
-        scoreWeight: 0.18,
-        mentorExplanation: 'Structured courses build solid foundations. Remember: finish what you start, and always build something with what you learn!',
-        resources: [
-          { title: 'Frontend Masters', url: 'https://frontendmasters.com/', type: 'course' },
-          { title: 'Pluralsight', url: 'https://www.pluralsight.com/', type: 'course' },
-          { title: 'freeCodeCamp', url: 'https://www.freecodecamp.org/', type: 'course' },
-        ],
-      },
-      {
-        value: 'podcasts',
-        label: 'Listen to tech podcasts',
-        recommendations: ['Take notes on key insights', 'Explore topics mentioned', 'Share episodes with team'],
-        scoreWeight: 0.12,
-        mentorExplanation: 'Podcasts are great for learning during commutes! Listen actively - take notes, follow up on interesting topics.',
-        resources: [
-          { title: 'Software Engineering Daily', url: 'https://softwareengineeringdaily.com/', type: 'article' },
-          { title: 'Syntax.fm', url: 'https://syntax.fm/', type: 'article' },
-          { title: 'JavaScript Jabber', url: 'https://javascriptjabber.com/', type: 'article' },
-        ],
-      },
-      {
-        value: 'conferences',
-        label: 'Attend conferences or meetups',
-        recommendations: ['Network with other developers', 'Present at local meetups', 'Share learnings with team'],
-        scoreWeight: 0.2,
-        mentorExplanation: "Conferences and meetups build community! Don't just attend - engage, ask questions, make connections. Virtual counts too!",
-        resources: [
-          { title: 'Meetup.com', url: 'https://www.meetup.com/', type: 'article' },
-          { title: 'Conference Talk Ideas', url: 'https://speaking.io/', type: 'docs' },
-          { title: 'Virtual Tech Events', url: 'https://www.eventbrite.com/d/online/tech/', type: 'article' },
-        ],
-      },
-      {
-        value: 'opensource',
-        label: 'Contribute to open source',
-        recommendations: ['Start with documentation', 'Fix bugs in tools you use', 'Build your portfolio'],
-        scoreWeight: 0.25,
-        mentorExplanation: "Open source is learning on steroids! You'll see production codebases, get feedback from experienced developers, and build your reputation. Start small - even docs help!",
-        resources: [
-          { title: 'First Contributions', url: 'https://github.com/firstcontributions/first-contributions', type: 'github' },
-          { title: 'Open Source Guide', url: 'https://opensource.guide/', type: 'docs' },
-          { title: 'Good First Issues', url: 'https://goodfirstissue.dev/', type: 'article' },
-        ],
-      },
-      {
         value: 'practice',
         label: 'Build side projects',
         recommendations: ['Share projects publicly', 'Try new technologies', 'Build to solve real problems'],
         scoreWeight: 0.2,
-        mentorExplanation: 'Side projects are your laboratory! Build in public, experiment freely, fail fast. This is where you can try risky things without consequences.',
+        mentorExplanation: 'Side projects let you experiment without consequences. Try risky things, fail fast, learn what works. Building in public adds accountability and networking. Your side project might become your next job.',
         resources: [
           { title: 'Project Ideas', url: 'https://github.com/florinpop17/app-ideas', type: 'github' },
           { title: 'Build in Public', url: 'https://www.indiehackers.com/group/build-in-public', type: 'article' },
@@ -1364,51 +1201,15 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'twitter',
-        label: 'Follow developers and tech leaders on social media',
-        recommendations: ['Engage in discussions', 'Share your insights', 'Build your network'],
-        scoreWeight: 0.12,
-        mentorExplanation: "Social media can be noisy, but following the right people gives you a pulse on the industry. Engage, don't just lurk!",
+        value: 'opensource',
+        label: 'Contribute to open source',
+        recommendations: ['Start with documentation', 'Fix bugs in tools you use', 'Build your portfolio'],
+        scoreWeight: 0.25,
+        mentorExplanation: "Open source shows you production codebases and gets you feedback from experienced developers. Start small - docs, typos, good-first-issues. Even small PRs build confidence and reputation.",
         resources: [
-          { title: 'Developer Twitter List', url: 'https://twitter.com/i/lists', type: 'article' },
-          { title: 'Tech Twitter Guide', url: 'https://dev.to/denicmarko/how-to-use-twitter-as-a-developer-4h45', type: 'article' },
-          { title: 'Engage on LinkedIn', url: 'https://www.linkedin.com/', type: 'article' },
-        ],
-      },
-      {
-        value: 'newsletters',
-        label: 'Subscribe to tech newsletters',
-        recommendations: ['Curate your subscriptions', 'Archive and review weekly', 'Share interesting finds'],
-        scoreWeight: 0.13,
-        mentorExplanation: "Newsletters deliver curated content to your inbox. Great for staying current without the noise! But don't just collect them - read and act.",
-        resources: [
-          { title: 'JavaScript Weekly', url: 'https://javascriptweekly.com/', type: 'article' },
-          { title: 'Node Weekly', url: 'https://nodeweekly.com/', type: 'article' },
-          { title: 'TLDR Newsletter', url: 'https://tldr.tech/', type: 'article' },
-        ],
-      },
-      {
-        value: 'books',
-        label: 'Read programming and software engineering books',
-        recommendations: ['Read classics and new releases', 'Discuss with reading groups', 'Apply concepts immediately'],
-        scoreWeight: 0.18,
-        mentorExplanation: "Books offer deep knowledge that articles can't match. Mix timeless classics with current topics. Take notes, discuss with others!",
-        resources: [
-          { title: 'The Pragmatic Programmer', url: 'https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/', type: 'book' },
-          { title: 'Clean Code', url: 'https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882', type: 'book' },
-          { title: 'Developer Reading List', url: 'https://github.com/mr-mig/every-programmer-should-know', type: 'github' },
-        ],
-      },
-      {
-        value: 'youtube',
-        label: 'Watch technical videos and tutorials',
-        recommendations: ['Follow quality channels', 'Build along with tutorials', 'Take notes and reference later'],
-        scoreWeight: 0.15,
-        mentorExplanation: "Videos are great for visual learning! Watch at 1.5x-2x speed, pause to try things, and always build along. Passive watching doesn't teach as well as active doing.",
-        resources: [
-          { title: 'Fireship', url: 'https://www.youtube.com/@Fireship', type: 'video' },
-          { title: 'Traversy Media', url: 'https://www.youtube.com/@TraversyMedia', type: 'video' },
-          { title: 'The Primeagen', url: 'https://www.youtube.com/@ThePrimeagen', type: 'video' },
+          { title: 'First Contributions', url: 'https://github.com/firstcontributions/first-contributions', type: 'github' },
+          { title: 'Open Source Guide', url: 'https://opensource.guide/', type: 'docs' },
+          { title: 'Good First Issues', url: 'https://goodfirstissue.dev/', type: 'article' },
         ],
       },
       {
@@ -1416,20 +1217,55 @@ export const QUESTIONS: Question[] = [
         label: 'Read official documentation and RFCs',
         recommendations: ['Read change logs', 'Understand core concepts', 'Contribute to docs'],
         scoreWeight: 0.2,
-        mentorExplanation: "Reading docs is underrated! Official documentation is the source of truth. Many developers skip it and miss important details. Make it a habit!",
+        mentorExplanation: "Docs are the source of truth everyone skips. Reading them catches nuances blog posts miss. RFCs show you where technology is heading before it ships. Make this a habit.",
         resources: [
           { title: 'MDN Web Docs', url: 'https://developer.mozilla.org/', type: 'docs' },
           { title: 'TC39 Proposals', url: 'https://github.com/tc39/proposals', type: 'github', description: 'JavaScript proposals' },
           { title: 'IETF RFCs', url: 'https://www.ietf.org/standards/rfcs/', type: 'docs' },
         ],
       },
-      // ── NEW learning options ────────────────────────────────────────────────
+      {
+        value: 'conferences',
+        label: 'Attend conferences or meetups',
+        recommendations: ['Network with other developers', 'Present at local meetups', 'Share learnings with team'],
+        scoreWeight: 0.2,
+        mentorExplanation: "Conferences expose you to new ideas and people working on different problems. The hallway track (conversations between talks) is often more valuable than the talks. Virtual events count too.",
+        resources: [
+          { title: 'Meetup.com', url: 'https://www.meetup.com/', type: 'article' },
+          { title: 'Conference Talk Ideas', url: 'https://speaking.io/', type: 'docs' },
+          { title: 'Virtual Tech Events', url: 'https://www.eventbrite.com/d/online/tech/', type: 'article' },
+        ],
+      },
+      {
+        value: 'books',
+        label: 'Read programming and software engineering books',
+        recommendations: ['Read classics and new releases', 'Discuss with reading groups', 'Apply concepts immediately'],
+        scoreWeight: 0.18,
+        mentorExplanation: "Books go deeper than articles. Classic books (Clean Code, Pragmatic Programmer) stay relevant for decades. Take notes, highlight, discuss with others. One good book beats a hundred blog posts.",
+        resources: [
+          { title: 'The Pragmatic Programmer', url: 'https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/', type: 'book' },
+          { title: 'Clean Code', url: 'https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882', type: 'book' },
+          { title: 'Developer Reading List', url: 'https://github.com/mr-mig/every-programmer-should-know', type: 'github' },
+        ],
+      },
+      {
+        value: 'blogs',
+        label: 'Read tech blogs and articles regularly',
+        recommendations: ['Create a curated reading list', 'Share interesting articles with team'],
+        scoreWeight: 0.15,
+        mentorExplanation: "Blogs keep you current on trends and techniques. Don't just consume - take notes, try examples, share what resonates. Build a curated list of quality sources; most content is noise.",
+        resources: [
+          { title: 'Developer Blog List', url: 'https://github.com/kilimchoi/engineering-blogs', type: 'github' },
+          { title: 'Hacker News', url: 'https://news.ycombinator.com/', type: 'article' },
+          { title: 'Dev.to Community', url: 'https://dev.to/', type: 'article' },
+        ],
+      },
       {
         value: 'pair-learning',
         label: 'Pair program or mob code with colleagues',
         recommendations: ['Schedule regular pairing sessions', 'Rotate pairing partners', 'Reflect after sessions'],
         scoreWeight: 0.22,
-        mentorExplanation: "Pairing is the fastest learning accelerator! You absorb techniques subconsciously and build team knowledge simultaneously. Even 30 minutes of pairing beats hours of solo struggle on a hard problem.",
+        mentorExplanation: "Pairing transfers knowledge faster than any other method. You absorb techniques unconsciously by watching someone work. It's also the best way to learn a new codebase or technology quickly.",
         resources: [
           { title: 'Pair Programming Guide', url: 'https://www.martinfowler.com/articles/on-pair-programming.html', type: 'article' },
           { title: 'Remote Pairing Tools', url: 'https://tuple.app/', type: 'docs' },
@@ -1437,11 +1273,47 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
+        value: 'courses',
+        label: 'Take online courses',
+        recommendations: ['Complete course projects', 'Apply learnings to real work', 'Mix free and paid courses'],
+        scoreWeight: 0.18,
+        mentorExplanation: 'Courses structure your learning and fill knowledge gaps. The key is finishing what you start and building something with it. Passive watching teaches less than active doing.',
+        resources: [
+          { title: 'Frontend Masters', url: 'https://frontendmasters.com/', type: 'course' },
+          { title: 'Pluralsight', url: 'https://www.pluralsight.com/', type: 'course' },
+          { title: 'freeCodeCamp', url: 'https://www.freecodecamp.org/', type: 'course' },
+        ],
+      },
+      {
+        value: 'youtube',
+        label: 'Watch technical videos and tutorials',
+        recommendations: ['Follow quality channels', 'Build along with tutorials', 'Take notes and reference later'],
+        scoreWeight: 0.15,
+        mentorExplanation: "Videos work for visual learning, but watch actively - pause, try things, build along. Speed up playback to 1.5-2x and take notes. Don't just collect videos to watch later; actually watch them.",
+        resources: [
+          { title: 'Fireship', url: 'https://www.youtube.com/@Fireship', type: 'video' },
+          { title: 'Traversy Media', url: 'https://www.youtube.com/@TraversyMedia', type: 'video' },
+          { title: 'The Primeagen', url: 'https://www.youtube.com/@ThePrimeagen', type: 'video' },
+        ],
+      },
+      {
+        value: 'newsletters',
+        label: 'Subscribe to tech newsletters',
+        recommendations: ['Curate your subscriptions', 'Archive and review weekly', 'Share interesting finds'],
+        scoreWeight: 0.13,
+        mentorExplanation: "Newsletters deliver curated content without the social media noise. But don't just hoard them - read and act. Unsubscribe from ones you skip consistently. Quality over quantity.",
+        resources: [
+          { title: 'JavaScript Weekly', url: 'https://javascriptweekly.com/', type: 'article' },
+          { title: 'Node Weekly', url: 'https://nodeweekly.com/', type: 'article' },
+          { title: 'TLDR Newsletter', url: 'https://tldr.tech/', type: 'article' },
+        ],
+      },
+      {
         value: 'research-papers',
         label: 'Read academic papers and research',
         recommendations: ['Use Papers With Code for practical papers', 'Join paper reading groups', 'Implement algorithms from papers'],
         scoreWeight: 0.23,
-        mentorExplanation: "Papers contain cutting-edge knowledge before it trickles into blog posts. Start with influential classics ('Attention Is All You Need', 'MapReduce', 'Dynamo'). Papers with Code is great for ML papers - they include working implementations!",
+        mentorExplanation: "Papers contain bleeding-edge ideas before they hit blogs. Start with classics - MapReduce, Dynamo, Attention Is All You Need. Papers With Code links papers to implementations, making them practical.",
         resources: [
           { title: 'Papers With Code', url: 'https://paperswithcode.com/', type: 'article' },
           { title: 'The Morning Paper', url: 'https://blog.acolyer.org/', type: 'article', description: 'CS paper summaries' },
@@ -1449,11 +1321,35 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
+        value: 'podcasts',
+        label: 'Listen to tech podcasts',
+        recommendations: ['Take notes on key insights', 'Explore topics mentioned', 'Share episodes with team'],
+        scoreWeight: 0.12,
+        mentorExplanation: 'Podcasts fill dead time - commutes, workouts, chores. But listen actively; take notes on interesting points and follow up. Passive listening is entertainment, not learning.',
+        resources: [
+          { title: 'Software Engineering Daily', url: 'https://softwareengineeringdaily.com/', type: 'article' },
+          { title: 'Syntax.fm', url: 'https://syntax.fm/', type: 'article' },
+          { title: 'JavaScript Jabber', url: 'https://javascriptjabber.com/', type: 'article' },
+        ],
+      },
+      {
+        value: 'twitter',
+        label: 'Follow developers and tech leaders on social media',
+        recommendations: ['Engage in discussions', 'Share your insights', 'Build your network'],
+        scoreWeight: 0.12,
+        mentorExplanation: "Social media can be noisy but following the right people gives industry pulse. Engage, don't just lurk - comment, share, discuss. Build relationships, not just follower counts.",
+        resources: [
+          { title: 'Developer Twitter List', url: 'https://twitter.com/i/lists', type: 'article' },
+          { title: 'Tech Twitter Guide', url: 'https://dev.to/denicmarko/how-to-use-twitter-as-a-developer-4h45', type: 'article' },
+          { title: 'Engage on LinkedIn', url: 'https://www.linkedin.com/', type: 'article' },
+        ],
+      },
+      {
         value: 'none',
         label: "I don't actively follow trends",
         recommendations: ['Subscribe to tech newsletters', 'Join developer communities', 'Start small - follow 3-5 good sources'],
         scoreWeight: 0,
-        mentorExplanation: "The tech industry moves fast! Not staying current puts you behind. Start small - pick ONE thing from this list. Even 15 minutes a day of learning compounds over time. Your future self will thank you!",
+        mentorExplanation: "Tech moves fast. Not learning means falling behind. Start small: pick ONE thing from this list. Even 15 minutes daily compounds over time. What you learned a year ago is already outdated in some areas.",
         resources: [
           { title: 'Getting Started with Learning', url: 'https://www.freecodecamp.org/news/how-to-stay-up-to-date-on-programming/', type: 'article' },
           { title: 'Building Learning Habits', url: 'https://www.coursera.org/learn/learning-how-to-learn', type: 'course' },
@@ -1467,7 +1363,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 10 — Documentation
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q10',
+    id: uuidv4(),
     title: 'How comfortable are you with documenting your code and technical decisions?',
     category: CATEGORIES.COMMUNICATION,
     type: 'multiple-choice',
@@ -1475,24 +1371,25 @@ export const QUESTIONS: Question[] = [
     allowOther: true,
     options: [
       {
-        value: 'minimal',
-        label: 'I write minimal or no documentation',
-        recommendations: ['Learn documentation best practices', 'Start with inline code comments', 'Write README files'],
-        scoreWeight: 0.18,
-        mentorExplanation: "Documentation might feel tedious, but it's an investment! Your future self (in 3 months) will thank you. Start small - explain the 'why' behind complex code. Comments are for humans, not computers!",
+        value: 'advocate',
+        label: 'I advocate for and maintain documentation standards',
+        recommendations: ['Build documentation culture', 'Create documentation automation', 'Speak about documentation'],
+        scoreWeight: 1.0,
+        isCorrect: true,
+        mentorExplanation: "Building documentation culture is rare and valuable. You understand that docs multiply team productivity. The teams that document well move faster, not slower. Keep advocating - this is leadership.",
         resources: [
-          { title: 'Write the Docs Guide', url: 'https://www.writethedocs.org/guide/', type: 'docs' },
-          { title: 'Code Documentation Best Practices', url: 'https://stackoverflow.blog/2021/12/23/best-practices-for-writing-code-comments/', type: 'article' },
-          { title: 'README Template', url: 'https://github.com/othneildrew/Best-README-Template', type: 'github' },
+          { title: "Building Docs Culture", url: 'https://www.writethedocs.org/guide/writing/beginners-guide-to-docs/', type: 'docs' },
+          { title: 'Documentation Systems', url: 'https://documentation.divio.com/', type: 'article' },
+          { title: 'Speaking About Docs', url: 'https://www.writethedocs.org/videos/', type: 'video' },
         ],
       },
       {
         value: 'basic',
         label: 'I document when required',
         recommendations: ['Create README files for projects', 'Document complex logic', 'Learn about ADRs'],
-        scoreWeight: 0.42,
+        scoreWeight: 0.35,
         isCommonMistake: true,
-        mentorExplanation: "Documenting only when required means documentation is seen as a chore. Flip that mindset! Good docs are part of good code. They help you think clearly too. Document decisions, not just code.",
+        mentorExplanation: "Waiting to be required means you're treating docs as overhead. Shift the mindset: write docs because they make your code better. Explaining your code forces clarity. Start documenting decisions - why you chose this approach over that one.",
         resources: [
           { title: 'Architecture Decision Records', url: 'https://adr.github.io/', type: 'docs' },
           { title: 'Documenting Architecture', url: 'https://www.oreilly.com/library/view/documenting-software-architectures/9780132488617/', type: 'book' },
@@ -1500,26 +1397,13 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'regular',
-        label: 'I regularly document my code and decisions',
-        recommendations: ['Establish documentation standards', 'Create technical guides', 'Share documentation practices'],
-        scoreWeight: 0.65,
-        isCorrect: true,
-        mentorExplanation: "Great documentation habits! You understand that code tells you HOW, but documentation tells you WHY. Keep it up and help establish team standards.",
-        resources: [
-          { title: 'Technical Writing Courses', url: 'https://developers.google.com/tech-writing', type: 'course' },
-          { title: 'Docs as Code', url: 'https://www.writethedocs.org/guide/docs-as-code/', type: 'docs' },
-          { title: 'Documentation Patterns', url: 'https://documentation.divio.com/', type: 'article' },
-        ],
-      },
-      {
         value: 'thorough',
         label: 'I write thorough documentation including ADRs',
         recommendations: ['Create documentation templates', 'Train team on documentation', 'Automate documentation generation'],
-        scoreWeight: 0.82,
+        scoreWeight: 0.8,
         yearOneRecommendations: ['Establish team documentation standards', 'Create comprehensive API documentation'],
         isCorrect: true,
-        mentorExplanation: "Excellent! You understand documentation is a first-class citizen. ADRs are particularly valuable - they capture the 'why' behind decisions. Share your documentation practices with the team!",
+        mentorExplanation: "ADRs are underused and powerful. They capture context that disappears otherwise - why you made this trade-off, what you considered, what you learned. Six months later when someone questions the decision, the ADR tells the story. Solid practice.",
         resources: [
           { title: 'Markdown Guide', url: 'https://www.markdownguide.org/', type: 'docs' },
           { title: 'Docusaurus', url: 'https://docusaurus.io/', type: 'docs', description: 'Documentation site generator' },
@@ -1527,93 +1411,28 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'advocate',
-        label: 'I advocate for and maintain documentation standards',
-        recommendations: ['Build documentation culture', 'Create documentation automation', 'Speak about documentation'],
-        scoreWeight: 1.0,
-        isCorrect: true,
-        mentorExplanation: "You're a documentation champion! Good docs multiply team productivity. Keep advocating - documentation culture is as important as testing culture!",
-        resources: [
-          { title: "Building Docs Culture", url: 'https://www.writethedocs.org/guide/writing/beginners-guide-to-docs/', type: 'docs' },
-          { title: 'Documentation Systems', url: 'https://documentation.divio.com/', type: 'article' },
-          { title: 'Speaking About Docs', url: 'https://www.writethedocs.org/videos/', type: 'video' },
-        ],
-      },
-    ],
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // QUESTION 11 — OOP
-  // ─────────────────────────────────────────────────────────────────────────────
-  {
-    id: 'q11',
-    title: 'How would you describe your understanding of Object-Oriented Programming (OOP) principles?',
-    category: CATEGORIES.CORE_CONCEPTS,
-    type: 'multiple-choice',
-    hint: 'OOP is about modeling real-world concepts with encapsulation, inheritance, and polymorphism',
-    allowOther: true,
-    options: [
-      {
-        value: 'unfamiliar',
-        label: "I'm not familiar with OOP concepts",
-        recommendations: ['Learn OOP fundamentals', 'Study the four pillars of OOP', 'Practice with class-based projects'],
+        value: 'minimal',
+        label: 'I write minimal or no documentation',
+        recommendations: ['Learn documentation best practices', 'Start with inline code comments', 'Write README files'],
         scoreWeight: 0.15,
-        mentorExplanation: "OOP is a fundamental programming paradigm! Even if you work with functional languages, understanding OOP helps you think about code organization. Start with the basics: classes, objects, encapsulation.",
+        mentorExplanation: "The code is never enough. Three months from now, you won't remember why you did something that way. Start small: write why, not what. Explain complex logic before you forget the reasoning. Document decisions and trade-offs - that context evaporates fast.",
         resources: [
-          { title: 'Object-Oriented Programming in JavaScript', url: 'https://www.freecodecamp.org/news/object-oriented-javascript-for-beginners/', type: 'article' },
-          { title: 'Head First Design Patterns', url: 'https://www.oreilly.com/library/view/head-first-design/9781492077992/', type: 'book' },
-          { title: 'OOP Explained Simply', url: 'https://www.youtube.com/watch?v=pTB0EiLXUC8', type: 'video' },
+          { title: 'Write the Docs Guide', url: 'https://www.writethedocs.org/guide/', type: 'docs' },
+          { title: 'Code Documentation Best Practices', url: 'https://stackoverflow.blog/2021/12/23/best-practices-for-writing-code-comments/', type: 'article' },
+          { title: 'README Template', url: 'https://github.com/othneildrew/Best-README-Template', type: 'github' },
         ],
       },
       {
-        value: 'basic',
-        label: 'I understand classes and objects but struggle with advanced concepts',
-        recommendations: ['Study inheritance and polymorphism', 'Learn design patterns', 'Practice SOLID principles'],
-        scoreWeight: 0.35,
-        mentorExplanation: "Good start! Classes and objects are the foundation. Now level up: learn when to use inheritance vs composition, understand polymorphism. These concepts help you write flexible code.",
-        resources: [
-          { title: 'SOLID Principles Explained', url: 'https://www.freecodecamp.org/news/solid-principles-explained-in-plain-english/', type: 'article' },
-          { title: 'Design Patterns', url: 'https://refactoring.guru/design-patterns', type: 'article' },
-          { title: 'Composition over Inheritance', url: 'https://www.youtube.com/watch?v=wfMtDGfHWpA', type: 'video' },
-        ],
-      },
-      {
-        value: 'intermediate',
-        label: 'I can use inheritance, polymorphism, and encapsulation effectively',
-        recommendations: ['Master design patterns', 'Study SOLID principles deeply', 'Learn when to avoid OOP'],
+        value: 'regular',
+        label: 'I regularly document my code and decisions',
+        recommendations: ['Establish documentation standards', 'Create technical guides', 'Share documentation practices'],
         scoreWeight: 0.6,
         isCorrect: true,
-        mentorExplanation: "Solid OOP skills! You understand the core concepts. Next: learn design patterns - they're proven solutions to common problems. Also important: knowing when NOT to use OOP!",
+        mentorExplanation: "Regular documentation means you get it: code shows how, docs show why. Keep this habit and help standardize it across your team. Document for the developer who inherits this code in a year - that might be you.",
         resources: [
-          { title: 'Design Patterns in Modern JavaScript', url: 'https://www.patterns.dev/', type: 'article' },
-          { title: 'Clean Code', url: 'https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882', type: 'book' },
-          { title: 'SOLID Principles in Practice', url: 'https://www.youtube.com/watch?v=pTB0EiLXUC8', type: 'video' },
-        ],
-      },
-      {
-        value: 'advanced',
-        label: 'I apply SOLID principles and design patterns appropriately',
-        recommendations: ['Study advanced patterns', 'Learn functional programming concepts', 'Mentor others in OOP'],
-        scoreWeight: 0.82,
-        isCorrect: true,
-        mentorExplanation: "Excellent! You understand OOP deeply and apply principles wisely. Consider exploring functional programming too - the contrast will sharpen both skills. Teach others!",
-        resources: [
-          { title: 'Advanced Design Patterns', url: 'https://sourcemaking.com/design_patterns', type: 'article' },
-          { title: 'Domain-Driven Design', url: 'https://www.amazon.com/Domain-Driven-Design-Tackling-Complexity-Software/dp/0321125215', type: 'book' },
-          { title: 'Functional vs OOP', url: 'https://www.youtube.com/watch?v=JEq7Ehw-qk8', type: 'video' },
-        ],
-      },
-      {
-        value: 'expert',
-        label: "I architect complex systems using OOP and know its trade-offs vs other paradigms",
-        recommendations: ['Share OOP knowledge through writing/speaking', 'Mentor junior developers', 'Explore paradigm blending'],
-        scoreWeight: 1.0,
-        isCorrect: true,
-        mentorExplanation: "You're an OOP expert! You understand not just HOW but WHEN to use OOP. Your grasp of trade-offs between paradigms is valuable - share it!",
-        resources: [
-          { title: 'Software Architecture Patterns', url: 'https://www.oreilly.com/library/view/software-architecture-patterns/9781491971437/', type: 'book' },
-          { title: 'Gang of Four Design Patterns', url: 'https://www.amazon.com/Design-Patterns-Elements-Reusable-Object-Oriented/dp/0201633612', type: 'book' },
-          { title: 'Crafting Interpreters', url: 'https://craftinginterpreters.com/', type: 'book' },
+          { title: 'Technical Writing Courses', url: 'https://developers.google.com/tech-writing', type: 'course' },
+          { title: 'Docs as Code', url: 'https://www.writethedocs.org/guide/docs-as-code/', type: 'docs' },
+          { title: 'Documentation Patterns', url: 'https://documentation.divio.com/', type: 'article' },
         ],
       },
     ],
@@ -1623,7 +1442,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 12 — Data Structures & Algorithms
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q12',
+    id: uuidv4(),
     title: 'How comfortable are you with data structures and algorithms?',
     category: CATEGORIES.ALGORITHMS,
     type: 'multiple-choice',
@@ -1631,37 +1450,12 @@ export const QUESTIONS: Question[] = [
     allowOther: true,
     options: [
       {
-        value: 'basics-only',
-        label: 'I know basic arrays and loops',
-        recommendations: ['Study common data structures', 'Learn Big O notation', 'Practice on platforms like LeetCode'],
-        scoreWeight: 0.2,
-        mentorExplanation: "Arrays and loops are the starting point! Next: learn when to use hash maps vs arrays, understand time/space complexity. These fundamentals matter in real work, not just interviews!",
-        resources: [
-          { title: 'JavaScript Algorithms', url: 'https://github.com/trekhleb/javascript-algorithms', type: 'github' },
-          { title: 'Big O Cheat Sheet', url: 'https://www.bigocheatsheet.com/', type: 'docs' },
-          { title: 'FreeCodeCamp DS&A', url: 'https://www.youtube.com/watch?v=8hly31xKli0', type: 'video' },
-        ],
-      },
-      {
-        value: 'some-knowledge',
-        label: "I know some structures (maps, sets) but don't understand complexity",
-        recommendations: ['Learn Big O notation deeply', 'Study algorithm complexity', 'Practice problem-solving'],
-        scoreWeight: 0.38,
-        isCommonMistake: true,
-        mentorExplanation: "Knowing data structures is good, but understanding their complexity is crucial! A nested loop in a loop is O(n²) - that matters when n is large. Learn to analyze your code!",
-        resources: [
-          { title: 'Introduction to Algorithms', url: 'https://www.amazon.com/Introduction-Algorithms-3rd-MIT-Press/dp/0262033844', type: 'book' },
-          { title: 'Big O Notation Explained', url: 'https://www.freecodecamp.org/news/big-o-notation-why-it-matters-and-why-it-doesnt-1674cfa8a23c/', type: 'article' },
-          { title: 'Algorithm Complexity', url: 'https://www.youtube.com/watch?v=D6xkbGLQesk', type: 'video' },
-        ],
-      },
-      {
         value: 'intermediate',
         label: 'I understand complexity and use appropriate structures for tasks',
         recommendations: ['Study advanced algorithms', 'Practice solving medium problems', 'Learn dynamic programming'],
-        scoreWeight: 0.58,
+        scoreWeight: 0.6,
         isCorrect: true,
-        mentorExplanation: "Great! You can choose the right structure for the job. Next level: study classic algorithms (sorting, searching, graph traversal). They appear more often than you think!",
+        mentorExplanation: "You can choose the right structure for the job - hash map vs array, when to use a set, etc. Next level: study classic algorithms (binary search, graph traversal, dynamic programming). They show up more than you'd think in real work.",
         resources: [
           { title: 'Grokking Algorithms', url: 'https://www.manning.com/books/grokking-algorithms', type: 'book' },
           { title: 'LeetCode Patterns', url: 'https://seanprashad.com/leetcode-patterns/', type: 'article' },
@@ -1669,16 +1463,15 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'advanced',
-        label: 'I can implement common algorithms and optimize code performance',
-        recommendations: ['Study advanced DS&A', 'Learn system optimization', 'Practice hard problems'],
-        scoreWeight: 0.78,
-        isCorrect: true,
-        mentorExplanation: "Excellent algorithmic thinking! You can optimize code and make smart trade-offs. Keep practicing - these skills compound over time!",
+        value: 'basics-only',
+        label: 'I know basic arrays and loops',
+        recommendations: ['Study common data structures', 'Learn Big O notation', 'Practice on platforms like LeetCode'],
+        scoreWeight: 0.15,
+        mentorExplanation: "Arrays and loops get you started. Next: learn when to reach for hash maps, sets, or queues. Understanding Big O helps you spot performance issues before they happen. These fundamentals matter in real code, not just interviews.",
         resources: [
-          { title: 'Algorithm Design Manual', url: 'https://www.algorist.com/', type: 'book' },
-          { title: 'LeetCode Hard Problems', url: 'https://leetcode.com/problemset/all/?difficulty=HARD', type: 'article' },
-          { title: 'Competitive Programming', url: 'https://cp-algorithms.com/', type: 'docs' },
+          { title: 'JavaScript Algorithms', url: 'https://github.com/trekhleb/javascript-algorithms', type: 'github' },
+          { title: 'Big O Cheat Sheet', url: 'https://www.bigocheatsheet.com/', type: 'docs' },
+          { title: 'FreeCodeCamp DS&A', url: 'https://www.youtube.com/watch?v=8hly31xKli0', type: 'video' },
         ],
       },
       {
@@ -1687,11 +1480,37 @@ export const QUESTIONS: Question[] = [
         recommendations: ['Participate in competitions', 'Mentor others', 'Share knowledge through content'],
         scoreWeight: 1.0,
         isCorrect: true,
-        mentorExplanation: "You're an algorithms expert! This skill is rare and valuable. Share it - create tutorials, mentor others, help your team write more efficient code!",
+        mentorExplanation: "Deep algorithmic knowledge is rare. You can design efficient solutions and explain the trade-offs. Share this - write about complex problems you've solved, mentor teammates on optimization, create learning resources.",
         resources: [
           { title: "Competitive Programmer's Handbook", url: 'https://cses.fi/book/book.pdf', type: 'book' },
           { title: 'TopCoder Tutorials', url: 'https://www.topcoder.com/thrive/articles/Competitive%20Programming%20Tutorials', type: 'article' },
           { title: 'Algorithms Course', url: 'https://www.coursera.org/specializations/algorithms', type: 'course' },
+        ],
+      },
+      {
+        value: 'some-knowledge',
+        label: "I know some structures (maps, sets) but don't understand complexity",
+        recommendations: ['Learn Big O notation deeply', 'Study algorithm complexity', 'Practice problem-solving'],
+        scoreWeight: 0.35,
+        isCommonMistake: true,
+        mentorExplanation: "Knowing which structures exist is good, but understanding their performance characteristics is critical. That nested loop in a loop? That's O(n²) - fine for 100 items, disaster for 10,000. Learn to analyze your code's complexity.",
+        resources: [
+          { title: 'Introduction to Algorithms', url: 'https://www.amazon.com/Introduction-Algorithms-3rd-MIT-Press/dp/0262033844', type: 'book' },
+          { title: 'Big O Notation Explained', url: 'https://www.freecodecamp.org/news/big-o-notation-why-it-matters-and-why-it-doesnt-1674cfa8a23c/', type: 'article' },
+          { title: 'Algorithm Complexity', url: 'https://www.youtube.com/watch?v=D6xkbGLQesk', type: 'video' },
+        ],
+      },
+      {
+        value: 'advanced',
+        label: 'I can implement common algorithms and optimize code performance',
+        recommendations: ['Study advanced DS&A', 'Learn system optimization', 'Practice hard problems'],
+        scoreWeight: 0.8,
+        isCorrect: true,
+        mentorExplanation: "Strong algorithmic skills. You can implement sorting, searching, and optimize performance-critical code. You make trade-offs between time and space complexity consciously. Keep practicing - these skills compound.",
+        resources: [
+          { title: 'Algorithm Design Manual', url: 'https://www.algorist.com/', type: 'book' },
+          { title: 'LeetCode Hard Problems', url: 'https://leetcode.com/problemset/all/?difficulty=HARD', type: 'article' },
+          { title: 'Competitive Programming', url: 'https://cp-algorithms.com/', type: 'docs' },
         ],
       },
     ],
@@ -1701,7 +1520,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 13 — Git & Version Control
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q13',
+    id: uuidv4(),
     title: 'How would you rate your Git and version control skills?',
     category: CATEGORIES.VERSION_CONTROL,
     type: 'multiple-choice',
@@ -1709,36 +1528,12 @@ export const QUESTIONS: Question[] = [
     allowOther: true,
     options: [
       {
-        value: 'basic-commands',
-        label: 'I use basic commands (add, commit, push, pull)',
-        recommendations: ['Learn branching strategies', 'Study Git workflows', 'Practice merge conflict resolution'],
-        scoreWeight: 0.25,
-        mentorExplanation: "Good start with the basics! Git is powerful beyond basic commands. Learn branching - it's like save points in a game. Master merging and rebasing - they'll save you headaches!",
-        resources: [
-          { title: 'Pro Git Book', url: 'https://git-scm.com/book/en/v2', type: 'book', description: 'Free comprehensive Git guide' },
-          { title: 'Learn Git Branching', url: 'https://learngitbranching.js.org/', type: 'article', description: 'Interactive Git tutorial' },
-          { title: 'Git Workflows', url: 'https://www.atlassian.com/git/tutorials/comparing-workflows', type: 'docs' },
-        ],
-      },
-      {
-        value: 'branching',
-        label: 'I use branches and can resolve simple merge conflicts',
-        recommendations: ['Learn Git rebase', 'Study cherry-picking', 'Master conflict resolution'],
-        scoreWeight: 0.42,
-        mentorExplanation: "Great! Branches are essential for parallel development. Now learn advanced operations: rebase for clean history, cherry-pick for selective changes. Git reflog is your safety net!",
-        resources: [
-          { title: 'Git Rebase Explained', url: 'https://www.youtube.com/watch?v=f1wnYdLEpgI', type: 'video' },
-          { title: 'Advanced Git', url: 'https://www.atlassian.com/git/tutorials/advanced-overview', type: 'docs' },
-          { title: 'Oh Shit, Git!', url: 'https://ohshitgit.com/', type: 'article', description: 'How to fix common Git mistakes' },
-        ],
-      },
-      {
         value: 'workflows',
         label: 'I understand Git workflows (GitFlow, trunk-based) and use them effectively',
         recommendations: ['Learn advanced Git commands', 'Study commit message best practices', 'Master Git hooks'],
-        scoreWeight: 0.65,
+        scoreWeight: 0.6,
         isCorrect: true,
-        mentorExplanation: "Excellent! Understanding workflows means you think beyond your local changes. Good commit messages are underrated - they're documentation! Learn Git hooks to automate checks.",
+        mentorExplanation: "Understanding workflows means you think beyond your local changes. You know how your team collaborates and why. Good commit messages tell a story - treat them as documentation. Git hooks automate quality checks.",
         resources: [
           { title: 'Conventional Commits', url: 'https://www.conventionalcommits.org/', type: 'docs' },
           { title: 'Git Hooks Tutorial', url: 'https://githooks.com/', type: 'docs' },
@@ -1746,16 +1541,15 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'advanced',
-        label: 'I use advanced features (rebase, bisect, reflog) and teach others',
-        recommendations: ['Establish team Git standards', 'Create Git workshops', 'Automate with Git hooks'],
-        scoreWeight: 0.85,
-        isCorrect: true,
-        mentorExplanation: "You're a Git power user! Bisect for finding bugs, reflog for recovering 'lost' commits - these are lifesavers. Share your knowledge - many developers fear Git unnecessarily!",
+        value: 'branching',
+        label: 'I use branches and can resolve simple merge conflicts',
+        recommendations: ['Learn Git rebase', 'Study cherry-picking', 'Master conflict resolution'],
+        scoreWeight: 0.35,
+        mentorExplanation: "Branches enable parallel work without stepping on toes. Now learn the powerful stuff: rebase for clean history, cherry-pick for selective merges, reflog for when you think you've lost work (you haven't - Git rarely loses anything).",
         resources: [
-          { title: 'Git Bisect Guide', url: 'https://www.metaltoad.com/blog/beginners-guide-git-bisect-process-elimination', type: 'article' },
-          { title: 'Git Internals', url: 'https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain', type: 'docs' },
-          { title: 'Building Better Teams with Git', url: 'https://www.youtube.com/watch?v=duqBHik7nRo', type: 'video' },
+          { title: 'Git Rebase Explained', url: 'https://www.youtube.com/watch?v=f1wnYdLEpgI', type: 'video' },
+          { title: 'Advanced Git', url: 'https://www.atlassian.com/git/tutorials/advanced-overview', type: 'docs' },
+          { title: 'Oh Shit, Git!', url: 'https://ohshitgit.com/', type: 'article', description: 'How to fix common Git mistakes' },
         ],
       },
       {
@@ -1764,322 +1558,36 @@ export const QUESTIONS: Question[] = [
         recommendations: ['Share Git expertise through content', 'Create custom Git tools', 'Mentor teams on Git strategies'],
         scoreWeight: 1.0,
         isCorrect: true,
-        mentorExplanation: "You understand Git at a deep level! Most developers never peek under the hood. Your ability to fix complex issues is invaluable. Consider creating tools or teaching resources!",
+        mentorExplanation: "You understand Git's object model - commits, trees, blobs. You can fix corrupted repos, untangle complex histories, optimize large repositories. This depth is rare. Share it - write about tricky Git problems you've solved, build tools, teach others.",
         resources: [
           { title: 'Git from the Bottom Up', url: 'https://jwiegley.github.io/git-from-the-bottom-up/', type: 'article' },
           { title: 'Git Magic', url: 'http://www-cs-students.stanford.edu/~blynn/gitmagic/', type: 'book' },
           { title: 'Advanced Git Techniques', url: 'https://www.youtube.com/watch?v=qsTthZi23VE', type: 'video' },
         ],
       },
-    ],
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // QUESTION 14 — Code Quality & Refactoring
-  // ─────────────────────────────────────────────────────────────────────────────
-  {
-    id: 'q14',
-    title: 'How do you approach code quality and refactoring?',
-    category: CATEGORIES.CODE_QUALITY,
-    type: 'multiple-choice',
-    hint: 'Clean code is about readability, maintainability, and future-you being happy',
-    allowOther: true,
-    options: [
       {
-        value: 'make-it-work',
-        label: 'I focus on making it work, less on cleanliness',
-        recommendations: ['Learn clean code principles', 'Study code smells', 'Practice small refactorings'],
-        scoreWeight: 0.22,
-        isCommonMistake: true,
-        mentorExplanation: "Making it work is step one, but it's not the finish line! Code is read 10x more than written. Spend 20% more time making it clean - your team (and future you) will thank you. Start small: better variable names, smaller functions.",
-        resources: [
-          { title: 'Clean Code', url: 'https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882', type: 'book' },
-          { title: 'Code Smells', url: 'https://refactoring.guru/refactoring/smells', type: 'article' },
-          { title: 'Clean Code Summary', url: 'https://www.freecodecamp.org/news/clean-code-book-summary/', type: 'article' },
-        ],
-      },
-      {
-        value: 'basic-cleanup',
-        label: 'I clean up obvious issues after getting code working',
-        recommendations: ['Learn systematic refactoring', 'Use linters and formatters', 'Study SOLID principles'],
-        scoreWeight: 0.38,
-        mentorExplanation: "Good instinct to clean up! Make it systematic: use tools like ESLint and Prettier to automate the basics. Then focus on structural improvements - extracting functions, removing duplication.",
-        resources: [
-          { title: 'Refactoring by Martin Fowler', url: 'https://refactoring.com/', type: 'book' },
-          { title: 'ESLint Rules Explained', url: 'https://eslint.org/docs/latest/rules/', type: 'docs' },
-          { title: 'Code Formatting with Prettier', url: 'https://prettier.io/', type: 'docs' },
-        ],
-      },
-      {
-        value: 'regular-refactor',
-        label: 'I regularly refactor and follow coding standards',
-        recommendations: ['Learn advanced refactoring patterns', 'Lead code quality initiatives', 'Study design patterns'],
-        scoreWeight: 0.62,
-        isCorrect: true,
-        mentorExplanation: "Excellent! Regular refactoring prevents technical debt from piling up. The 'Boy Scout Rule' - leave code better than you found it. Keep learning refactoring patterns!",
-        resources: [
-          { title: 'Refactoring Catalog', url: 'https://refactoring.guru/refactoring/catalog', type: 'article' },
-          { title: 'Working Effectively with Legacy Code', url: 'https://www.amazon.com/Working-Effectively-Legacy-Michael-Feathers/dp/0131177052', type: 'book' },
-          { title: 'Refactoring Techniques', url: 'https://www.youtube.com/watch?v=DC-pQPq0acs', type: 'video' },
-        ],
-      },
-      {
-        value: 'proactive',
-        label: 'I proactively identify and fix code smells and technical debt',
-        recommendations: ['Establish quality metrics', 'Mentor others in clean code', 'Create team standards'],
-        scoreWeight: 0.82,
-        isCorrect: true,
-        mentorExplanation: "You have a great code quality mindset! Proactive refactoring prevents bigger problems. Help your team: create checklists, automated checks, share patterns you see.",
-        resources: [
-          { title: 'Code Quality Metrics', url: 'https://www.sonarsource.com/learn/code-quality/', type: 'article' },
-          { title: 'Managing Technical Debt', url: 'https://martinfowler.com/bliki/TechnicalDebt.html', type: 'article' },
-          { title: 'Clean Architecture', url: 'https://www.amazon.com/Clean-Architecture-Craftsmans-Software-Structure/dp/0134494164', type: 'book' },
-        ],
-      },
-      {
-        value: 'champion',
-        label: 'I champion code quality and establish organization-wide standards',
-        recommendations: ['Scale quality practices', 'Create tooling and automation', 'Share knowledge widely'],
-        scoreWeight: 1.0,
-        isCorrect: true,
-        mentorExplanation: "You're a code quality champion! Your organizational impact is huge. Keep making quality easy and automatic - that's how it scales. Consider writing about your practices!",
-        resources: [
-          { title: 'Building Quality Culture', url: 'https://www.amazon.com/Accelerate-Software-Performing-Technology-Organizations/dp/1942788339', type: 'book' },
-          { title: 'Code Review Tools', url: 'https://github.com/features/code-review/', type: 'docs' },
-          { title: 'Quality Engineering', url: 'https://www.youtube.com/watch?v=7HhKAFy0Jqg', type: 'video' },
-        ],
-      },
-    ],
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // QUESTION 15 — Async Programming
-  // ─────────────────────────────────────────────────────────────────────────────
-  {
-    id: 'q15',
-    title: 'How comfortable are you with asynchronous programming (Promises, async/await)?',
-    category: CATEGORIES.CORE_CONCEPTS,
-    type: 'multiple-choice',
-    hint: 'Async is everywhere in modern development - API calls, file operations, database queries',
-    allowOther: true,
-    options: [
-      {
-        value: 'callbacks-only',
-        label: 'I mostly use callbacks and get confused by async code',
-        recommendations: ['Learn Promise fundamentals', 'Study async/await syntax', 'Practice error handling in async code'],
-        scoreWeight: 0.2,
-        isCommonMistake: true,
-        mentorExplanation: "Callback hell is real! Promises and async/await make async code readable. Think of async/await as synchronous-looking code that doesn't block. Game changer! Start with Promises, then level up to async/await.",
-        resources: [
-          { title: 'JavaScript Promises Explained', url: 'https://javascript.info/promise-basics', type: 'article' },
-          { title: 'Async/Await Tutorial', url: 'https://www.youtube.com/watch?v=V_Kr9OSfDeU', type: 'video' },
-          { title: 'Async JavaScript', url: 'https://www.freecodecamp.org/news/asynchronous-javascript-explained/', type: 'article' },
-        ],
-      },
-      {
-        value: 'promises',
-        label: 'I use Promises but sometimes struggle with complex async flows',
-        recommendations: ['Master async/await', 'Learn Promise.all and Promise.race', 'Study error handling patterns'],
-        scoreWeight: 0.42,
-        mentorExplanation: "Promises are good, async/await is better! It makes async code look synchronous and easier to reason about. Learn Promise combinators (all, race, allSettled) - they're powerful for parallel operations.",
-        resources: [
-          { title: 'Promise Combinators', url: 'https://javascript.info/promise-api', type: 'article' },
-          { title: 'Async Error Handling', url: 'https://www.youtube.com/watch?v=ITogH7lJTyE', type: 'video' },
-          { title: 'Advanced Async Patterns', url: 'https://www.patterns.dev/posts/async-patterns', type: 'article' },
-        ],
-      },
-      {
-        value: 'async-await',
-        label: 'I comfortably use async/await and handle errors properly',
-        recommendations: ['Study advanced async patterns', 'Learn about event loop', 'Master concurrent operations'],
-        scoreWeight: 0.68,
-        isCorrect: true,
-        mentorExplanation: "Great! Async/await with proper error handling is clean and maintainable. Next: understand the event loop - it'll help you debug tricky async bugs and optimize performance.",
-        resources: [
-          { title: 'Event Loop Explained', url: 'https://www.youtube.com/watch?v=8aGhZQkoFbQ', type: 'video', description: 'Classic talk by Philip Roberts' },
-          { title: 'Async Patterns', url: 'https://www.patterns.dev/posts/async-patterns', type: 'article' },
-          { title: 'Node.js Async Best Practices', url: 'https://github.com/goldbergyoni/nodebestpractices#2-error-handling-practices', type: 'github' },
-        ],
-      },
-      {
-        value: 'advanced',
-        label: 'I understand the event loop and optimize async operations',
-        recommendations: ['Learn about concurrency models', 'Study async performance', 'Share async knowledge'],
-        scoreWeight: 0.85,
-        isCorrect: true,
-        mentorExplanation: "Excellent async skills! Understanding the event loop puts you ahead of most developers. You can debug race conditions and optimize concurrent operations. Share this knowledge!",
-        resources: [
-          { title: 'Async Performance', url: 'https://nodejs.org/en/docs/guides/dont-block-the-event-loop/', type: 'docs' },
-          { title: 'Concurrency Models', url: 'https://www.youtube.com/watch?v=8aGhZQkoFbQ', type: 'video' },
-          { title: 'Async Patterns Deep Dive', url: 'https://www.nodejsdesignpatterns.com/', type: 'book' },
-        ],
-      },
-      {
-        value: 'expert',
-        label: 'I architect complex async systems and solve advanced concurrency challenges',
-        recommendations: ['Write about async patterns', 'Build async libraries', 'Mentor others in async programming'],
-        scoreWeight: 1.0,
-        isCorrect: true,
-        mentorExplanation: "You're an async expert! Complex concurrency is hard - your expertise is valuable. Consider creating libraries, writing detailed guides, or teaching workshops on async patterns.",
-        resources: [
-          { title: 'Distributed Systems', url: 'https://www.amazon.com/Designing-Data-Intensive-Applications-Reliable-Maintainable/dp/1449373321', type: 'book' },
-          { title: 'Advanced Async Patterns', url: 'https://www.nodejsdesignpatterns.com/', type: 'book' },
-          { title: 'Building Async Libraries', url: 'https://github.com/caolan/async', type: 'github' },
-        ],
-      },
-    ],
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // QUESTION 16 — API Design & REST
-  // ─────────────────────────────────────────────────────────────────────────────
-  {
-    id: 'q16',
-    title: 'How would you rate your understanding of API design and RESTful principles?',
-    category: CATEGORIES.CORE_CONCEPTS,
-    type: 'multiple-choice',
-    hint: 'Good API design is about intuitive, consistent, and well-documented interfaces',
-    allowOther: true,
-    options: [
-      {
-        value: 'consume-only',
-        label: "I mainly consume APIs, haven't designed my own",
-        recommendations: ['Learn REST principles', 'Study API design best practices', 'Build a simple REST API'],
-        scoreWeight: 0.28,
-        mentorExplanation: "Using APIs teaches you what works! Now flip the perspective - design your own. Start with REST basics: resources, HTTP methods, status codes. Good API design is about empathy for your users.",
-        resources: [
-          { title: 'REST API Tutorial', url: 'https://restfulapi.net/', type: 'docs' },
-          { title: 'API Design Patterns', url: 'https://www.manning.com/books/api-design-patterns', type: 'book' },
-          { title: 'Build a REST API', url: 'https://www.youtube.com/watch?v=pKd0Rpw7O48', type: 'video' },
-        ],
-      },
-      {
-        value: 'basic-rest',
-        label: "I can create basic REST APIs but unsure about best practices",
-        recommendations: ['Study REST constraints', 'Learn API versioning', 'Practice good endpoint design'],
-        scoreWeight: 0.45,
-        mentorExplanation: "Good start! REST is more than CRUD endpoints. Learn the constraints (stateless, cacheable, etc.), study pagination, filtering, error responses. Consistency is key!",
-        resources: [
-          { title: 'REST API Best Practices', url: 'https://github.com/tfredrich/RestApiTutorial.com', type: 'github' },
-          { title: 'API Pagination Guide', url: 'https://www.moesif.com/blog/technical/api-design/REST-API-Design-Filtering-Sorting-and-Pagination/', type: 'article' },
-          { title: 'HTTP Status Codes', url: 'https://httpstatuses.com/', type: 'docs' },
-        ],
-      },
-      {
-        value: 'good-apis',
-        label: 'I design consistent RESTful APIs with proper status codes and versioning',
-        recommendations: ['Learn API documentation', 'Study authentication patterns', 'Explore GraphQL'],
-        scoreWeight: 0.68,
-        isCorrect: true,
-        mentorExplanation: "Excellent API design skills! Consistency and proper HTTP semantics make APIs pleasant to use. Next: master documentation (OpenAPI/Swagger), authentication (OAuth, JWT), and explore alternatives like GraphQL.",
-        resources: [
-          { title: 'OpenAPI Specification', url: 'https://swagger.io/specification/', type: 'docs' },
-          { title: 'API Security Best Practices', url: 'https://github.com/shieldfy/API-Security-Checklist', type: 'github' },
-          { title: 'GraphQL vs REST', url: 'https://www.youtube.com/watch?v=yWzKJPw_VzM', type: 'video' },
-        ],
-      },
-      {
-        value: 'advanced',
-        label: 'I design scalable APIs with proper authentication, rate limiting, and documentation',
-        recommendations: ['Study API gateway patterns', 'Learn API performance optimization', 'Explore API management platforms'],
-        scoreWeight: 0.85,
-        isCorrect: true,
-        mentorExplanation: "You design production-grade APIs! Rate limiting, authentication, documentation - these are what separate good from great. Consider studying API gateways and microservices patterns.",
-        resources: [
-          { title: 'API Gateway Pattern', url: 'https://microservices.io/patterns/apigateway.html', type: 'docs' },
-          { title: 'API Performance', url: 'https://www.moesif.com/blog/technical/api-performance/API-Performance-Best-Practices/', type: 'article' },
-          { title: 'Building Hypermedia APIs', url: 'https://www.amazon.com/Building-Hypermedia-APIs-HTML5-Node/dp/1449306578', type: 'book' },
-        ],
-      },
-      {
-        value: 'architect',
-        label: 'I architect API ecosystems and establish API design standards',
-        recommendations: ['Write about API design', 'Create API style guides', 'Speak at conferences'],
-        scoreWeight: 1.0,
-        isCorrect: true,
-        mentorExplanation: "You're an API architect! Your ecosystem-level thinking is rare. Share your standards and patterns - they could become industry references!",
-        resources: [
-          { title: 'API Design at Scale', url: 'https://www.amazon.com/Principles-Web-API-Design-Indispensable/dp/0137355637', type: 'book' },
-          { title: 'API Governance', url: 'https://www.youtube.com/watch?v=zFzJXFzEiY4', type: 'video' },
-          { title: 'API Strategy', url: 'https://tyk.io/api-strategy/', type: 'article' },
-        ],
-      },
-    ],
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // QUESTION 17 — Security Awareness
-  // ─────────────────────────────────────────────────────────────────────────────
-  {
-    id: 'q17',
-    title: 'How aware are you of common security vulnerabilities and best practices?',
-    category: CATEGORIES.CODE_QUALITY,
-    type: 'multiple-choice',
-    hint: "Security isn't just the security team's job - every developer writes secure (or insecure) code",
-    allowOther: true,
-    options: [
-      {
-        value: 'minimal',
-        label: 'I have minimal security awareness',
-        recommendations: ['Learn OWASP Top 10', 'Study common vulnerabilities', 'Practice secure coding basics'],
+        value: 'basic-commands',
+        label: 'I use basic commands (add, commit, push, pull)',
+        recommendations: ['Learn branching strategies', 'Study Git workflows', 'Practice merge conflict resolution'],
         scoreWeight: 0.15,
-        mentorExplanation: "Security might seem scary, but basics go a long way! Start with OWASP Top 10 - it covers the most common vulnerabilities. Simple things like input validation and parameterized queries prevent most attacks. Security is everyone's responsibility!",
+        mentorExplanation: "Basic commands get you started. Git's real power is in branching - think of branches as save points in a game. Learn to merge and resolve conflicts. Understand that Git is designed for collaboration, not just version control.",
         resources: [
-          { title: 'OWASP Top 10', url: 'https://owasp.org/www-project-top-ten/', type: 'docs', description: 'Most critical web security risks' },
-          { title: 'Web Security Academy', url: 'https://portswigger.net/web-security', type: 'course', description: 'Free online security training' },
-          { title: 'Security for Developers', url: 'https://www.youtube.com/watch?v=RobFFfySKcE', type: 'video' },
+          { title: 'Pro Git Book', url: 'https://git-scm.com/book/en/v2', type: 'book', description: 'Free comprehensive Git guide' },
+          { title: 'Learn Git Branching', url: 'https://learngitbranching.js.org/', type: 'article', description: 'Interactive Git tutorial' },
+          { title: 'Git Workflows', url: 'https://www.atlassian.com/git/tutorials/comparing-workflows', type: 'docs' },
         ],
       },
       {
-        value: 'basic-awareness',
-        label: "I know basics (SQL injection, XSS) but not how to prevent them",
-        recommendations: ['Learn prevention techniques', 'Study authentication best practices', 'Practice security testing'],
-        scoreWeight: 0.35,
-        isCommonMistake: true,
-        mentorExplanation: "Knowing vulnerabilities exist is step one! Now learn prevention: parameterized queries stop SQL injection, proper encoding stops XSS. Most frameworks help, but you need to use them correctly. Think like an attacker!",
-        resources: [
-          { title: 'SQL Injection Prevention', url: 'https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html', type: 'docs' },
-          { title: 'XSS Prevention', url: 'https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html', type: 'docs' },
-          { title: 'Secure Coding Practices', url: 'https://www.securecoding.cert.org/', type: 'docs' },
-        ],
-      },
-      {
-        value: 'conscious',
-        label: 'I actively consider security when coding and follow best practices',
-        recommendations: ['Study advanced security topics', 'Learn security testing', 'Get security certifications'],
-        scoreWeight: 0.62,
+        value: 'advanced',
+        label: 'I use advanced features (rebase, bisect, reflog) and teach others',
+        recommendations: ['Establish team Git standards', 'Create Git workshops', 'Automate with Git hooks'],
+        scoreWeight: 0.8,
         isCorrect: true,
-        mentorExplanation: "Great security mindset! You think about security while coding, not as an afterthought. Next: learn security testing (penetration testing basics), study authentication flows (OAuth, JWT), understand HTTPS/TLS.",
+        mentorExplanation: "Git power user. Bisect finds which commit broke things (binary search through history). Reflog recovers 'lost' commits. Rebase rewrites history cleanly. These tools separate competent from expert. Many developers fear Git - help them master it.",
         resources: [
-          { title: 'Authentication Best Practices', url: 'https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html', type: 'docs' },
-          { title: 'JWT Security', url: 'https://www.youtube.com/watch?v=7Q17ubqLfaM', type: 'video' },
-          { title: 'Practical Security Testing', url: 'https://www.hacksplaining.com/', type: 'article' },
-        ],
-      },
-      {
-        value: 'proactive',
-        label: 'I proactively identify vulnerabilities and help secure codebases',
-        recommendations: ['Lead security initiatives', 'Perform security audits', 'Share security knowledge'],
-        scoreWeight: 0.82,
-        isCorrect: true,
-        mentorExplanation: "Excellent security awareness! Proactive security work prevents breaches. Help your team: do code reviews with security in mind, run security scans, create security checklists.",
-        resources: [
-          { title: 'Security Code Review', url: 'https://owasp.org/www-project-code-review-guide/', type: 'docs' },
-          { title: 'Threat Modeling', url: 'https://owasp.org/www-community/Threat_Modeling', type: 'docs' },
-          { title: 'DevSecOps', url: 'https://www.youtube.com/watch?v=J73MELGF6u0', type: 'video' },
-        ],
-      },
-      {
-        value: 'expert',
-        label: 'I have deep security expertise and establish security standards',
-        recommendations: ['Get advanced certifications', 'Speak about security', 'Build security tools'],
-        scoreWeight: 1.0,
-        isCorrect: true,
-        mentorExplanation: "You're a security expert! Your knowledge protects entire organizations. Consider getting certifications (CEH, OSCP), speaking at conferences, or building security tools. Share this rare expertise!",
-        resources: [
-          { title: 'OWASP Cheat Sheets', url: 'https://cheatsheetseries.owasp.org/', type: 'docs' },
-          { title: 'Web Security Testing Guide', url: 'https://owasp.org/www-project-web-security-testing-guide/', type: 'docs' },
-          { title: 'Security Certifications Guide', url: 'https://www.offensive-security.com/', type: 'docs' },
+          { title: 'Git Bisect Guide', url: 'https://www.metaltoad.com/blog/beginners-guide-git-bisect-process-elimination', type: 'article' },
+          { title: 'Git Internals', url: 'https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain', type: 'docs' },
+          { title: 'Building Better Teams with Git', url: 'https://www.youtube.com/watch?v=duqBHik7nRo', type: 'video' },
         ],
       },
     ],
@@ -2089,7 +1597,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 18 — Performance Optimization
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q18',
+    id: uuidv4(),
     title: 'How do you approach performance optimization in your applications?',
     category: CATEGORIES.PROBLEM_SOLVING,
     type: 'multiple-choice',
@@ -2097,12 +1605,25 @@ export const QUESTIONS: Question[] = [
     allowOther: true,
     options: [
       {
+        value: 'proactive',
+        label: 'I proactively optimize and set performance budgets',
+        recommendations: ['Establish performance culture', 'Build performance monitoring', 'Share optimization knowledge'],
+        scoreWeight: 0.8,
+        isCorrect: true,
+        mentorExplanation: "Performance budgets prevent regressions before they ship. You're treating performance as a feature, not an afterthought. Keep sharing wins - when the team sees load time cut in half, performance becomes valued.",
+        resources: [
+          { title: 'Building Performance Culture', url: 'https://www.youtube.com/watch?v=FEs2jgZBaQA', type: 'video' },
+          { title: 'Performance Monitoring', url: 'https://web.dev/vitals/', type: 'docs' },
+          { title: 'High Performance Browser Networking', url: 'https://hpbn.co/', type: 'book' },
+        ],
+      },
+      {
         value: 'dont-think',
         label: "I don't usually think about performance until there's a problem",
         recommendations: ['Learn performance fundamentals', 'Study common bottlenecks', 'Use browser DevTools'],
-        scoreWeight: 0.22,
+        scoreWeight: 0.15,
         isCommonMistake: true,
-        mentorExplanation: "Performance matters to users! You don't need to optimize everything, but be aware. Learn to spot obvious issues: nested loops, unnecessary re-renders, large bundle sizes. Use browser DevTools - they show you where time goes.",
+        mentorExplanation: "Performance impacts real users. Slow apps lose customers - Amazon found 100ms latency costs 1% of sales. You don't need to micro-optimize, but learn to spot issues: O(n²) loops, unnecessary re-renders, huge bundles. DevTools show where time actually goes.",
         resources: [
           { title: 'Web Performance Fundamentals', url: 'https://web.dev/learn-web-vitals/', type: 'docs' },
           { title: 'Chrome DevTools Performance', url: 'https://developer.chrome.com/docs/devtools/performance/', type: 'docs' },
@@ -2110,11 +1631,24 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
+        value: 'expert',
+        label: 'I architect systems for performance and lead optimization initiatives',
+        recommendations: ['Speak about performance', 'Create performance tooling', 'Scale performance practices'],
+        scoreWeight: 1.0,
+        isCorrect: true,
+        mentorExplanation: "You architect with performance in mind from the start. Your decisions - caching layers, CDN strategy, database indexes - impact millions of requests. Performance engineering is underrepresented in content. Share what you know.",
+        resources: [
+          { title: 'Designing for Performance', url: 'https://designingforperformance.com/', type: 'book' },
+          { title: 'Systems Performance', url: 'https://www.amazon.com/Systems-Performance-Brendan-Gregg/dp/0136820158', type: 'book' },
+          { title: 'Performance at Scale', url: 'https://www.youtube.com/watch?v=VaNTXw5udmA', type: 'video' },
+        ],
+      },
+      {
         value: 'reactive',
         label: 'I optimize when users complain or metrics show issues',
         recommendations: ['Learn to measure performance', 'Study optimization patterns', 'Set performance budgets'],
-        scoreWeight: 0.38,
-        mentorExplanation: "Reactive optimization works, but proactive is better! Learn to measure: use Lighthouse, set performance budgets. Prevent performance issues in code review. 'If you can't measure it, you can't improve it.'",
+        scoreWeight: 0.35,
+        mentorExplanation: "Reactive optimization means users already suffered through slowness. Shift left: measure in dev, set budgets, catch regressions in CI. Lighthouse scores in pull requests prevent problems before deployment. 'If you can't measure it, you can't improve it.'",
         resources: [
           { title: 'Web Performance Metrics', url: 'https://web.dev/metrics/', type: 'docs' },
           { title: 'Performance Budgets', url: 'https://web.dev/performance-budgets-101/', type: 'article' },
@@ -2125,39 +1659,13 @@ export const QUESTIONS: Question[] = [
         value: 'conscious',
         label: 'I consider performance while coding and use profiling tools',
         recommendations: ['Master advanced optimization techniques', 'Learn caching strategies', 'Study render optimization'],
-        scoreWeight: 0.62,
+        scoreWeight: 0.6,
         isCorrect: true,
-        mentorExplanation: "Great performance awareness! You measure before optimizing - that's smart. Next: learn advanced techniques like code splitting, lazy loading, memoization, caching strategies. Small optimizations compound!",
+        mentorExplanation: "You measure before optimizing - that's the right approach. Profiling reveals the actual bottleneck, not what you assume. Next: code splitting, lazy loading, memoization, HTTP caching. Small improvements compound.",
         resources: [
           { title: 'Web Performance Optimization', url: 'https://www.youtube.com/watch?v=AQqFZ5t8uNc', type: 'video' },
           { title: 'React Performance', url: 'https://kentcdodds.com/blog/fix-the-slow-render-before-you-fix-the-re-render', type: 'article' },
           { title: 'Patterns for Performance', url: 'https://www.patterns.dev/posts/rendering-patterns/', type: 'article' },
-        ],
-      },
-      {
-        value: 'proactive',
-        label: 'I proactively optimize and set performance budgets',
-        recommendations: ['Establish performance culture', 'Build performance monitoring', 'Share optimization knowledge'],
-        scoreWeight: 0.82,
-        isCorrect: true,
-        mentorExplanation: "Excellent! Performance budgets prevent regressions. You're making performance a team priority. Keep sharing wins and techniques - make performance visible and valued.",
-        resources: [
-          { title: 'Building Performance Culture', url: 'https://www.youtube.com/watch?v=FEs2jgZBaQA', type: 'video' },
-          { title: 'Performance Monitoring', url: 'https://web.dev/vitals/', type: 'docs' },
-          { title: 'High Performance Browser Networking', url: 'https://hpbn.co/', type: 'book' },
-        ],
-      },
-      {
-        value: 'expert',
-        label: 'I architect systems for performance and lead optimization initiatives',
-        recommendations: ['Speak about performance', 'Create performance tooling', 'Scale performance practices'],
-        scoreWeight: 1.0,
-        isCorrect: true,
-        mentorExplanation: "You're a performance expert! Your architectural decisions impact user experience at scale. Share your knowledge - performance engineering is underrepresented in content. Write, speak, build tools!",
-        resources: [
-          { title: 'Designing for Performance', url: 'https://designingforperformance.com/', type: 'book' },
-          { title: 'Systems Performance', url: 'https://www.amazon.com/Systems-Performance-Brendan-Gregg/dp/0136820158', type: 'book' },
-          { title: 'Performance at Scale', url: 'https://www.youtube.com/watch?v=VaNTXw5udmA', type: 'video' },
         ],
       },
     ],
@@ -2167,7 +1675,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 19 — CI/CD & DevOps
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q19',
+    id: uuidv4(),
     title: "What's your experience with CI/CD pipelines and DevOps practices?",
     category: CATEGORIES.TECHNICAL_SKILLS,
     type: 'multiple-choice',
@@ -2175,36 +1683,12 @@ export const QUESTIONS: Question[] = [
     allowOther: true,
     options: [
       {
-        value: 'no-experience',
-        label: 'Little to no experience with CI/CD',
-        recommendations: ['Learn CI/CD basics', 'Study deployment strategies', 'Set up a simple pipeline'],
-        scoreWeight: 0.15,
-        mentorExplanation: "CI/CD might seem like 'operations stuff,' but it affects how you develop! Automated testing and deployment let you ship faster and safer. Start simple: automate tests on every commit. The confidence is worth it!",
-        resources: [
-          { title: 'CI/CD Explained', url: 'https://www.youtube.com/watch?v=scEDHsr3APg', type: 'video' },
-          { title: 'GitHub Actions Tutorial', url: 'https://docs.github.com/en/actions/quickstart', type: 'docs' },
-          { title: 'CI/CD Best Practices', url: 'https://www.atlassian.com/continuous-delivery/principles/continuous-integration-vs-delivery-vs-deployment', type: 'article' },
-        ],
-      },
-      {
-        value: 'use-existing',
-        label: "I use existing CI/CD pipelines but don't configure them",
-        recommendations: ['Learn pipeline configuration', 'Study different CI/CD tools', 'Create your own pipeline'],
-        scoreWeight: 0.32,
-        mentorExplanation: "Using pipelines is good! Now learn to create them. Understanding how builds, tests, and deployments work helps you debug issues and improve the process. Try setting up a simple pipeline for a side project!",
-        resources: [
-          { title: 'GitLab CI/CD Tutorial', url: 'https://docs.gitlab.com/ee/ci/', type: 'docs' },
-          { title: 'Jenkins Tutorial', url: 'https://www.jenkins.io/doc/tutorials/', type: 'docs' },
-          { title: 'CI/CD Pipeline Design', url: 'https://www.youtube.com/watch?v=WnhcAR1YgS8', type: 'video' },
-        ],
-      },
-      {
         value: 'configure',
         label: 'I can configure and maintain CI/CD pipelines',
         recommendations: ['Learn infrastructure as code', 'Study deployment strategies', 'Master monitoring and logging'],
-        scoreWeight: 0.58,
+        scoreWeight: 0.6,
         isCorrect: true,
-        mentorExplanation: "Great DevOps skills! You understand the development pipeline. Next: infrastructure as code (Terraform, CloudFormation), advanced deployment strategies (blue-green, canary), observability (logging, monitoring).",
+        mentorExplanation: "You understand the development pipeline end-to-end. Next level: infrastructure as code (Terraform treats infra like code), deployment strategies (blue-green eliminates downtime), observability (logs and metrics show what's actually happening in prod).",
         resources: [
           { title: 'Terraform Tutorial', url: 'https://developer.hashicorp.com/terraform/tutorials', type: 'docs' },
           { title: 'Deployment Strategies', url: 'https://www.youtube.com/watch?v=AWVTKBUnoIg', type: 'video' },
@@ -2212,16 +1696,15 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'advanced',
-        label: 'I design deployment strategies and implement infrastructure as code',
-        recommendations: ['Study Kubernetes', 'Learn observability', 'Advocate for DevOps practices'],
-        scoreWeight: 0.78,
-        isCorrect: true,
-        mentorExplanation: "Excellent DevOps capabilities! You're bridging dev and ops effectively. Share your knowledge - many developers struggle with deployments. Good DevOps practices multiply team productivity!",
+        value: 'use-existing',
+        label: "I use existing CI/CD pipelines but don't configure them",
+        recommendations: ['Learn pipeline configuration', 'Study different CI/CD tools', 'Create your own pipeline'],
+        scoreWeight: 0.32,
+        mentorExplanation: "Using pipelines is fine, but understanding how they work helps when they break (and they will). Knowing how builds, tests, and deployments connect helps you debug faster. Set up a GitHub Action for a side project - it's simpler than you think.",
         resources: [
-          { title: 'Kubernetes Tutorial', url: 'https://kubernetes.io/docs/tutorials/', type: 'docs' },
-          { title: 'Observability Engineering', url: 'https://www.oreilly.com/library/view/observability-engineering/9781492076438/', type: 'book' },
-          { title: 'Cloud Native DevOps', url: 'https://www.youtube.com/watch?v=gH5cMLWwOxw', type: 'video' },
+          { title: 'GitLab CI/CD Tutorial', url: 'https://docs.gitlab.com/ee/ci/', type: 'docs' },
+          { title: 'Jenkins Tutorial', url: 'https://www.jenkins.io/doc/tutorials/', type: 'docs' },
+          { title: 'CI/CD Pipeline Design', url: 'https://www.youtube.com/watch?v=WnhcAR1YgS8', type: 'video' },
         ],
       },
       {
@@ -2230,11 +1713,36 @@ export const QUESTIONS: Question[] = [
         recommendations: ['Share DevOps knowledge', 'Build developer platforms', 'Speak at conferences'],
         scoreWeight: 1.0,
         isCorrect: true,
-        mentorExplanation: "You're a DevOps/Platform Engineering expert! Your work enables entire organizations to ship faster and safer. This expertise is highly valuable - share it through talks, writing, or building tools!",
+        mentorExplanation: "Platform engineering - building internal developer platforms that let teams ship independently. Your work multiplies everyone's productivity. This expertise is in high demand. Share it - write, speak, build tools.",
         resources: [
           { title: 'Platform Engineering', url: 'https://platformengineering.org/', type: 'docs' },
           { title: 'Site Reliability Engineering', url: 'https://sre.google/books/', type: 'book', description: 'Free Google SRE books' },
           { title: 'DevOps at Scale', url: 'https://www.youtube.com/watch?v=WnhcAR1YgS8', type: 'video' },
+        ],
+      },
+      {
+        value: 'advanced',
+        label: 'I design deployment strategies and implement infrastructure as code',
+        recommendations: ['Study Kubernetes', 'Learn observability', 'Advocate for DevOps practices'],
+        scoreWeight: 0.8,
+        isCorrect: true,
+        mentorExplanation: "You bridge dev and ops effectively. Infrastructure as code, blue-green deployments, rollback strategies - you're enabling safe, fast shipping. Many developers fear this stuff. Share your knowledge, make deployments less scary.",
+        resources: [
+          { title: 'Kubernetes Tutorial', url: 'https://kubernetes.io/docs/tutorials/', type: 'docs' },
+          { title: 'Observability Engineering', url: 'https://www.oreilly.com/library/view/observability-engineering/9781492076438/', type: 'book' },
+          { title: 'Cloud Native DevOps', url: 'https://www.youtube.com/watch?v=gH5cMLWwOxw', type: 'video' },
+        ],
+      },
+      {
+        value: 'no-experience',
+        label: 'Little to no experience with CI/CD',
+        recommendations: ['Learn CI/CD basics', 'Study deployment strategies', 'Set up a simple pipeline'],
+        scoreWeight: 0.15,
+        mentorExplanation: "CI/CD isn't just 'operations stuff' - it changes how you develop. Automated tests on every commit catch bugs early. Push-button deploys eliminate manual errors. Start simple: run tests automatically. The confidence boost is immediate.",
+        resources: [
+          { title: 'CI/CD Explained', url: 'https://www.youtube.com/watch?v=scEDHsr3APg', type: 'video' },
+          { title: 'GitHub Actions Tutorial', url: 'https://docs.github.com/en/actions/quickstart', type: 'docs' },
+          { title: 'CI/CD Best Practices', url: 'https://www.atlassian.com/continuous-delivery/principles/continuous-integration-vs-delivery-vs-deployment', type: 'article' },
         ],
       },
     ],
@@ -2244,7 +1752,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 20 — Problem-Solving Approach
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q20',
+    id: uuidv4(),
     title: 'How do you typically approach solving a new technical problem?',
     category: CATEGORIES.PROBLEM_SOLVING,
     type: 'multiple-choice',
@@ -2252,16 +1760,16 @@ export const QUESTIONS: Question[] = [
     allowOther: true,
     options: [
       {
-        value: 'trial-error',
-        label: 'Trial and error until something works',
-        recommendations: ['Learn systematic problem-solving', 'Study debugging strategies', 'Practice breaking down problems'],
-        scoreWeight: 0.2,
-        isCommonMistake: true,
-        mentorExplanation: "Random trial and error is frustrating and slow! Learn systematic approaches: understand the problem first, break it into smaller pieces, form hypotheses, test them. Saves tons of time! Rubber duck debugging helps too.",
+        value: 'systematic',
+        label: 'I use systematic approaches: break down, research, prototype, iterate',
+        recommendations: ['Learn advanced problem-solving patterns', 'Study design patterns', 'Mentor others in problem-solving'],
+        scoreWeight: 0.8,
+        isCorrect: true,
+        mentorExplanation: "Systematic problem-solving: break it down, research similar problems, prototype quickly, iterate. That's professional engineering. Your process is as valuable as your code. Teach others - many developers skip straight to coding and waste time.",
         resources: [
-          { title: 'How to Think Like a Programmer', url: 'https://www.freecodecamp.org/news/how-to-think-like-a-programmer-lessons-in-problem-solving-d1d8bf1de7d2/', type: 'article' },
-          { title: 'Problem Solving Techniques', url: 'https://www.youtube.com/watch?v=azcrPFhaY9k', type: 'video' },
-          { title: 'The Pragmatic Programmer', url: 'https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/', type: 'book' },
+          { title: 'Design Thinking Process', url: 'https://www.interaction-design.org/literature/article/5-stages-in-the-design-thinking-process', type: 'article' },
+          { title: 'Rapid Prototyping', url: 'https://www.youtube.com/watch?v=JMjozqJS44M', type: 'video' },
+          { title: 'A Philosophy of Software Design', url: 'https://www.amazon.com/Philosophy-Software-Design-John-Ousterhout/dp/1732102201', type: 'book' },
         ],
       },
       {
@@ -2270,7 +1778,7 @@ export const QUESTIONS: Question[] = [
         recommendations: ['Understand before copying', 'Build problem-solving skills', 'Learn underlying concepts'],
         scoreWeight: 0.35,
         isCommonMistake: true,
-        mentorExplanation: "Searching is smart, blindly copying is not! Understand WHY a solution works before using it. What if you hit a similar problem later? Build understanding, not just working code. Stack Overflow is a learning tool, not a copy-paste source.",
+        mentorExplanation: "Searching is smart. Blindly copying code you don't understand is not. What happens when you hit a similar problem and Stack Overflow doesn't have the exact answer? Understand WHY solutions work. Build mental models, not code collections.",
         resources: [
           { title: 'How to Read Documentation', url: 'https://www.writethedocs.org/videos/portland/2019/lessons-learned-in-a-year-of-reading-mdm-documentation-kayce-basques/', type: 'video' },
           { title: 'Effective Stack Overflow Use', url: 'https://stackoverflow.blog/2021/03/31/the-key-copy-paste-programming-techniques/', type: 'article' },
@@ -2278,42 +1786,42 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'understand-first',
-        label: 'I try to understand the problem fully before coding',
-        recommendations: ['Learn design thinking', 'Practice problem decomposition', 'Study algorithmic thinking'],
-        scoreWeight: 0.55,
-        isCorrect: true,
-        mentorExplanation: "Great instinct! Understanding the problem is half the solution. 'Weeks of coding can save hours of planning.' Keep this habit! Add: write down the problem, identify constraints, consider edge cases before coding.",
-        resources: [
-          { title: 'How to Solve It', url: 'https://www.amazon.com/How-Solve-Mathematical-Princeton-Science/dp/069116407X', type: 'book', description: 'Classic problem-solving book' },
-          { title: 'Algorithmic Thinking', url: 'https://www.youtube.com/watch?v=rL8X2mlNHPM', type: 'video' },
-          { title: 'Problem Decomposition', url: 'https://www.freecodecamp.org/news/how-to-think-like-a-programmer-lessons-in-problem-solving-d1d8bf1de7d2/', type: 'article' },
-        ],
-      },
-      {
-        value: 'systematic',
-        label: 'I use systematic approaches: break down, research, prototype, iterate',
-        recommendations: ['Learn advanced problem-solving patterns', 'Study design patterns', 'Mentor others in problem-solving'],
-        scoreWeight: 0.75,
-        isCorrect: true,
-        mentorExplanation: "Excellent systematic approach! Breaking down problems, prototyping quickly, iterating - that's professional problem-solving. Your process is as valuable as your technical skills. Teach others your approach!",
-        resources: [
-          { title: 'Design Thinking Process', url: 'https://www.interaction-design.org/literature/article/5-stages-in-the-design-thinking-process', type: 'article' },
-          { title: 'Rapid Prototyping', url: 'https://www.youtube.com/watch?v=JMjozqJS44M', type: 'video' },
-          { title: 'A Philosophy of Software Design', url: 'https://www.amazon.com/Philosophy-Software-Design-John-Ousterhout/dp/1732102201', type: 'book' },
-        ],
-      },
-      {
         value: 'holistic',
         label: 'I consider trade-offs, constraints, and impact before proposing solutions',
         recommendations: ['Share problem-solving frameworks', 'Mentor in technical decision-making', 'Write about your process'],
-        scoreWeight: 0.9,
+        scoreWeight: 1.0,
         isCorrect: true,
-        mentorExplanation: "You think like an engineer, not just a coder! Considering trade-offs and constraints shows maturity. You know there's no perfect solution, only appropriate ones. This thinking is leadership - share it!",
+        mentorExplanation: "Engineering, not just coding. You consider trade-offs (speed vs maintainability), constraints (time, resources, existing tech), impact (users, team, business). There's no perfect solution, only appropriate ones. This thinking is leadership.",
         resources: [
           { title: 'Technical Decision Making', url: 'https://www.youtube.com/watch?v=jsNnlu0B1-0', type: 'video' },
           { title: 'Systems Thinking', url: 'https://www.amazon.com/Thinking-Systems-Donella-H-Meadows/dp/1603580557', type: 'book' },
           { title: 'Architecture Decision Records', url: 'https://adr.github.io/', type: 'docs' },
+        ],
+      },
+      {
+        value: 'trial-error',
+        label: 'Trial and error until something works',
+        recommendations: ['Learn systematic problem-solving', 'Study debugging strategies', 'Practice breaking down problems'],
+        scoreWeight: 0.15,
+        isCommonMistake: true,
+        mentorExplanation: "Random trial and error is slow and frustrating. Learn systematic approaches: understand the problem, break it down, form hypotheses, test them methodically. Rubber duck debugging (explaining the problem out loud) often reveals the solution.",
+        resources: [
+          { title: 'How to Think Like a Programmer', url: 'https://www.freecodecamp.org/news/how-to-think-like-a-programmer-lessons-in-problem-solving-d1d8bf1de7d2/', type: 'article' },
+          { title: 'Problem Solving Techniques', url: 'https://www.youtube.com/watch?v=azcrPFhaY9k', type: 'video' },
+          { title: 'The Pragmatic Programmer', url: 'https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/', type: 'book' },
+        ],
+      },
+      {
+        value: 'understand-first',
+        label: 'I try to understand the problem fully before coding',
+        recommendations: ['Learn design thinking', 'Practice problem decomposition', 'Study algorithmic thinking'],
+        scoreWeight: 0.6,
+        isCorrect: true,
+        mentorExplanation: "Understanding the problem is half the battle. 'Weeks of coding can save hours of planning.' Write down the problem, identify constraints, consider edge cases before touching code. Many bugs come from solving the wrong problem.",
+        resources: [
+          { title: 'How to Solve It', url: 'https://www.amazon.com/How-Solve-Mathematical-Princeton-Science/dp/069116407X', type: 'book', description: 'Classic problem-solving book' },
+          { title: 'Algorithmic Thinking', url: 'https://www.youtube.com/watch?v=rL8X2mlNHPM', type: 'video' },
+          { title: 'Problem Decomposition', url: 'https://www.freecodecamp.org/news/how-to-think-like-a-programmer-lessons-in-problem-solving-d1d8bf1de7d2/', type: 'article' },
         ],
       },
     ],
@@ -2327,7 +1835,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 21 — Pair Programming & Collaboration (Collaboration category)
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q21',
+    id: uuidv4(),
     title: 'How comfortable are you with pair programming and collaborative coding?',
     category: CATEGORIES.COLLABORATION,
     type: 'multiple-choice',
@@ -2335,53 +1843,28 @@ export const QUESTIONS: Question[] = [
     allowOther: true,
     options: [
       {
-        value: 'uncomfortable',
-        label: "I'm uncomfortable having others watch me code",
-        recommendations: ['Start with low-stakes pairing sessions', 'Practice thinking out loud', 'Reframe pairing as a learning opportunity'],
-        scoreWeight: 0.2,
-        mentorExplanation: "It's totally normal to feel vulnerable coding with someone watching! Remember: everyone makes mistakes. Pairing is explicitly about thinking together, not performing. Your 'mistakes' are the most useful part - they reveal the thought process. Start by asking a colleague to pair on a small bug.",
+        value: 'advocate',
+        label: 'I actively advocate for pairing and lead pairing sessions',
+        recommendations: ['Create a team pairing schedule', 'Run pairing retrospectives', 'Mentor others on facilitating effective sessions'],
+        scoreWeight: 0.8,
+        isCorrect: true,
+        mentorExplanation: "Advocating for pairing takes courage - it challenges the solo-coder identity many developers hold. You're making the case with concrete results: fewer bugs, faster onboarding, shared knowledge. Keep showing the wins.",
         resources: [
-          { title: 'Guide to Pair Programming', url: 'https://www.martinfowler.com/articles/on-pair-programming.html', type: 'article' },
-          { title: 'How to Stop Being Afraid to Pair', url: 'https://www.freecodecamp.org/news/pair-programming-what-is-it-and-why-should-i-try-it-5f8999926776/', type: 'article' },
-          { title: 'Thinking Out Loud', url: 'https://www.youtube.com/watch?v=1MiSHkBB5ps', type: 'video' },
+          { title: 'Building a Pairing Culture', url: 'https://www.thoughtworks.com/insights/blog/pair-programming-considered-extremely-beneficial', type: 'article' },
+          { title: 'Pairing Retrospectives', url: 'https://www.retrium.com/', type: 'docs' },
+          { title: 'Scaling Pairing Practices', url: 'https://engineering.pivotal.io/post/pair-programming/', type: 'article' },
         ],
       },
       {
         value: 'occasional',
         label: 'I pair occasionally but prefer working alone',
         recommendations: ['Schedule regular pairing sessions', 'Try driver-navigator format', 'Pair on the hardest problems'],
-        scoreWeight: 0.38,
-        mentorExplanation: "Working alone has its place, but you're missing out on pairing's benefits! Try the driver-navigator format on your next hard problem - the navigator provides a fresh perspective without touching the keyboard. Often you'll solve it in half the time.",
+        scoreWeight: 0.35,
+        mentorExplanation: "Solo work has its place, but pairing on hard problems often cuts debugging time in half. Try driver-navigator: one codes, one navigates with fresh eyes. You'll catch bugs before they're written.",
         resources: [
           { title: 'Driver-Navigator Pairing', url: 'https://www.drovio.com/blog/the-driver-navigator-pattern/', type: 'article' },
           { title: 'When to Pair Program', url: 'https://www.thoughtworks.com/insights/blog/pair-programming-considered-extremely-beneficial', type: 'article' },
           { title: 'Remote Pair Programming', url: 'https://tuple.app/', type: 'docs' },
-        ],
-      },
-      {
-        value: 'comfortable',
-        label: 'I pair comfortably and find it productive',
-        recommendations: ['Learn mob programming', 'Mentor less experienced developers through pairing', 'Establish pairing norms for your team'],
-        scoreWeight: 0.65,
-        isCorrect: true,
-        mentorExplanation: "Great! Pairing is one of the most effective knowledge-transfer and quality tools available. Use it strategically - pair on the hardest things, spread knowledge intentionally, and rotate partners.",
-        resources: [
-          { title: 'Effective Pair Programming', url: 'https://www.agilealliance.org/glossary/pairing/', type: 'docs' },
-          { title: 'Mob Programming', url: 'https://mobprogramming.org/', type: 'docs' },
-          { title: 'Knowledge Sharing Through Pairing', url: 'https://martinfowler.com/articles/on-pair-programming.html#KnowledgeSharing', type: 'article' },
-        ],
-      },
-      {
-        value: 'advocate',
-        label: 'I actively advocate for pairing and lead pairing sessions',
-        recommendations: ['Create a team pairing schedule', 'Run pairing retrospectives', 'Mentor others on facilitating effective sessions'],
-        scoreWeight: 0.85,
-        isCorrect: true,
-        mentorExplanation: "You understand pairing's value deeply! Advocating for pairing takes courage - it challenges many developers' solo-coder identity. Keep making the case with concrete examples of quality and knowledge improvements.",
-        resources: [
-          { title: 'Building a Pairing Culture', url: 'https://www.thoughtworks.com/insights/blog/pair-programming-considered-extremely-beneficial', type: 'article' },
-          { title: 'Pairing Retrospectives', url: 'https://www.retrium.com/', type: 'docs' },
-          { title: 'Scaling Pairing Practices', url: 'https://engineering.pivotal.io/post/pair-programming/', type: 'article' },
         ],
       },
       {
@@ -2390,11 +1873,36 @@ export const QUESTIONS: Question[] = [
         recommendations: ['Run mob programming sessions', 'Document pairing effectiveness', 'Create pairing training for new hires'],
         scoreWeight: 1.0,
         isCorrect: true,
-        mentorExplanation: "You've mastered collaborative coding! Strategic pairing - knowing when to pair, who to pair with, and what format to use - is a leadership skill. Help your organization build this muscle systematically.",
+        mentorExplanation: "Strategic pairing - knowing when, who, and how to pair. Use it for onboarding (new person drives, experienced navigates). Hard problems (two brains better than one). Knowledge transfer (rotate pairs deliberately). This is leadership.",
         resources: [
           { title: 'Mob Programming RPG', url: 'https://github.com/willemlarsen/mobprogrammingrpg', type: 'github' },
           { title: 'Pairing Research', url: 'https://www.cs.utexas.edu/users/downing/papers/PairProgramming-2002.pdf', type: 'article' },
           { title: 'Strategic Pairing Guide', url: 'https://www.martinfowler.com/articles/on-pair-programming.html', type: 'article' },
+        ],
+      },
+      {
+        value: 'uncomfortable',
+        label: "I'm uncomfortable having others watch me code",
+        recommendations: ['Start with low-stakes pairing sessions', 'Practice thinking out loud', 'Reframe pairing as a learning opportunity'],
+        scoreWeight: 0.15,
+        mentorExplanation: "Feeling vulnerable while someone watches you code is normal. But pairing isn't performance - it's thinking together. Your mistakes are valuable; they show your thought process. Start small: pair on a bug fix with someone you trust.",
+        resources: [
+          { title: 'Guide to Pair Programming', url: 'https://www.martinfowler.com/articles/on-pair-programming.html', type: 'article' },
+          { title: 'How to Stop Being Afraid to Pair', url: 'https://www.freecodecamp.org/news/pair-programming-what-is-it-and-why-should-i-try-it-5f8999926776/', type: 'article' },
+          { title: 'Thinking Out Loud', url: 'https://www.youtube.com/watch?v=1MiSHkBB5ps', type: 'video' },
+        ],
+      },
+      {
+        value: 'comfortable',
+        label: 'I pair comfortably and find it productive',
+        recommendations: ['Learn mob programming', 'Mentor less experienced developers through pairing', 'Establish pairing norms for your team'],
+        scoreWeight: 0.6,
+        isCorrect: true,
+        mentorExplanation: "Pairing is one of the fastest knowledge-transfer tools. Use it strategically: pair on hard problems, rotate partners to spread knowledge, pair experienced with junior developers. Make it intentional, not random.",
+        resources: [
+          { title: 'Effective Pair Programming', url: 'https://www.agilealliance.org/glossary/pairing/', type: 'docs' },
+          { title: 'Mob Programming', url: 'https://mobprogramming.org/', type: 'docs' },
+          { title: 'Knowledge Sharing Through Pairing', url: 'https://martinfowler.com/articles/on-pair-programming.html#KnowledgeSharing', type: 'article' },
         ],
       },
     ],
@@ -2404,7 +1912,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 22 — Stakeholder Communication (Communication category)
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q22',
+    id: uuidv4(),
     title: 'How well do you communicate technical concepts to non-technical stakeholders?',
     category: CATEGORIES.COMMUNICATION,
     type: 'multiple-choice',
@@ -2412,36 +1920,12 @@ export const QUESTIONS: Question[] = [
     allowOther: true,
     options: [
       {
-        value: 'struggle',
-        label: 'I struggle to explain technical concepts in plain language',
-        recommendations: ['Practice the "explain it to a 5-year-old" technique', 'Use analogies and visual aids', 'Study technical writing basics'],
-        scoreWeight: 0.2,
-        mentorExplanation: "This is one of the most valuable skills you can develop! The ability to bridge technical and business worlds makes you irreplaceable. Practice the Feynman Technique: explain concepts using simple language and analogies. If your audience needs a dictionary to understand you, you've lost them.",
-        resources: [
-          { title: 'Feynman Technique', url: 'https://fs.blog/feynman-technique/', type: 'article' },
-          { title: 'Technical Communication for Engineers', url: 'https://developers.google.com/tech-writing', type: 'course' },
-          { title: 'Simply Said (Book)', url: 'https://www.amazon.com/Simply-Said-Communicating-Better-Beyond/dp/1119285291', type: 'book' },
-        ],
-      },
-      {
-        value: 'basic',
-        label: 'I can explain basics but lose non-technical people on complex topics',
-        recommendations: ['Practice structured storytelling', 'Focus on business impact over technical details', 'Use before/after scenarios'],
-        scoreWeight: 0.4,
-        mentorExplanation: "Good start! The key insight: non-technical stakeholders care about outcomes, not implementation. Instead of 'We need to refactor the database layer,' say 'This 2-week investment will cut customer-facing errors by 80%.' Lead with the why and the impact.",
-        resources: [
-          { title: 'Business Impact Framework', url: 'https://www.intercom.com/blog/how-to-communicate-technical-problems-to-non-technical-people/', type: 'article' },
-          { title: 'Data Storytelling', url: 'https://hbr.org/2013/04/how-to-tell-a-story-with-data', type: 'article' },
-          { title: 'Executive Communication', url: 'https://www.youtube.com/watch?v=Unzc731iCUY', type: 'video' },
-        ],
-      },
-      {
         value: 'competent',
         label: 'I adapt my language for the audience and convey technical trade-offs clearly',
         recommendations: ['Level up to persuasive communication', 'Learn to write compelling technical proposals', 'Practice presenting to executives'],
-        scoreWeight: 0.65,
+        scoreWeight: 0.6,
         isCorrect: true,
-        mentorExplanation: "Excellent! Adapting your language shows empathy and awareness. Next level: become persuasive. When you need a tech investment, can you build a compelling business case? Learn to frame technical work in terms of risk, cost, and opportunity.",
+        mentorExplanation: "Adapting language to your audience shows empathy. Next level: persuasion. When you need budget for tech debt, can you frame it as risk reduction? When proposing a new architecture, can you quantify the business impact? Frame technical work in business terms.",
         resources: [
           { title: 'Writing Compelling Tech Proposals', url: 'https://leaddev.com/communication/writing-technical-proposal', type: 'article' },
           { title: "Slide:ology (Presentation Design)", url: 'https://www.amazon.com/slide-ology-Science-Creating-Presentations/dp/0596522347', type: 'book' },
@@ -2449,16 +1933,15 @@ export const QUESTIONS: Question[] = [
         ],
       },
       {
-        value: 'strong',
-        label: 'I regularly present technical strategy to leadership and align it with business goals',
-        recommendations: ['Mentor engineers on stakeholder communication', 'Develop your personal communication style', 'Create communication guidelines for your team'],
-        scoreWeight: 0.88,
-        isCorrect: true,
-        mentorExplanation: "You bridge the technical-business divide effectively! This is a rare skill that drives careers to staff/principal level. Help your team develop this muscle too - pair technical engineers with communication opportunities progressively.",
+        value: 'basic',
+        label: 'I can explain basics but lose non-technical people on complex topics',
+        recommendations: ['Practice structured storytelling', 'Focus on business impact over technical details', 'Use before/after scenarios'],
+        scoreWeight: 0.35,
+        mentorExplanation: "Non-technical stakeholders care about outcomes, not implementation. Don't say 'We need to refactor the database layer.' Say 'This 2-week investment will cut customer-facing errors by 80%.' Lead with impact, not technical details.",
         resources: [
-          { title: 'Staff Engineer Communication', url: 'https://staffeng.com/guides/staff-archetypes/', type: 'article' },
-          { title: 'Influence Without Authority', url: 'https://www.amazon.com/Influence-Without-Authority-Allan-Cohen/dp/0471609552', type: 'book' },
-          { title: 'Engineering Manager Communication', url: 'https://leaddev.com/communication', type: 'article' },
+          { title: 'Business Impact Framework', url: 'https://www.intercom.com/blog/how-to-communicate-technical-problems-to-non-technical-people/', type: 'article' },
+          { title: 'Data Storytelling', url: 'https://hbr.org/2013/04/how-to-tell-a-story-with-data', type: 'article' },
+          { title: 'Executive Communication', url: 'https://www.youtube.com/watch?v=Unzc731iCUY', type: 'video' },
         ],
       },
       {
@@ -2467,98 +1950,47 @@ export const QUESTIONS: Question[] = [
         recommendations: ['Publish thought leadership content', 'Speak at industry conferences', 'Mentor leaders on technical communication'],
         scoreWeight: 1.0,
         isCorrect: true,
-        mentorExplanation: "You're a technical communicator at the highest level! Your ability to shape organizational direction through clear communication is rare. Write, speak externally, and mentor others - your impact multiplies when you share this skill.",
+        mentorExplanation: "You shape organizational direction through communication. Your technical vision becomes company strategy because you translate it into business value. This is rare. Share this skill - write, speak publicly, mentor others.",
         resources: [
           { title: 'Building a Technical Brand', url: 'https://www.swyx.io/learn-in-public/', type: 'article' },
           { title: 'Thought Leadership Content', url: 'https://hbr.org/2018/09/how-to-become-a-thought-leader', type: 'article' },
           { title: 'CTO Communication Patterns', url: 'https://ctohb.com/', type: 'book' },
         ],
       },
-    ],
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // QUESTION 23 — Functional Programming (Core Concepts category)
-  // ─────────────────────────────────────────────────────────────────────────────
-  {
-    id: 'q23',
-    title: 'How familiar are you with functional programming concepts?',
-    category: CATEGORIES.CORE_CONCEPTS,
-    type: 'multiple-choice',
-    hint: 'Functional programming techniques like immutability and pure functions reduce bugs dramatically',
-    allowOther: true,
-    options: [
       {
-        value: 'unfamiliar',
-        label: "I'm not familiar with functional programming",
-        recommendations: ['Learn pure functions and immutability', 'Study map/filter/reduce', 'Try functional exercises in JavaScript or Python'],
-        scoreWeight: 0.2,
-        mentorExplanation: "Functional programming (FP) sounds academic but has very practical benefits! The core ideas: pure functions (same input → same output, no side effects), immutability (never mutate data), and function composition. These ideas make code easier to reason about and test. You've already used FP - every time you use .map(), .filter(), or .reduce() you're thinking functionally!",
+        value: 'struggle',
+        label: 'I struggle to explain technical concepts in plain language',
+        recommendations: ['Practice the "explain it to a 5-year-old" technique', 'Use analogies and visual aids', 'Study technical writing basics'],
+        scoreWeight: 0.15,
+        mentorExplanation: "Bridging technical and business worlds is one of the most valuable skills you can develop. Practice the Feynman Technique: explain concepts using simple language. If your audience needs a dictionary to understand you, you've lost them. Use analogies.",
         resources: [
-          { title: 'Functional Programming in JavaScript', url: 'https://www.youtube.com/watch?v=e-5obm1G_FY', type: 'video' },
-          { title: 'Professor Frisby\'s FP Guide', url: 'https://mostly-adequate.gitbook.io/mostly-adequate-guide/', type: 'book', description: 'Free, excellent FP in JavaScript' },
-          { title: 'Functional-Light JS', url: 'https://github.com/getify/Functional-Light-JS', type: 'github' },
+          { title: 'Feynman Technique', url: 'https://fs.blog/feynman-technique/', type: 'article' },
+          { title: 'Technical Communication for Engineers', url: 'https://developers.google.com/tech-writing', type: 'course' },
+          { title: 'Simply Said (Book)', url: 'https://www.amazon.com/Simply-Said-Communicating-Better-Beyond/dp/1119285291', type: 'book' },
         ],
       },
       {
-        value: 'basic',
-        label: 'I use map/filter/reduce but avoid advanced FP patterns',
-        recommendations: ['Learn function composition', 'Study currying and partial application', 'Practice writing pure functions'],
-        scoreWeight: 0.4,
-        mentorExplanation: "Great foundation! map/filter/reduce are the gateway to FP. Next: try writing functions that take functions as arguments (higher-order functions), practice keeping functions pure, and explore composition (combining small functions into larger ones). These patterns lead to remarkably clean code.",
-        resources: [
-          { title: 'Function Composition', url: 'https://medium.com/javascript-scene/master-the-javascript-interview-what-is-function-composition-20dfb109a1a0', type: 'article' },
-          { title: 'Currying Explained', url: 'https://javascript.info/currying-partials', type: 'article' },
-          { title: 'Pure Functions', url: 'https://www.freecodecamp.org/news/what-is-a-pure-function-in-javascript-acb887375dfe/', type: 'article' },
-        ],
-      },
-      {
-        value: 'intermediate',
-        label: 'I understand immutability, pure functions, and function composition',
-        recommendations: ['Learn monads and functors conceptually', 'Apply FP to state management', 'Study languages like Haskell or Elm briefly'],
-        scoreWeight: 0.62,
+        value: 'strong',
+        label: 'I regularly present technical strategy to leadership and align it with business goals',
+        recommendations: ['Mentor engineers on stakeholder communication', 'Develop your personal communication style', 'Create communication guidelines for your team'],
+        scoreWeight: 0.8,
         isCorrect: true,
-        mentorExplanation: "Solid FP understanding! You know the practical core. Now go deeper: understand why immutability matters in concurrent systems, explore how Redux uses FP principles, or try a purely functional language briefly (Elm, ReScript). It'll permanently improve your JavaScript too.",
+        mentorExplanation: "You bridge technical-business effectively. This skill drives careers to staff/principal level. Help your team develop it - pair junior engineers with stakeholder communication opportunities. Make communication a core competency.",
         resources: [
-          { title: 'Haskell in 5 Minutes', url: 'https://tryhaskell.org/', type: 'docs' },
-          { title: 'Redux and FP', url: 'https://redux.js.org/understanding/thinking-in-redux/motivation', type: 'docs' },
-          { title: 'Immutability in JavaScript', url: 'https://immerjs.github.io/immer/', type: 'docs' },
-        ],
-      },
-      {
-        value: 'advanced',
-        label: 'I apply FP principles across codebases and understand monads, functors, etc.',
-        recommendations: ['Blend FP and OOP where appropriate', 'Mentor others in FP thinking', 'Explore category theory basics'],
-        scoreWeight: 0.85,
-        isCorrect: true,
-        mentorExplanation: "Impressive! Deep FP knowledge is rare. You can see how FP and OOP complement each other. Help teammates understand FP - they'll write better code even if they don't go deep. The industry is steadily moving toward functional patterns.",
-        resources: [
-          { title: 'Category Theory for Programmers', url: 'https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/', type: 'article' },
-          { title: 'FP vs OOP', url: 'https://www.youtube.com/watch?v=JEq7Ehw-qk8', type: 'video' },
-          { title: 'Algebraic Structures in JS', url: 'https://github.com/hemanth/functional-programming-jargon', type: 'github' },
-        ],
-      },
-      {
-        value: 'expert',
-        label: 'I design systems using FP principles and can teach advanced FP concepts',
-        recommendations: ['Write about FP patterns', 'Contribute to FP libraries', 'Teach FP workshops'],
-        scoreWeight: 1.0,
-        isCorrect: true,
-        mentorExplanation: "You're a functional programming expert - a rare specialization! Your ability to design systems with FP principles leads to more correct, testable code. Share this - FP demystification talks are always in demand.",
-        resources: [
-          { title: 'Building FP Libraries', url: 'https://github.com/ramda/ramda', type: 'github' },
-          { title: 'Domain Modeling Made Functional', url: 'https://www.amazon.com/Domain-Modeling-Made-Functional-Domain-Driven/dp/1680502549', type: 'book' },
-          { title: 'FP Conference Talks', url: 'https://www.youtube.com/c/LambdaConf', type: 'video' },
+          { title: 'Staff Engineer Communication', url: 'https://staffeng.com/guides/staff-archetypes/', type: 'article' },
+          { title: 'Influence Without Authority', url: 'https://www.amazon.com/Influence-Without-Authority-Allan-Cohen/dp/0471609552', type: 'book' },
+          { title: 'Engineering Manager Communication', url: 'https://leaddev.com/communication', type: 'article' },
         ],
       },
     ],
   },
+
 
   // ─────────────────────────────────────────────────────────────────────────────
   // QUESTION 24 — Specific DS Knowledge (Algorithms category)
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q24',
+    id: uuidv4(),
     title: 'Which data structures do you understand well enough to implement and use in real code?',
     category: CATEGORIES.ALGORITHMS,
     type: 'checkbox',
@@ -2673,7 +2105,7 @@ export const QUESTIONS: Question[] = [
   // QUESTION 25 — Monorepo & Branch Strategy (Version Control category)
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q25',
+    id: uuidv4(),
     title: 'How experienced are you with repository strategy and large codebase management?',
     category: CATEGORIES.VERSION_CONTROL,
     type: 'multiple-choice',
@@ -2684,7 +2116,7 @@ export const QUESTIONS: Question[] = [
         value: 'single-repo',
         label: 'I only work in single-repository projects',
         recommendations: ['Learn about monorepo vs polyrepo trade-offs', 'Study how large companies structure code', 'Explore tools like Nx or Turborepo'],
-        scoreWeight: 0.25,
+        scoreWeight: 0.15,
         mentorExplanation: "Single repos are fine for smaller projects! But understanding the alternatives prepares you for larger organizations. Monorepos (one repo for everything) are used by Google, Meta, and many others - they have real advantages for code sharing and atomic changes across packages.",
         resources: [
           { title: 'Monorepo vs Polyrepo', url: 'https://monorepo.tools/', type: 'docs' },
@@ -2696,7 +2128,7 @@ export const QUESTIONS: Question[] = [
         value: 'basic-multi-repo',
         label: 'I work with multiple repos but find dependency management challenging',
         recommendations: ['Learn semantic versioning deeply', 'Study package management strategies', 'Explore monorepo tools as a solution'],
-        scoreWeight: 0.42,
+        scoreWeight: 0.35,
         isCommonMistake: true,
         mentorExplanation: "Polyrepo dependency hell is a real pain - you update a shared library and now 12 repos need updates! Monorepos solve this but have their own tradeoffs. Learn semantic versioning thoroughly and explore tools like Changesets to manage releases.",
         resources: [
@@ -2709,7 +2141,7 @@ export const QUESTIONS: Question[] = [
         value: 'monorepo-experience',
         label: 'I have experience with monorepos and understand their trade-offs',
         recommendations: ['Learn advanced monorepo tooling', 'Study caching and build optimization', 'Understand affected-change detection'],
-        scoreWeight: 0.65,
+        scoreWeight: 0.6,
         isCorrect: true,
         mentorExplanation: "Excellent! Monorepo experience is valuable. Focus next on performance at scale: caching build outputs, affected-change detection (only build what changed), and CI optimization. This is where monorepos win or lose.",
         resources: [
@@ -2722,7 +2154,7 @@ export const QUESTIONS: Question[] = [
         value: 'architect',
         label: 'I design repository architecture and branching strategies for teams',
         recommendations: ['Document your architectural decisions', 'Share repo strategy knowledge', 'Evaluate emerging tooling'],
-        scoreWeight: 0.85,
+        scoreWeight: 0.8,
         isCorrect: true,
         mentorExplanation: "Excellent! Repository architecture has huge impact on team velocity. Your experience evaluating trade-offs (monorepo vs polyrepo, trunk-based vs feature branches) is high-level thinking. Share these decisions and their reasoning with your organization.",
         resources: [
@@ -2751,9 +2183,9 @@ export const QUESTIONS: Question[] = [
   // QUESTION 26 — Root Cause Analysis / Production Debugging (Debugging category)
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q26',
+    id: uuidv4(),
     title: 'How do you approach debugging issues in production environments?',
-    category: CATEGORIES.DEBUGGING,
+    category: CATEGORIES.PROBLEM_SOLVING,
     type: 'multiple-choice',
     hint: 'Production bugs are harder - no breakpoints, real user data, and time pressure',
     allowOther: true,
@@ -2762,7 +2194,7 @@ export const QUESTIONS: Question[] = [
         value: 'restart-hope',
         label: 'I restart services and hope the problem goes away',
         recommendations: ['Learn structured logging', 'Study observability basics', 'Practice reading error logs'],
-        scoreWeight: 0.12,
+        scoreWeight: 0.15,
         isCommonMistake: true,
         mentorExplanation: "Restarting without understanding is dangerous - the problem will come back, maybe worse! Learn to investigate first. Add proper logging to understand what's happening. A restart is sometimes necessary, but always investigate the cause.",
         resources: [
@@ -2775,7 +2207,7 @@ export const QUESTIONS: Question[] = [
         value: 'logs-only',
         label: 'I look at logs but struggle to connect events to root causes',
         recommendations: ['Learn distributed tracing', 'Study correlation IDs', 'Practice timeline reconstruction from logs'],
-        scoreWeight: 0.32,
+        scoreWeight: 0.35,
         mentorExplanation: "Logs are great but fragmented across services they're hard to reason about! Learn about correlation IDs (trace a request across multiple services) and distributed tracing tools (Jaeger, Datadog APM). They connect the dots automatically.",
         resources: [
           { title: 'Distributed Tracing Guide', url: 'https://opentelemetry.io/docs/concepts/observability-primer/', type: 'docs' },
@@ -2787,7 +2219,7 @@ export const QUESTIONS: Question[] = [
         value: 'systematic',
         label: 'I use logs, metrics, and traces systematically to isolate issues',
         recommendations: ['Build runbooks for common issues', 'Study chaos engineering', 'Learn advanced APM features'],
-        scoreWeight: 0.62,
+        scoreWeight: 0.6,
         isCorrect: true,
         mentorExplanation: "Excellent! The three pillars - logs, metrics, traces - give you the full picture. Now build runbooks for common issues so your whole team can handle them. And study how to PREVENT production issues with chaos engineering.",
         resources: [
@@ -2800,7 +2232,7 @@ export const QUESTIONS: Question[] = [
         value: 'advanced',
         label: 'I perform thorough post-mortems and implement preventive measures',
         recommendations: ['Lead blameless post-mortems', 'Build observability culture', 'Design for debuggability from the start'],
-        scoreWeight: 0.85,
+        scoreWeight: 0.8,
         isCorrect: true,
         mentorExplanation: "Excellent production engineering mindset! Post-mortems with preventive follow-through turn outages into improvements. Blameless culture is key - when people fear blame, they hide problems. You're building antifragile systems!",
         resources: [
@@ -2826,87 +2258,10 @@ export const QUESTIONS: Question[] = [
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // QUESTION 27 — Accessibility & Inclusive Design (Technical Skills / Code Quality)
-  // ─────────────────────────────────────────────────────────────────────────────
-  {
-    id: 'q27',
-    title: 'How much do you consider accessibility (a11y) when building user interfaces?',
-    category: CATEGORIES.CODE_QUALITY,
-    type: 'multiple-choice',
-    hint: "Accessible software is better software for everyone - not just users with disabilities",
-    allowOther: true,
-    options: [
-      {
-        value: 'unaware',
-        label: "I haven't thought much about accessibility",
-        recommendations: ['Learn WCAG guidelines basics', 'Run an accessibility audit on your current project', 'Try using a screen reader for 30 minutes'],
-        scoreWeight: 0.1,
-        mentorExplanation: "Accessibility affects 15% of the world's population and is legally required in many contexts! The good news: accessibility improvements benefit everyone. Better keyboard navigation, higher contrast ratios, proper semantic HTML - these make interfaces better for all users. Start by running Lighthouse's accessibility audit on any page you've built.",
-        resources: [
-          { title: 'Web Accessibility Initiative (WAI)', url: 'https://www.w3.org/WAI/fundamentals/accessibility-intro/', type: 'docs' },
-          { title: 'Learn Accessibility', url: 'https://web.dev/learn/accessibility/', type: 'course', description: "Google's free a11y course" },
-          { title: 'A11y Project Checklist', url: 'https://www.a11yproject.com/checklist/', type: 'docs' },
-        ],
-      },
-      {
-        value: 'basic',
-        label: 'I add alt text to images and use semantic HTML occasionally',
-        recommendations: ['Learn ARIA roles and attributes', 'Test with keyboard navigation', 'Study focus management'],
-        scoreWeight: 0.32,
-        mentorExplanation: "Good start with the basics! Alt text and semantic HTML go a long way. Now go further: test your interfaces with just a keyboard (Tab, Enter, Arrow keys). If you can't navigate your UI without a mouse, neither can a power user or a person with motor disabilities.",
-        resources: [
-          { title: 'ARIA Authoring Practices', url: 'https://www.w3.org/WAI/ARIA/apg/', type: 'docs' },
-          { title: 'Keyboard Navigation Testing', url: 'https://www.deque.com/blog/keyboard-accessibility-testing/', type: 'article' },
-          { title: 'Focus Management Guide', url: 'https://developers.google.com/web/fundamentals/accessibility/focus/', type: 'docs' },
-        ],
-      },
-      {
-        value: 'conscious',
-        label: 'I consciously build accessible UIs and test with keyboard navigation',
-        recommendations: ['Learn to test with screen readers', 'Study complex widget patterns (modals, dropdowns)', 'Integrate automated a11y testing'],
-        scoreWeight: 0.6,
-        isCorrect: true,
-        mentorExplanation: "Great accessibility awareness! You're going beyond basics. Next: test with actual screen readers (NVDA free, VoiceOver built into Mac/iOS). What sounds like a good experience visually can be confusing aurally. Integrate axe-core into your test suite for automated catches.",
-        resources: [
-          { title: 'Testing with Screen Readers', url: 'https://www.smashingmagazine.com/2018/12/voiceover-screen-reader-web-apps/', type: 'article' },
-          { title: 'axe-core Testing', url: 'https://github.com/dequelabs/axe-core', type: 'github' },
-          { title: 'Inclusive Components', url: 'https://inclusive-components.design/', type: 'article' },
-        ],
-      },
-      {
-        value: 'champion',
-        label: 'I advocate for a11y and integrate it into design and development processes',
-        recommendations: ['Run a11y training for your team', 'Create accessibility guidelines and component standards', 'Include users with disabilities in user testing'],
-        scoreWeight: 0.85,
-        isCorrect: true,
-        mentorExplanation: "You're an accessibility advocate! Systemic change - accessible design systems, component standards, user testing with people with disabilities - has the highest leverage. You're making products better for millions of people.",
-        resources: [
-          { title: 'Accessibility in Design Systems', url: 'https://www.designsystemchecklist.com/', type: 'docs' },
-          { title: 'Hiring Disabled Testers', url: 'https://www.a11yproject.com/resources/', type: 'docs' },
-          { title: 'A11y Legal Requirements', url: 'https://www.ada.gov/resources/web-guidance/', type: 'docs' },
-        ],
-      },
-      {
-        value: 'expert',
-        label: 'I lead a11y initiatives and ensure compliance at an organizational level',
-        recommendations: ['Contribute to accessibility standards', 'Speak about a11y at conferences', 'Build accessible component libraries'],
-        scoreWeight: 1.0,
-        isCorrect: true,
-        mentorExplanation: "You're an accessibility expert and champion! Your organizational-level impact ensures products work for everyone. The community needs your voice - consider contributing to WCAG development, speaking at A11yTO or Inclusive Design 24.",
-        resources: [
-          { title: 'WCAG 3.0 Development', url: 'https://www.w3.org/TR/wcag-3.0/', type: 'docs' },
-          { title: 'A11y Conference Speaking', url: 'https://a11yto.com/', type: 'article' },
-          { title: 'Building Accessible DS', url: 'https://www.radix-ui.com/', type: 'docs', description: 'Study Radix UI as a model' },
-        ],
-      },
-    ],
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────────
   // QUESTION 28 — Mentoring & Knowledge Transfer (Learning & Growth / Collaboration)
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q28',
+    id: uuidv4(),
     title: 'How actively do you mentor others or share knowledge within your team?',
     category: CATEGORIES.LEARNING,
     type: 'multiple-choice',
@@ -2917,7 +2272,7 @@ export const QUESTIONS: Question[] = [
         value: 'receiver',
         label: "I'm still learning and mostly receive mentorship",
         recommendations: ['Start sharing small learnings with peers', 'Write brief notes on things you figure out', 'Explain solutions you found to teammates'],
-        scoreWeight: 0.25,
+        scoreWeight: 0.15,
         mentorExplanation: "You don't need to be an expert to mentor! Explaining what you just learned to a peer reinforces your own understanding (Feynman Technique). Start small: the next time you solve a tricky bug, write a quick Slack message explaining what you found. That IS mentorship.",
         resources: [
           { title: 'Feynman Technique', url: 'https://fs.blog/feynman-technique/', type: 'article' },
@@ -2929,7 +2284,7 @@ export const QUESTIONS: Question[] = [
         value: 'informal',
         label: 'I help when asked but rarely proactively share knowledge',
         recommendations: ['Share learnings in team channels', 'Write internal wiki pages', 'Present at team meetings'],
-        scoreWeight: 0.42,
+        scoreWeight: 0.35,
         mentorExplanation: "Reactive help is good, but proactive sharing multiplies your impact! Did you learn something useful this week? Post it in Slack. Figured out a tricky config? Write a wiki page. Your knowledge becomes a team asset.",
         resources: [
           { title: 'Building a Knowledge Base', url: 'https://www.notion.so/product/wikis', type: 'docs' },
@@ -2941,7 +2296,7 @@ export const QUESTIONS: Question[] = [
         value: 'active',
         label: 'I actively mentor junior developers and share knowledge regularly',
         recommendations: ['Create structured learning plans for mentees', 'Run team knowledge-sharing sessions', 'Document your mentoring approach'],
-        scoreWeight: 0.65,
+        scoreWeight: 0.6,
         isCorrect: true,
         mentorExplanation: "Excellent! Active mentorship multiplies team capability. Make it structured: create learning plans with goals and milestones for mentees. Track progress. The most effective mentors challenge and stretch their mentees, not just answer questions.",
         resources: [
@@ -2954,7 +2309,7 @@ export const QUESTIONS: Question[] = [
         value: 'program-builder',
         label: 'I build knowledge-sharing culture through talks, documentation, and structured programs',
         recommendations: ['Create formal mentoring programs', 'Build internal learning platforms', 'Measure knowledge sharing effectiveness'],
-        scoreWeight: 0.88,
+        scoreWeight: 0.8,
         isCorrect: true,
         mentorExplanation: "You're building learning culture at scale! Systematic knowledge sharing - guilds, internal conferences, structured onboarding - compounds over time. Track impact: do engineers ramp up faster? Is there less bus factor? These metrics justify continued investment.",
         resources: [
@@ -2979,89 +2334,12 @@ export const QUESTIONS: Question[] = [
     ],
   },
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // QUESTION 29 — Error Handling & Resilience (Core Concepts / Code Quality)
-  // ─────────────────────────────────────────────────────────────────────────────
-  {
-    id: 'q29',
-    title: 'How do you approach error handling and building resilient applications?',
-    category: CATEGORIES.CORE_CONCEPTS,
-    type: 'multiple-choice',
-    hint: "How your app fails is as important as how it succeeds - users judge reliability above features",
-    allowOther: true,
-    options: [
-      {
-        value: 'ignore',
-        label: "I often don't handle errors explicitly",
-        recommendations: ['Learn try-catch patterns', 'Study error propagation', 'Add error boundaries to your UI'],
-        scoreWeight: 0.12,
-        isCommonMistake: true,
-        mentorExplanation: "Unhandled errors crash apps and lose user data! Every network call, file operation, and database query can fail. Start with the basics: wrap operations in try-catch, show meaningful error messages (not stack traces!) to users, and log errors for debugging. Small improvement, huge user experience gains.",
-        resources: [
-          { title: 'Error Handling in JavaScript', url: 'https://javascript.info/error-handling', type: 'docs' },
-          { title: 'React Error Boundaries', url: 'https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary', type: 'docs' },
-          { title: 'Error Handling Patterns', url: 'https://www.youtube.com/watch?v=ITogH7lJTyE', type: 'video' },
-        ],
-      },
-      {
-        value: 'basic-try-catch',
-        label: 'I use try-catch but handle errors generically',
-        recommendations: ['Distinguish error types and handle appropriately', 'Learn about custom error classes', 'Study user-facing error messaging'],
-        scoreWeight: 0.35,
-        mentorExplanation: "Good that you're handling errors! But generic handling loses valuable information. Is it a network error (retry might help)? A validation error (show the user what to fix)? An unexpected bug (log and report)? Each deserves different treatment. Create custom error classes for your domain.",
-        resources: [
-          { title: 'Custom Error Classes', url: 'https://javascript.info/custom-errors', type: 'article' },
-          { title: 'Result Types Pattern', url: 'https://www.youtube.com/watch?v=OGmFGFxSGaA', type: 'video' },
-          { title: 'Error Message Best Practices', url: 'https://www.nngroup.com/articles/error-message-guidelines/', type: 'article' },
-        ],
-      },
-      {
-        value: 'thoughtful',
-        label: 'I categorize errors and handle each type appropriately',
-        recommendations: ['Implement circuit breakers', 'Study retry with backoff patterns', 'Add error reporting (Sentry)'],
-        scoreWeight: 0.62,
-        isCorrect: true,
-        mentorExplanation: "Excellent error-handling mindset! You're thinking about failure modes. Next level: implement retry with exponential backoff for transient failures, circuit breakers to prevent cascade failures, and error monitoring (Sentry, Bugsnag) to catch production issues proactively.",
-        resources: [
-          { title: 'Circuit Breaker Pattern', url: 'https://martinfowler.com/bliki/CircuitBreaker.html', type: 'article' },
-          { title: 'Retry with Backoff', url: 'https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/', type: 'article' },
-          { title: 'Sentry Error Monitoring', url: 'https://sentry.io/for/javascript/', type: 'docs' },
-        ],
-      },
-      {
-        value: 'resilience-patterns',
-        label: 'I design systems with resilience patterns (retries, circuit breakers, fallbacks)',
-        recommendations: ['Study chaos engineering', 'Implement health checks and graceful degradation', 'Design for partial failure'],
-        scoreWeight: 0.85,
-        isCorrect: true,
-        mentorExplanation: "You think in systems resilience - that's senior-level thinking! Designing for partial failure (degrading gracefully when a service is down) is critical for production systems. Chaos engineering proactively finds weaknesses before users do.",
-        resources: [
-          { title: 'Release It! (Book)', url: 'https://www.amazon.com/Release-Design-Deploy-Production-Ready-Software/dp/1680502395', type: 'book', description: 'The definitive guide to resilience patterns' },
-          { title: 'Chaos Engineering', url: 'https://netflix.github.io/chaosmonkey/', type: 'docs' },
-          { title: 'Graceful Degradation', url: 'https://www.smashingmagazine.com/2009/04/progressive-enhancement-what-it-is-and-how-to-use-it/', type: 'article' },
-        ],
-      },
-      {
-        value: 'expert',
-        label: 'I architect highly available systems with comprehensive failure modeling',
-        recommendations: ['Define SLAs and SLOs', 'Implement disaster recovery plans', 'Lead reliability engineering initiatives'],
-        scoreWeight: 1.0,
-        isCorrect: true,
-        mentorExplanation: "You're operating at the reliability engineering level! Failure modeling, SLAs, and disaster recovery are what separate high-availability systems from fragile ones. Your expertise directly protects user trust and business continuity.",
-        resources: [
-          { title: "Google's Site Reliability Engineering", url: 'https://sre.google/books/', type: 'book' },
-          { title: 'Disaster Recovery Planning', url: 'https://aws.amazon.com/blogs/architecture/disaster-recovery-dr-architecture-on-aws-part-1/', type: 'article' },
-          { title: 'SLA vs SLO vs SLI', url: 'https://cloud.google.com/blog/products/devops-sre/sre-fundamentals-slis-slas-and-slos', type: 'article' },
-        ],
-      },
-    ],
-  },
-
+  
   // ─────────────────────────────────────────────────────────────────────────────
   // QUESTION 30 — Estimating & Project Planning (Communication / Problem Solving)
   // ─────────────────────────────────────────────────────────────────────────────
   {
-    id: 'q30',
+    id: uuidv4(),
     title: 'How do you approach estimating technical work and managing scope?',
     category: CATEGORIES.COMMUNICATION,
     type: 'multiple-choice',
@@ -3072,7 +2350,7 @@ export const QUESTIONS: Question[] = [
         value: 'avoid',
         label: "I avoid giving estimates - I never know how long things take",
         recommendations: ['Learn estimation techniques', 'Practice breaking tasks into small pieces', 'Track your actual time vs estimates'],
-        scoreWeight: 0.18,
+        scoreWeight: 0.15,
         mentorExplanation: "Avoiding estimates leaves your team and stakeholders unable to plan! Estimation IS hard, but it's a skill you can develop. Start small: break work into tasks under 2 hours. Estimate those. Track actual vs estimate. Over time you'll develop calibration. The goal isn't perfection - it's a reasonable range with stated assumptions.",
         resources: [
           { title: 'Software Estimation Techniques', url: 'https://www.pluralsight.com/blog/software-development/software-development-time-estimation', type: 'article' },
@@ -3110,7 +2388,7 @@ export const QUESTIONS: Question[] = [
         value: 'skilled',
         label: 'I decompose work accurately, identify risks early, and adjust plans proactively',
         recommendations: ['Mentor teammates on estimation', 'Establish estimation processes', 'Use data to improve team forecasting'],
-        scoreWeight: 0.85,
+        scoreWeight: 0.8,
         isCorrect: true,
         mentorExplanation: "Excellent! Risk identification before you start is the hallmark of experience. Your ability to say 'This looks like 3 days but there are 2 unknowns that could make it a week' is incredibly valuable. Share this skill - help your team estimate better.",
         resources: [
@@ -3134,7 +2412,1681 @@ export const QUESTIONS: Question[] = [
       },
     ],
   },
+  // ─────────────────────────────────────────────────────────────────────────────
+  // QUESTION 31 — Technical Understanding: Problem-Solving & Knowledge Application
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    id: uuidv4(),
+    title: 'How would you describe your ability to solve technical problems and apply your knowledge in frontend development?',
+    category: CATEGORIES.TECHNICAL_KNOWLEDGE,
+    type: 'multiple-choice',
+    hint: 'Consider: solving problems without exact examples, explaining how things work, frequency of getting stuck, ability to adapt solutions',
+    options: [
+      {
+        value: 'level1',
+        label: 'I need very similar examples to solve problems and get stuck very often. I struggle to explain how things work.',
+        recommendations: [
+          'Start with tutorial projects to build foundational understanding',
+          'Practice explaining code out loud',
+          'Break down existing code to understand how each part works',
+          'Join beginner-friendly coding communities',
+        ],
+        scoreWeight: 0.1,
+        mentorExplanation: "You're at the beginning - focus on understanding fundamentals. When you copy code, understand each line. Keep a learning journal. Don't be discouraged - getting stuck is part of learning.",
+        resources: [
+          { title: 'freeCodeCamp', url: 'https://www.freecodecamp.org/', type: 'course', description: 'Structured learning path' },
+          { title: 'MDN Learn', url: 'https://developer.mozilla.org/en-US/docs/Learn', type: 'docs', description: 'Beginner documentation' },
+        ],
+      },
+      {
+        value: 'level2',
+        label: 'I can follow tutorials but struggle when slightly different. I get stuck often and search frequently.',
+        recommendations: [
+          'Modify tutorial code with variations',
+          'Try solving before searching',
+          'Read documentation regularly',
+        ],
+        scoreWeight: 0.2,
+        mentorExplanation: "You're making progress! Focus on WHY solutions work. Take time to understand each part. Build a personal knowledge base.",
+        resources: [
+          { title: 'Frontend Mentor', url: 'https://www.frontendmentor.io/', type: 'course', description: 'Real-world projects' },
+        ],
+      },
+      {
+        value: 'level3',
+        label: 'I adapt examples to my situation but need external references regularly. I get stuck moderately often.',
+        recommendations: [
+          'Challenge yourself to solve before searching',
+          'Deep dive into framework documentation',
+          'Practice explaining code',
+        ],
+        scoreWeight: 0.3,
+        mentorExplanation: "Good progress! Before searching, spend 15-20 minutes trying approaches. Read library source code. Focus on understanding tradeoffs.",
+        resources: [
+          { title: 'Patterns.dev', url: 'https://www.patterns.dev/', type: 'docs', description: 'Modern web patterns' },
+        ],
+      },
+      {
+        value: 'level4',
+        label: 'I solve simpler tasks alone but need references for complex problems. I understand basics but not all details.',
+        recommendations: [
+          'Study advanced framework concepts',
+          'Build complex personal projects',
+          'Solve problems multiple ways',
+        ],
+        scoreWeight: 0.4,
+        mentorExplanation: "Intermediate territory! Focus on WHY things work. Study tool internals. Read about performance and security.",
+        resources: [
+          { title: 'Epic React', url: 'https://epicreact.dev/', type: 'course', description: 'Advanced React' },
+        ],
+      },
+      {
+        value: 'level5',
+        label: 'I handle most standard tasks independently. I understand how things work but occasionally need documentation.',
+        recommendations: [
+          'Take on complex features',
+          'Mentor junior developers',
+          'Study system design patterns',
+        ],
+        scoreWeight: 0.5,
+        mentorExplanation: "Solidly intermediate! Expand impact and deepen expertise. Think architecture, not just implementation.",
+        resources: [
+          { title: 'System Design Primer', url: 'https://github.com/donnemartin/system-design-primer', type: 'github', description: 'Design fundamentals' },
+        ],
+      },
+      {
+        value: 'level6',
+        label: 'I solve complex problems independently and explain how tech works. Rarely stuck except on specific edge cases.',
+        recommendations: [
+          'Explore cutting-edge technologies',
+          'Write technical articles',
+          'Lead technical initiatives',
+        ],
+        scoreWeight: 0.6,
+        mentorExplanation: "Strong intermediate to advanced! Focus on breadth and leadership. Share knowledge. Study performance and accessibility.",
+        resources: [
+          { title: 'High Performance Browser Networking', url: 'https://hpbn.co/', type: 'book', description: 'Web performance' },
+        ],
+      },
+      {
+        value: 'level7',
+        label: 'Deep understanding, architect complex solutions. Understand not just how but why. Getting stuck is rare.',
+        recommendations: [
+          'Focus on system architecture',
+          'Mentor and guide team decisions',
+          'Publish technical content',
+        ],
+        scoreWeight: 0.7,
+        mentorExplanation: "Advanced level! You understand 'why' behind decisions. Focus on impact and leadership. Study large-scale systems.",
+        resources: [
+          { title: 'Designing Data-Intensive Apps', url: 'https://dataintensive.net/', type: 'book', description: 'System design' },
+        ],
+      },
+      {
+        value: 'level8',
+        label: 'I solve almost any problem independently with full understanding. I design robust solutions with edge cases.',
+        recommendations: [
+          'Lead architectural decisions',
+          'Evaluate emerging technologies',
+          'Build team tools and frameworks',
+        ],
+        scoreWeight: 0.8,
+        mentorExplanation: "Senior/expert level! Focus on strategic impact. Build teams that scale. Influence stack decisions.",
+        resources: [
+          { title: 'The Manager\'s Path', url: 'https://www.oreilly.com/library/view/the-managers-path/9781491973882/', type: 'book', description: 'Technical leadership' },
+        ],
+      },
+      {
+        value: 'level9',
+        label: 'Mastery-level understanding, innovate solutions. Rarely encounter unsolvable problems.',
+        recommendations: [
+          'Drive organizational innovation',
+          'Contribute significantly to open source',
+          'Shape industry best practices',
+        ],
+        scoreWeight: 0.9,
+        mentorExplanation: "Outstanding mastery! You define best practices. Extend impact beyond code - shape standards, influence frameworks.",
+        resources: [
+          { title: 'Google Research', url: 'https://research.google/', type: 'article', description: 'Cutting-edge research' },
+        ],
+      },
+      {
+        value: 'level10',
+        label: 'Expert-level across stack. I create novel solutions and contribute to advancing the field itself.',
+        recommendations: [
+          'Lead R&D initiatives',
+          'Publish papers or create influential OSS',
+          'Speak at major conferences',
+        ],
+        scoreWeight: 1.0,
+        mentorExplanation: "Exceptional! You create technology. Focus on legacy - problems that benefit millions. Create frameworks, write books, teach.",
+        resources: [
+          { title: 'TC39', url: 'https://tc39.es/', type: 'docs', description: 'JavaScript specification' },
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // QUESTION 32 — Technical Understanding: Debugging & Implementation
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    id: uuidv4(),
+    title: 'How would you describe your ability to debug issues and implement new solutions without existing examples?',
+    category: CATEGORIES.TECHNICAL_KNOWLEDGE,
+    type: 'multiple-choice',
+    hint: 'Consider: identifying root causes, implementing without examples, judging when to use technologies, troubleshooting systematically',
+    options: [
+      {
+        value: 'debug1',
+        label: 'I struggle to identify problems without help. I need detailed examples and feel lost without them.',
+        recommendations: [
+          'Learn browser DevTools basics',
+          'Practice reading error messages',
+          'Learn console.log and breakpoints',
+        ],
+        scoreWeight: 0.1,
+        mentorExplanation: "Debugging improves with practice! Error messages help. Read them slowly. Learn DevTools. Isolate problems systematically.",
+        resources: [
+          { title: 'Chrome DevTools', url: 'https://developer.chrome.com/docs/devtools/', type: 'docs', description: 'Browser debugging' },
+        ],
+      },
+      {
+        value: 'debug2',
+        label: 'I debug simple issues with guidance. I rely on examples and struggle implementing without references.',
+        recommendations: [
+          'Practice hypothesis-test-observe',
+          'Learn to read stack traces',
+          'Use debugger not just console.log',
+        ],
+        scoreWeight: 0.2,
+        mentorExplanation: "Building awareness! Form hypotheses, test them. Learn debugger - step through code, watch variables.",
+        resources: [
+          { title: 'VS Code Debugging', url: 'https://code.visualstudio.com/docs/editor/debugging', type: 'docs', description: 'IDE debugger' },
+        ],
+      },
+      {
+        value: 'debug3',
+        label: 'I find and fix common bugs. I adapt examples but feel uncomfortable without starting references.',
+        recommendations: [
+          'Implement features from scratch',
+          'Study multiple solutions',
+          'Read docs not just Stack Overflow',
+        ],
+        scoreWeight: 0.3,
+        mentorExplanation: "Good! Try 30 minutes before searching. Read official docs. Understanding 'why' lets you decide without examples.",
+        resources: [
+          { title: 'React DevTools', url: 'https://react.dev/learn/react-developer-tools', type: 'docs', description: 'Debug React apps' },
+        ],
+      },
+      {
+        value: 'debug4',
+        label: 'I debug most issues given time. I implement simpler features independently but prefer examples for complex ones.',
+        recommendations: [
+          'Challenge with complex bugs',
+          'Learn advanced DevTools',
+          'Practice system design first',
+        ],
+        scoreWeight: 0.4,
+        mentorExplanation: "Solid intermediate! For complex features, try architectural thinking: components, communication, data flow.",
+        resources: [
+          { title: 'Clean Architecture', url: 'https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html', type: 'article', description: 'Architectural thinking' },
+        ],
+      },
+      {
+        value: 'debug5',
+        label: 'I debug complex issues systematically. I implement most features independently and judge different approaches.',
+        recommendations: [
+          'Identify performance bottlenecks proactively',
+          'Study debugging at scale',
+          'Mentor debugging techniques',
+        ],
+        scoreWeight: 0.5,
+        mentorExplanation: "Strong intermediate! Think systems. Study monitoring, logging, error tracking. Think maintainability and testability.",
+        resources: [
+          { title: 'Sentry Docs', url: 'https://docs.sentry.io/', type: 'docs', description: 'Production monitoring' },
+        ],
+      },
+      {
+        value: 'debug6',
+        label: 'I quickly identify root causes. I confidently implement solutions and evaluate technology choices independently.',
+        recommendations: [
+          'Prevent issues through architecture',
+          'Study distributed debugging',
+          'Build team debugging tools',
+        ],
+        scoreWeight: 0.6,
+        mentorExplanation: "Advanced! Focus on scale and prevention. Design debuggable systems. Study observability - metrics, logs, traces.",
+        resources: [
+          { title: 'Distributed Tracing', url: 'https://opentelemetry.io/', type: 'docs', description: 'Debug distributed systems' },
+        ],
+      },
+      {
+        value: 'debug7',
+        label: 'I excel at debugging obscure issues. I architect solutions with edge cases and explain decisions clearly.',
+        recommendations: [
+          'Lead debugging workshops',
+          'Develop debugging strategies',
+          'Contribute to dev tools',
+        ],
+        scoreWeight: 0.7,
+        mentorExplanation: "Excellent! Scale your knowledge: build runbooks, create tooling, set standards. Share through docs and talks.",
+        resources: [
+          { title: 'SRE Books', url: 'https://sre.google/books/', type: 'book', description: 'Reliability approach' },
+        ],
+      },
+      {
+        value: 'debug8',
+        label: 'I solve almost any debugging challenge. I design with built-in debuggability and rarely encounter blockers.',
+        recommendations: [
+          'Establish org-wide best practices',
+          'Build sophisticated debugging tools',
+          'Consult on complex challenges',
+        ],
+        scoreWeight: 0.8,
+        mentorExplanation: "Outstanding! Prevent bug categories through architecture. Lead initiatives. Build tooling. Your expertise shapes how others debug.",
+        resources: [
+          { title: 'V8 Blog', url: 'https://v8.dev/blog', type: 'article', description: 'JS engine internals' },
+        ],
+      },
+      {
+        value: 'debug9',
+        label: 'Mastery-level debugging across stack. I innovate debugging approaches and contribute to advancing tools.',
+        recommendations: [
+          'Research new debugging methodologies',
+          'Contribute to DevTools/frameworks',
+          'Publish debugging research',
+        ],
+        scoreWeight: 0.9,
+        mentorExplanation: "Exceptional! Don't just use tools, improve them. Develop techniques. Contribute to tools millions use. Share expertise.",
+        resources: [
+          { title: 'DevTools Protocol', url: 'https://chromedevtools.github.io/devtools-protocol/', type: 'docs', description: 'Build debugging tools' },
+        ],
+      },
+      {
+        value: 'debug10',
+        label: 'Expert-level debugging all layers. I create tools and methodologies used industry-wide.',
+        recommendations: [
+          'Lead research in debugging',
+          'Develop next-gen debugging tools',
+          'Advise on debugging strategy',
+        ],
+        scoreWeight: 1.0,
+        mentorExplanation: "Extraordinary! Your work influences worldwide debugging. At this pinnacle, legacy matters. Lead OSS, found companies, write definitive works.",
+        resources: [
+          { title: 'W3C', url: 'https://www.w3.org/', type: 'docs', description: 'Web standards' },
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // QUESTION 33 — Technical Knowledge: Vocabulary & Concept Recognition
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    id: uuidv4(),
+    title: 'How would you describe your familiarity with technical terminology and understanding of what different technologies are used for?',
+    category: CATEGORIES.TECHNICAL_KNOWLEDGE,
+    type: 'multiple-choice',
+    hint: 'Consider: understanding conversations with technical terms, knowing what technologies do, recognizing categories (e.g., Python is a language, not a database)',
+    options: [
+      {
+        value: 'vocab1',
+        label: 'I frequently don\'t understand technical terms in conversations and often confuse what different technologies are for.',
+        recommendations: [
+          'Build a personal tech glossary as you learn',
+          'Use MDN Web Docs to understand web technologies',
+          'Watch beginner-friendly tech overview videos',
+          'Ask questions when unfamiliar terms come up',
+        ],
+        scoreWeight: 0.1,
+        mentorExplanation: "Building your technical vocabulary is foundational! Don't be embarrassed to ask 'what does that mean?' Create a running list of terms you encounter and look them up. This gets easier quickly.",
+        resources: [
+          { title: 'MDN Web Docs Glossary', url: 'https://developer.mozilla.org/en-US/docs/Glossary', type: 'docs', description: 'Web technology terms' },
+          { title: 'Codecademy Glossary', url: 'https://www.codecademy.com/resources/docs', type: 'docs', description: 'Programming glossary' },
+        ],
+      },
+      {
+        value: 'vocab2',
+        label: 'I understand basic terms but often encounter unfamiliar concepts. I sometimes confuse technology categories.',
+        recommendations: [
+          'Read tech articles regularly',
+          'Follow technology newsletters',
+          'Study technology landscape maps',
+        ],
+        scoreWeight: 0.2,
+        mentorExplanation: "You're building awareness! Exposure helps - read tech blogs, follow developers on social media. When you hear a new term, take 2 minutes to understand it.",
+        resources: [
+          { title: 'JavaScript Weekly', url: 'https://javascriptweekly.com/', type: 'article', description: 'Stay current' },
+          { title: 'Web.dev', url: 'https://web.dev/', type: 'docs', description: 'Modern web development' },
+        ],
+      },
+      {
+        value: 'vocab3',
+        label: 'I understand common frontend terms but struggle with backend, DevOps, or infrastructure concepts.',
+        recommendations: [
+          'Study full-stack architecture diagrams',
+          'Learn basics of backend and DevOps',
+          'Understand how frontend fits in larger systems',
+        ],
+        scoreWeight: 0.3,
+        mentorExplanation: "Common for frontend specialists! Broaden gradually - understand APIs, databases, deployment. You don't need to code it all, but knowing what they are helps collaboration.",
+        resources: [
+          { title: 'Full Stack Open', url: 'https://fullstackopen.com/', type: 'course', description: 'Full-stack fundamentals' },
+          { title: 'Roadmap.sh', url: 'https://roadmap.sh/', type: 'docs', description: 'Developer roadmaps' },
+        ],
+      },
+      {
+        value: 'vocab4',
+        label: 'I understand most frontend and basic full-stack terms. I occasionally encounter unfamiliar specialized concepts.',
+        recommendations: [
+          'Explore adjacent specializations',
+          'Read about emerging technologies',
+          'Join technical discussions and ask questions',
+        ],
+        scoreWeight: 0.4,
+        mentorExplanation: "Solid foundation! Continue expanding horizontally - learn enough about databases, cloud, security to have informed conversations. Specialization is good, but breadth helps you design better solutions.",
+        resources: [
+          { title: 'System Design Primer', url: 'https://github.com/donnemartin/system-design-primer', type: 'github', description: 'Broad tech concepts' },
+          { title: 'AWS Cloud Practitioner Essentials', url: 'https://aws.amazon.com/training/', type: 'course', description: 'Cloud basics' },
+        ],
+      },
+      {
+        value: 'vocab5',
+        label: 'I understand technical conversations across web development. I know what most common technologies do and their categories.',
+        recommendations: [
+          'Deep dive into technologies you use daily',
+          'Explore performance and security concepts',
+          'Study software architecture patterns',
+        ],
+        scoreWeight: 0.5,
+        mentorExplanation: "Well-rounded intermediate knowledge! Now go deeper on your stack and broader on architecture. Understanding tradeoffs between technologies matters more than knowing all of them.",
+        resources: [
+          { title: 'Martin Fowler\'s Blog', url: 'https://martinfowler.com/', type: 'article', description: 'Software architecture' },
+          { title: 'High Scalability', url: 'http://highscalability.com/', type: 'article', description: 'Architecture case studies' },
+        ],
+      },
+      {
+        value: 'vocab6',
+        label: 'I have strong knowledge of web technologies and infrastructure. I can explain most technologies and suggest alternatives.',
+        recommendations: [
+          'Study emerging technologies and trends',
+          'Understand historical context of tech evolution',
+          'Share knowledge through writing or talks',
+        ],
+        scoreWeight: 0.6,
+        mentorExplanation: "Advanced knowledge! You can evaluate technologies effectively. Focus on understanding 'why' technologies emerged and what problems they solve. This helps you predict trends and make smart bets.",
+        resources: [
+          { title: 'ThoughtWorks Tech Radar', url: 'https://www.thoughtworks.com/radar', type: 'article', description: 'Technology trends' },
+          { title: 'InfoQ', url: 'https://www.infoq.com/', type: 'article', description: 'Software architecture news' },
+        ],
+      },
+      {
+        value: 'vocab7',
+        label: 'I have comprehensive knowledge across frontend, backend, and infrastructure. I rarely encounter unfamiliar concepts.',
+        recommendations: [
+          'Explore cutting-edge research areas',
+          'Contribute to technical discussions and RFCs',
+          'Mentor others on technology choices',
+        ],
+        scoreWeight: 0.7,
+        mentorExplanation: "Excellent breadth! You can make informed architectural decisions. Focus on depth in strategic areas and staying ahead of industry shifts. Your knowledge helps teams avoid costly mistakes.",
+        resources: [
+          { title: 'Papers We Love', url: 'https://paperswelove.org/', type: 'article', description: 'Computer science papers' },
+          { title: 'ACM Queue', url: 'https://queue.acm.org/', type: 'article', description: 'Practitioner research' },
+        ],
+      },
+      {
+        value: 'vocab8',
+        label: 'I have expert-level knowledge of web technologies, infrastructure, and CS fundamentals. I can discuss advanced topics fluently.',
+        recommendations: [
+          'Lead technology evaluation processes',
+          'Publish technical content',
+          'Influence organizational tech strategy',
+        ],
+        scoreWeight: 0.8,
+        mentorExplanation: "Senior/expert level! You understand the entire stack deeply. Use this to guide architectural decisions, evaluate build vs buy, and set technical direction. Your expertise is a strategic asset.",
+        resources: [
+          { title: 'Google Research Publications', url: 'https://research.google/pubs/', type: 'article', description: 'Research at scale' },
+          { title: 'Distributed Systems Course', url: 'https://www.distributedsystemscourse.com/', type: 'course', description: 'Advanced concepts' },
+        ],
+      },
+      {
+        value: 'vocab9',
+        label: 'I have mastery-level understanding of technologies across the stack. I contribute to technical standards and discussions.',
+        recommendations: [
+          'Participate in standards organizations',
+          'Speak at major conferences',
+          'Publish influential technical writing',
+        ],
+        scoreWeight: 0.9,
+        mentorExplanation: "Outstanding mastery! You shape how others think about technology. Consider contributing to open source, standards bodies, or influential blogs. Your insights can influence thousands of developers.",
+        resources: [
+          { title: 'W3C Working Groups', url: 'https://www.w3.org/groups/wg/', type: 'docs', description: 'Web standards' },
+          { title: 'TC39 Proposals', url: 'https://github.com/tc39/proposals', type: 'github', description: 'JavaScript evolution' },
+        ],
+      },
+      {
+        value: 'vocab10',
+        label: 'I have world-class expertise in web technologies and computer science. I contribute to advancing the field itself.',
+        recommendations: [
+          'Lead research initiatives',
+          'Author definitive resources',
+          'Shape industry direction',
+        ],
+        scoreWeight: 1.0,
+        mentorExplanation: "Exceptional! You're at the forefront of the industry. Your work defines best practices. Focus on maximum impact - create frameworks, write books, lead standards. Invest in the next generation of developers.",
+        resources: [
+          { title: 'IETF', url: 'https://www.ietf.org/', type: 'docs', description: 'Internet standards' },
+          { title: 'ACM', url: 'https://www.acm.org/', type: 'docs', description: 'Computing research' },
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // QUESTION 34 — Technical Knowledge: Solution Navigation & Application
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    id: uuidv4(),
+    title: 'How would you describe your ability to navigate solutions, understand your project\'s architecture, and identify technology alternatives?',
+    category: CATEGORIES.TECHNICAL_KNOWLEDGE,
+    type: 'multiple-choice',
+    hint: 'Consider: finding solutions efficiently, understanding how your project works, knowing what libraries are used, identifying alternatives, recommending improvements',
+    options: [
+      {
+        value: 'nav1',
+        label: 'I struggle to find solutions on my own and have minimal understanding of how our project works or what libraries we use.',
+        recommendations: [
+          'Create a project architecture diagram',
+          'Document libraries and their purposes',
+          'Practice reading package.json and dependencies',
+          'Ask teammates for codebase tours',
+        ],
+        scoreWeight: 0.1,
+        mentorExplanation: "Start with your own project! List every library in package.json and understand its purpose. Draw how components connect. This foundation makes everything else easier.",
+        resources: [
+          { title: 'Reading a Codebase', url: 'https://www.felienne.com/archives/6472', type: 'article', description: 'Navigating unfamiliar code' },
+          { title: 'Understanding Dependencies', url: 'https://docs.npmjs.com/cli/v8/configuring-npm/package-json', type: 'docs', description: 'Package.json guide' },
+        ],
+      },
+      {
+        value: 'nav2',
+        label: 'I can find basic solutions with guidance. I have surface-level understanding of our project but can\'t identify alternatives.',
+        recommendations: [
+          'Study project README and documentation',
+          'Trace feature implementations end-to-end',
+          'Research why each library was chosen',
+        ],
+        scoreWeight: 0.2,
+        mentorExplanation: "Building context! For each library, research 'why this one?' Look at alternatives. Understanding tradeoffs develops your judgment. Follow code paths from UI to data.",
+        resources: [
+          { title: 'npm Trends', url: 'https://npmtrends.com/', type: 'docs', description: 'Compare libraries' },
+          { title: 'Stack Overflow Developer Survey', url: 'https://survey.stackoverflow.co/', type: 'article', description: 'Popular technologies' },
+        ],
+      },
+      {
+        value: 'nav3',
+        label: 'I can find solutions for common problems. I understand basic project structure but struggle with architecture decisions.',
+        recommendations: [
+          'Study software architecture patterns',
+          'Analyze how features are implemented',
+          'Research alternative approaches to current solutions',
+        ],
+        scoreWeight: 0.3,
+        mentorExplanation: "Good progress! Move from 'what' to 'why'. Why is state managed this way? Why this routing approach? Understanding architectural decisions prepares you to make them.",
+        resources: [
+          { title: 'Patterns.dev', url: 'https://www.patterns.dev/', type: 'docs', description: 'Design patterns' },
+          { title: 'React Architecture', url: 'https://kentcdodds.com/blog/', type: 'article', description: 'Frontend architecture' },
+        ],
+      },
+      {
+        value: 'nav4',
+        label: 'I navigate solutions effectively for routine problems. I understand project structure and can point to some alternatives.',
+        recommendations: [
+          'Compare alternative solutions before implementing',
+          'Study similar projects\' approaches',
+          'Practice evaluating tradeoffs',
+        ],
+        scoreWeight: 0.4,
+        mentorExplanation: "Solid intermediate! Build your decision-making muscle - before implementing, research 2-3 approaches. Understand pros/cons. This skill becomes invaluable at senior levels.",
+        resources: [
+          { title: 'Architecture Decision Records', url: 'https://adr.github.io/', type: 'docs', description: 'Document decisions' },
+          { title: 'Real World App Comparisons', url: 'https://github.com/gothinkster/realworld', type: 'github', description: 'Same app, different stacks' },
+        ],
+      },
+      {
+        value: 'nav5',
+        label: 'I efficiently find solutions and understand how our project works. I can identify alternatives and explain tradeoffs.',
+        recommendations: [
+          'Propose improvements to current architecture',
+          'Evaluate emerging solutions in your domain',
+          'Contribute to technical discussions',
+        ],
+        scoreWeight: 0.5,
+        mentorExplanation: "Strong intermediate! You can make informed recommendations. Start proposing improvements - better state management, performance optimizations, updated dependencies. Build conviction through research.",
+        resources: [
+          { title: 'Software Architecture Guide', url: 'https://martinfowler.com/architecture/', type: 'article', description: 'Architecture principles' },
+          { title: 'State of JS', url: 'https://stateofjs.com/', type: 'article', description: 'Ecosystem trends' },
+        ],
+      },
+      {
+        value: 'nav6',
+        label: 'I quickly find optimal solutions and deeply understand project architecture. I confidently recommend new technologies and improvements.',
+        recommendations: [
+          'Lead technical spikes and evaluations',
+          'Document architectural patterns for the team',
+          'Mentor others on solution navigation',
+        ],
+        scoreWeight: 0.6,
+        mentorExplanation: "Advanced capability! You're a technical decision-maker. Lead evaluations of new tools. Document architectural patterns. Your recommendations carry weight - use it wisely.",
+        resources: [
+          { title: 'C4 Model', url: 'https://c4model.com/', type: 'docs', description: 'Architecture diagrams' },
+          { title: 'Technology Radar', url: 'https://www.thoughtworks.com/radar/how-to-byor', type: 'article', description: 'Build your radar' },
+        ],
+      },
+      {
+        value: 'nav7',
+        label: 'I excel at finding solutions across the stack and architecting features. I evaluate and introduce new technologies successfully.',
+        recommendations: [
+          'Set standards for technology evaluation',
+          'Build reusable patterns and libraries',
+          'Influence technical roadmap',
+        ],
+        scoreWeight: 0.7,
+        mentorExplanation: "Excellent! You drive technical direction. Focus on creating leverage - build internal tools, establish evaluation criteria, create runbooks. Scale your impact through systems and documentation.",
+        resources: [
+          { title: 'Staff Engineer Archetypes', url: 'https://staffeng.com/guides/staff-archetypes', type: 'article', description: 'Technical leadership' },
+          { title: 'Engineering Strategy', url: 'https://lethain.com/engineering-strategy/', type: 'article', description: 'Strategic thinking' },
+        ],
+      },
+      {
+        value: 'nav8',
+        label: 'I have expert-level ability to evaluate technologies and architect complex systems. I lead major technical decisions.',
+        recommendations: [
+          'Drive organization-wide technical initiatives',
+          'Establish architectural review processes',
+          'Publish architectural guidance',
+        ],
+        scoreWeight: 0.8,
+        mentorExplanation: "Senior/expert level! Your decisions shape how teams work. Invest in processes - architectural reviews, tech radars, decision frameworks. Build organizational technical intelligence.",
+        resources: [
+          { title: 'The Architecture of Open Source Applications', url: 'https://aosabook.org/', type: 'book', description: 'Learn from real systems' },
+          { title: 'Software Architecture in Practice', url: 'https://www.oreilly.com/library/view/software-architecture-in/9780136885979/', type: 'book', description: 'Architectural thinking' },
+        ],
+      },
+      {
+        value: 'nav9',
+        label: 'I have mastery-level expertise in solution architecture and technology evaluation. I shape technical strategy at scale.',
+        recommendations: [
+          'Develop novel architectural patterns',
+          'Contribute to open source architecture',
+          'Advise on industry best practices',
+        ],
+        scoreWeight: 0.9,
+        mentorExplanation: "Outstanding! You create architectural patterns others adopt. Share your expertise - speak at conferences, write influential posts, contribute to frameworks. Your insights benefit the entire industry.",
+        resources: [
+          { title: 'Building Evolutionary Architectures', url: 'https://www.oreilly.com/library/view/building-evolutionary-architectures/9781492097532/', type: 'book', description: 'Modern architecture' },
+          { title: 'Microservices Patterns', url: 'https://microservices.io/', type: 'docs', description: 'Distributed architecture' },
+        ],
+      },
+      {
+        value: 'nav10',
+        label: 'I have world-class expertise in software architecture and technology strategy. I create frameworks and patterns used industry-wide.',
+        recommendations: [
+          'Lead major open source projects',
+          'Author definitive architectural guides',
+          'Advise organizations on technology strategy',
+        ],
+        scoreWeight: 1.0,
+        mentorExplanation: "Exceptional! You define how modern applications are built. Create lasting impact - build influential frameworks, write seminal books, establish new patterns. Invest deeply in the next generation.",
+        resources: [
+          { title: 'Design of Design', url: 'https://www.amazon.com/Design-Essays-Computer-Scientist/dp/0201362988', type: 'book', description: 'Design philosophy' },
+          { title: 'Designing Data-Intensive Applications', url: 'https://dataintensive.net/', type: 'book', description: 'Modern system design' },
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // QUESTION 35 — Problem Solving: Problem Identification & Research Skills
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    id: uuidv4(),
+    title: 'How would you describe your ability to identify problems and find solutions through research?',
+    category: CATEGORIES.PROBLEM_SOLVING,
+    type: 'multiple-choice',
+    hint: 'Consider: narrowing down problem areas, searching effectively (Google, Stack Overflow), finding solutions in existing codebase, using correct keywords',
+    options: [
+      {
+        value: 'research1',
+        label: 'I often get blocked and struggle to identify where the problem is. I have difficulty finding relevant information online.',
+        recommendations: [
+          'Learn to read error messages carefully',
+          'Practice breaking problems into smaller pieces',
+          'Use browser DevTools to inspect behavior',
+          'Ask for help narrowing down the problem area',
+        ],
+        scoreWeight: 0.1,
+        mentorExplanation: "Getting blocked is frustrating but normal when learning! Start with error messages - they point to problem areas. Learn to add console.logs to trace execution. Copy exact error messages to Google.",
+        resources: [
+          { title: 'How to Debug', url: 'https://jvns.ca/blog/2019/06/23/a-few-debugging-resources/', type: 'article', description: 'Debugging fundamentals' },
+          { title: 'Reading Error Messages', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors', type: 'docs', description: 'Understanding JS errors' },
+        ],
+      },
+      {
+        value: 'research2',
+        label: 'I frequently get stuck and need help. I can sometimes find relevant information but struggle with search keywords.',
+        recommendations: [
+          'Learn effective Google search techniques',
+          'Practice reading Stack Overflow answers',
+          'Study how to isolate problems',
+          'Build vocabulary of technical terms',
+        ],
+        scoreWeight: 0.2,
+        mentorExplanation: "Searching is a skill! Include framework names in searches ('React useState not updating'). Look for recent answers. Read multiple solutions to understand patterns.",
+        resources: [
+          { title: 'Google Search Tips', url: 'https://support.google.com/websearch/answer/2466433', type: 'docs', description: 'Advanced search' },
+          { title: 'How to Search Stack Overflow', url: 'https://stackoverflow.com/help/searching', type: 'docs', description: 'Effective searching' },
+        ],
+      },
+      {
+        value: 'research3',
+        label: 'I get blocked regularly but can usually find something relevant. I can identify the general area but not the specific issue.',
+        recommendations: [
+          'Practice systematic debugging',
+          'Learn to use debugger breakpoints',
+          'Study your project\'s architecture',
+          'Improve search query formulation',
+        ],
+        scoreWeight: 0.3,
+        mentorExplanation: "You're getting closer! Use the debugger to step through code and see exactly where behavior diverges from expectations. This narrows problems from 'somewhere in this feature' to 'this specific line'.",
+        resources: [
+          { title: 'Chrome DevTools Debugging', url: 'https://developer.chrome.com/docs/devtools/javascript/', type: 'docs', description: 'Using breakpoints' },
+          { title: 'The Art of Googling', url: 'https://www.freecodecamp.org/news/how-to-google-like-a-pro-10-tips-for-effective-googling/', type: 'article', description: 'Search strategies' },
+        ],
+      },
+      {
+        value: 'research4',
+        label: 'I sometimes get blocked but can usually identify the problem area. I find relevant solutions with some trial and error.',
+        recommendations: [
+          'Study debugging methodologies',
+          'Learn to read source code of libraries',
+          'Practice hypothesis-driven debugging',
+          'Build mental models of your tech stack',
+        ],
+        scoreWeight: 0.4,
+        mentorExplanation: "Solid progress! Form hypotheses about causes, then test them. Keep a log of what you tried and what happened. Pattern recognition develops with practice - you'll start seeing familiar issues.",
+        resources: [
+          { title: 'Debugging Guide', url: 'https://www.theodinproject.com/lessons/foundations-javascript-developer-tools', type: 'article', description: 'Systematic debugging' },
+          { title: 'Reading Library Source Code', url: 'https://kentcdodds.com/blog/how-to-read-source-code', type: 'article', description: 'Understanding dependencies' },
+        ],
+      },
+      {
+        value: 'research5',
+        label: 'I can usually identify problem areas and find solutions independently. I use effective keywords most of the time.',
+        recommendations: [
+          'Search official documentation first',
+          'Learn advanced debugging techniques',
+          'Study common problem patterns',
+          'Practice reading stack traces deeply',
+        ],
+        scoreWeight: 0.5,
+        mentorExplanation: "Strong intermediate! Go deeper - understand why solutions work, not just that they work. Read documentation and source code when Stack Overflow isn't enough. Build confidence in unfamiliar territory.",
+        resources: [
+          { title: 'Beyond Console.log', url: 'https://medium.com/front-end-weekly/beyond-console-log-level-up-your-debugging-skills-2e2e4ba94f97', type: 'article', description: 'Advanced debugging' },
+          { title: 'MDN JavaScript Guide', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide', type: 'docs', description: 'Deep reference' },
+        ],
+      },
+      {
+        value: 'research6',
+        label: 'I efficiently identify specific problem areas and find solutions quickly. I know what to search for and where to look.',
+        recommendations: [
+          'Contribute answers to help others',
+          'Study advanced debugging tools',
+          'Learn performance profiling',
+          'Read GitHub issues of libraries you use',
+        ],
+        scoreWeight: 0.6,
+        mentorExplanation: "Advanced capability! You've built strong research skills. Start helping others - answer Stack Overflow questions, write blog posts about tricky bugs you solved. Teaching reinforces your knowledge.",
+        resources: [
+          { title: 'Performance Profiling', url: 'https://developer.chrome.com/docs/devtools/performance/', type: 'docs', description: 'Chrome performance tools' },
+          { title: 'GitHub Issue Search', url: 'https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests', type: 'docs', description: 'Finding known issues' },
+        ],
+      },
+      {
+        value: 'research7',
+        label: 'I quickly pinpoint problems and find solutions even for complex issues. I search official docs, source code, and GitHub issues effectively.',
+        recommendations: [
+          'Solve problems not documented online',
+          'Contribute to documentation',
+          'Build debugging tools and utilities',
+          'Mentor others on problem-solving',
+        ],
+        scoreWeight: 0.7,
+        mentorExplanation: "Excellent! You go beyond Stack Overflow to primary sources. Share your expertise - write debugging guides, create tools, establish team practices. Your skills help everyone solve problems faster.",
+        resources: [
+          { title: 'Writing Technical Docs', url: 'https://www.writethedocs.org/guide/', type: 'docs', description: 'Documentation best practices' },
+          { title: 'Building Dev Tools', url: 'https://chromedevtools.github.io/devtools-protocol/', type: 'docs', description: 'Create debugging tools' },
+        ],
+      },
+      {
+        value: 'research8',
+        label: 'I excel at identifying root causes quickly. I solve problems without existing online solutions by reading specs and source code.',
+        recommendations: [
+          'Contribute to open source debugging efforts',
+          'Document novel problems and solutions',
+          'Lead debugging workshops',
+          'Establish team debugging standards',
+        ],
+        scoreWeight: 0.8,
+        mentorExplanation: "Senior/expert level! You solve problems few others can. Create resources - runbooks for common issues, debugging playbooks, search strategies. Your approach to problems is a team asset.",
+        resources: [
+          { title: 'TC39 Proposals', url: 'https://github.com/tc39/proposals', type: 'github', description: 'JavaScript specifications' },
+          { title: 'Web Platform Tests', url: 'https://web-platform-tests.org/', type: 'docs', description: 'Browser standards' },
+        ],
+      },
+      {
+        value: 'research9',
+        label: 'I have mastery-level problem identification skills. I solve deep technical issues by understanding specifications and implementations.',
+        recommendations: [
+          'Contribute to language/framework specifications',
+          'Publish research on debugging techniques',
+          'Speak at conferences about problem-solving',
+          'Develop new debugging methodologies',
+        ],
+        scoreWeight: 0.9,
+        mentorExplanation: "Outstanding! You identify problems that require spec-level understanding. Share widely - blog posts, conference talks, open source contributions. Influence how the community approaches problems.",
+        resources: [
+          { title: 'ECMA-262 Spec', url: 'https://tc39.es/ecma262/', type: 'docs', description: 'JavaScript specification' },
+          { title: 'W3C Standards', url: 'https://www.w3.org/standards/', type: 'docs', description: 'Web standards' },
+        ],
+      },
+      {
+        value: 'research10',
+        label: 'I have world-class expertise in problem identification and research. I solve problems that require contributing to specifications or tools.',
+        recommendations: [
+          'Lead research initiatives',
+          'Contribute to browser/language development',
+          'Author definitive debugging guides',
+          'Shape industry problem-solving practices',
+        ],
+        scoreWeight: 1.0,
+        mentorExplanation: "Exceptional! You solve problems at the edges of what's possible. Your work defines how problems are approached industry-wide. Focus on maximum leverage - tools, standards, education that help millions.",
+        resources: [
+          { title: 'V8 Development', url: 'https://v8.dev/docs', type: 'docs', description: 'JavaScript engine development' },
+          { title: 'Chromium Development', url: 'https://www.chromium.org/developers/', type: 'docs', description: 'Browser development' },
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // QUESTION 36 — Problem Solving: Experimentation & Solution Implementation
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    id: uuidv4(),
+    title: 'How would you describe your approach to experimenting with solutions and implementing fixes?',
+    category: CATEGORIES.PROBLEM_SOLVING,
+    type: 'multiple-choice',
+    hint: 'Consider: willingness to try different approaches, experimenting without fear of breaking things, implementing from documentation, solving problems not on Stack Overflow',
+    options: [
+      {
+        value: 'experiment1',
+        label: 'I rarely experiment with different solutions. I\'m worried about breaking things and need exact examples to follow.',
+        recommendations: [
+          'Set up a safe development environment',
+          'Learn to use Git to safely experiment',
+          'Practice making small changes and testing',
+          'Pair with someone while experimenting',
+        ],
+        scoreWeight: 0.1,
+        mentorExplanation: "Fear of breaking things is common but limiting! Use Git branches - you can always undo. Start with small experiments in isolated components. Breaking things in development is how you learn.",
+        resources: [
+          { title: 'Git Branches Tutorial', url: 'https://learngitbranching.js.org/', type: 'course', description: 'Safe experimentation with Git' },
+          { title: 'Local Development Setup', url: 'https://create-react-app.dev/docs/getting-started', type: 'docs', description: 'Safe dev environment' },
+        ],
+      },
+      {
+        value: 'experiment2',
+        label: 'I sometimes try different solutions but often stick to familiar approaches. I need clear examples to implement.',
+        recommendations: [
+          'Practice implementing from documentation',
+          'Try 2-3 approaches before choosing one',
+          'Build confidence with version control',
+          'Learn to read API documentation effectively',
+        ],
+        scoreWeight: 0.2,
+        mentorExplanation: "Start building experimentation muscles! Before copying code, try implementing from docs first. Spend 20 minutes experimenting, then look for examples. You'll be surprised how much you can figure out.",
+        resources: [
+          { title: 'Reading API Docs', url: 'https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Client-side_web_APIs/Introduction', type: 'docs', description: 'Understanding API documentation' },
+          { title: 'Trial and Error Learning', url: 'https://www.freecodecamp.org/news/how-to-learn-to-code-by-doing/', type: 'article', description: 'Learning through experimentation' },
+        ],
+      },
+      {
+        value: 'experiment3',
+        label: 'I experiment with solutions but prefer having examples nearby. I can implement from docs with some guidance.',
+        recommendations: [
+          'Practice implementing features from scratch',
+          'Study multiple implementation approaches',
+          'Build small projects without tutorials',
+          'Learn to adapt examples to different contexts',
+        ],
+        scoreWeight: 0.3,
+        mentorExplanation: "You're building confidence! Challenge yourself to implement before searching. Read docs, try an approach, debug it. Examples are learning aids, not crutches.",
+        resources: [
+          { title: 'Project-Based Learning', url: 'https://github.com/practical-tutorials/project-based-learning', type: 'github', description: 'Build to learn' },
+          { title: 'Exercism', url: 'https://exercism.org/', type: 'course', description: 'Practice problems' },
+        ],
+      },
+      {
+        value: 'experiment4',
+        label: 'I often experiment with different approaches. I can implement from documentation for simpler problems.',
+        recommendations: [
+          'Tackle more complex implementation challenges',
+          'Practice debugging your experiments',
+          'Study design patterns and apply them',
+          'Build features using only official docs',
+        ],
+        scoreWeight: 0.4,
+        mentorExplanation: "Good experimentation habit! Push boundaries - try complex features, experiment with architectures. Your willingness to try things is becoming a strength. Keep building that muscle.",
+        resources: [
+          { title: 'JavaScript Design Patterns', url: 'https://www.patterns.dev/posts/classic-design-patterns', type: 'article', description: 'Implementation patterns' },
+          { title: 'React Docs Beta', url: 'https://react.dev/', type: 'docs', description: 'Learning from docs' },
+        ],
+      },
+      {
+        value: 'experiment5',
+        label: 'I regularly experiment with solutions and am comfortable trying different approaches. I can implement most features from documentation.',
+        recommendations: [
+          'Solve problems without Stack Overflow',
+          'Experiment with performance optimizations',
+          'Try alternative libraries and approaches',
+          'Practice researching from primary sources',
+        ],
+        scoreWeight: 0.5,
+        mentorExplanation: "Strong intermediate capability! You have healthy experimentation habits. Now tackle problems without existing solutions. Read RFCs, specs, source code. Trust your ability to figure things out.",
+        resources: [
+          { title: 'Web Performance', url: 'https://web.dev/performance/', type: 'docs', description: 'Performance optimization' },
+          { title: 'GitHub Discussions', url: 'https://docs.github.com/en/discussions', type: 'docs', description: 'Community problem solving' },
+        ],
+      },
+      {
+        value: 'experiment6',
+        label: 'I confidently experiment without fear of breaking things. I solve problems using documentation and source code even without online examples.',
+        recommendations: [
+          'Contribute solutions to help others',
+          'Experiment with cutting-edge features',
+          'Build proof-of-concepts for new approaches',
+          'Document your experimental process',
+        ],
+        scoreWeight: 0.6,
+        mentorExplanation: "Advanced! You solve novel problems by going to primary sources. Share your experiments - blog about approaches, contribute examples to docs. Your experimentation helps others tackle similar challenges.",
+        resources: [
+          { title: 'Write the Docs', url: 'https://www.writethedocs.org/', type: 'docs', description: 'Documentation community' },
+          { title: 'Dev.to', url: 'https://dev.to/', type: 'article', description: 'Share your experiments' },
+        ],
+      },
+      {
+        value: 'experiment7',
+        label: 'I excel at experimental problem-solving. I regularly implement solutions from specs, RFCs, and source code without existing examples.',
+        recommendations: [
+          'Lead technical spikes and POCs',
+          'Mentor others on experimentation',
+          'Contribute to documentation with examples',
+          'Build internal tools and libraries',
+        ],
+        scoreWeight: 0.7,
+        mentorExplanation: "Excellent! You're comfortable in uncharted territory. Share your process - how you approach unknowns, evaluate experiments, decide when to pivot. This mindset is invaluable for teams tackling novel problems.",
+        resources: [
+          { title: 'Architecture Decision Records', url: 'https://adr.github.io/', type: 'docs', description: 'Document experiments' },
+          { title: 'IETF RFCs', url: 'https://www.ietf.org/standards/rfcs/', type: 'docs', description: 'Technical specifications' },
+        ],
+      },
+      {
+        value: 'experiment8',
+        label: 'I have expert-level experimentation skills. I solve complex problems by implementing from specs, contributing to libraries, and creating novel solutions.',
+        recommendations: [
+          'Lead innovation initiatives',
+          'Contribute to framework development',
+          'Publish original research and solutions',
+          'Establish experimentation best practices',
+        ],
+        scoreWeight: 0.8,
+        mentorExplanation: "Senior/expert level! You create solutions where none exist. Build organizational capability - establish experimentation frameworks, create proof-of-concept processes, mentor fearless experimentation.",
+        resources: [
+          { title: 'Contributing to Open Source', url: 'https://opensource.guide/how-to-contribute/', type: 'docs', description: 'OSS contribution guide' },
+          { title: 'Research Papers', url: 'https://paperswelove.org/', type: 'article', description: 'Academic computer science' },
+        ],
+      },
+      {
+        value: 'experiment9',
+        label: 'I have mastery-level experimentation skills. I innovate solutions, contribute to specifications, and solve problems requiring original research.',
+        recommendations: [
+          'Publish influential research',
+          'Contribute to language/framework evolution',
+          'Lead innovation at industry level',
+          'Mentor next-generation problem solvers',
+        ],
+        scoreWeight: 0.9,
+        mentorExplanation: "Outstanding! Your experiments push boundaries. Amplify impact - contribute to TC39 proposals, create influential libraries, publish papers. Your work shapes how others approach problems.",
+        resources: [
+          { title: 'TC39 Contributing', url: 'https://github.com/tc39/how-we-work', type: 'github', description: 'Shape JavaScript' },
+          { title: 'ACM Queue', url: 'https://queue.acm.org/', type: 'article', description: 'Research publication' },
+        ],
+      },
+      {
+        value: 'experiment10',
+        label: 'I have world-class experimentation and innovation capabilities. I create groundbreaking solutions and advance the state of the art.',
+        recommendations: [
+          'Lead major research initiatives',
+          'Create revolutionary tools and frameworks',
+          'Author seminal works on problem-solving',
+          'Shape industry innovation practices',
+        ],
+        scoreWeight: 1.0,
+        mentorExplanation: "Exceptional! Your experiments become standards. You solve problems that define new categories. Focus on generational impact - create frameworks used by millions, establish new paradigms, invest in education.",
+        resources: [
+          { title: 'Google Research', url: 'https://research.google/', type: 'article', description: 'Cutting-edge research' },
+          { title: 'MIT CSAIL', url: 'https://www.csail.mit.edu/', type: 'article', description: 'Computer science research' },
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // QUESTION 37 — Independence: Self-Direction & Task Autonomy
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    id: uuidv4(),
+    title: 'How would you describe your ability to work independently and figure out what to do next without constant direction?',
+    category: CATEGORIES.INDEPENDENCE,
+    type: 'multiple-choice',
+    hint: 'Consider: continuing independently, deciding next steps, identifying gaps in task descriptions, confidence taking on tasks, filling in missing requirements',
+    options: [
+      {
+        value: 'autonomy1',
+        label: 'I need constant direction and struggle to continue without being told what to do next. I can\'t figure out missing parts of tasks.',
+        recommendations: [
+          'Break tasks into smaller, concrete steps',
+          'Create checklists before starting work',
+          'Practice asking "what would I try first?" before asking',
+          'Document what you know vs what you need to clarify',
+        ],
+        scoreWeight: 0.1,
+        mentorExplanation: "Building independence starts with structure! Before asking for next steps, spend 5 minutes thinking through options. Make a list: what do I know? What's unclear? What could I try? This builds decision-making muscles.",
+        resources: [
+          { title: 'Getting Things Done', url: 'https://gettingthingsdone.com/', type: 'article', description: 'Task management basics' },
+          { title: 'Breaking Down Tasks', url: 'https://www.atlassian.com/agile/project-management/user-stories', type: 'docs', description: 'Task decomposition' },
+        ],
+      },
+      {
+        value: 'autonomy2',
+        label: 'I frequently need guidance on what to do next. I struggle to identify or fill gaps in task descriptions independently.',
+        recommendations: [
+          'Practice making small decisions without approval',
+          'Study similar completed work for patterns',
+          'Try solving before asking, even if unsure',
+          'Keep notes of how others approach unclear tasks',
+        ],
+        scoreWeight: 0.2,
+        mentorExplanation: "Start building confidence in small decisions! When stuck, try something for 15-30 minutes first. Document your attempt - even wrong paths teach you. Ask 'what would success look like?' to identify gaps.",
+        resources: [
+          { title: 'Decision Making', url: 'https://fs.blog/mental-models/', type: 'article', description: 'Mental models' },
+          { title: 'Learning to Learn', url: 'https://www.coursera.org/learn/learning-how-to-learn', type: 'course', description: 'Self-directed learning' },
+        ],
+      },
+      {
+        value: 'autonomy3',
+        label: 'I can continue with clear tasks but need direction when requirements are vague. I sometimes identify missing parts.',
+        recommendations: [
+          'Practice clarifying requirements yourself first',
+          'Look at existing similar features for patterns',
+          'Make documented assumptions when unclear',
+          'Build confidence proposing approaches',
+        ],
+        scoreWeight: 0.3,
+        mentorExplanation: "You're developing! When things are vague, document assumptions: 'I think this means X, will confirm.' Look at similar existing work. Propose an approach rather than asking what to do.",
+        resources: [
+          { title: 'User Story Mapping', url: 'https://www.jpattonassociates.com/user-story-mapping/', type: 'article', description: 'Understanding requirements' },
+          { title: 'Assumption Testing', url: 'https://www.thoughtworks.com/insights/blog/testing-your-assumptions', type: 'article', description: 'Making smart assumptions' },
+        ],
+      },
+      {
+        value: 'autonomy4',
+        label: 'I can usually decide next steps but sometimes need guidance. I identify some gaps but not all edge cases.',
+        recommendations: [
+          'Practice thinking through edge cases',
+          'Review completed work to spot patterns',
+          'Build confidence in your judgment',
+          'Document your decision-making process',
+        ],
+        scoreWeight: 0.4,
+        mentorExplanation: "Good progress! Build edge-case thinking: 'What if user does X? What breaks if Y happens?' Study production issues to see what you miss. Your judgment is developing - trust it more.",
+        resources: [
+          { title: 'Edge Case Thinking', url: 'https://www.hillelwayne.com/post/divide-by-zero/', type: 'article', description: 'Thinking about edge cases' },
+          { title: 'Systems Thinking', url: 'https://thesystemsthinker.com/', type: 'article', description: 'Holistic problem analysis' },
+        ],
+      },
+      {
+        value: 'autonomy5',
+        label: 'I usually work independently and identify most gaps in requirements. I decide next steps confidently most of the time.',
+        recommendations: [
+          'Take on more ambiguous projects',
+          'Mentor others on breaking down tasks',
+          'Document your approach for the team',
+          'Practice leading technical discussions',
+        ],
+        scoreWeight: 0.5,
+        mentorExplanation: "Strong intermediate autonomy! You're reliable. Now tackle increasingly ambiguous work. Share your process - how do you identify gaps? How do you decide? Teaching others sharpens your own thinking.",
+        resources: [
+          { title: 'Technical Leadership', url: 'https://leaddev.com/', type: 'article', description: 'Leading through influence' },
+          { title: 'Writing ADRs', url: 'https://adr.github.io/', type: 'docs', description: 'Document decisions' },
+        ],
+      },
+      {
+        value: 'autonomy6',
+        label: 'I work independently, identify gaps, and propose solutions. I confidently decide next steps and fill in missing requirements.',
+        recommendations: [
+          'Take ownership of entire features',
+          'Lead ambiguous projects',
+          'Help define requirements, not just implement',
+          'Guide others on independent work',
+        ],
+        scoreWeight: 0.6,
+        mentorExplanation: "Advanced autonomy! You don't just execute - you shape work. Start influencing what gets built. Challenge requirements, suggest better approaches, identify risks early. You're ready for ownership.",
+        resources: [
+          { title: 'Product Thinking', url: 'https://www.svpg.com/product-vs-feature-teams/', type: 'article', description: 'Outcome-oriented thinking' },
+          { title: 'Staff Engineer', url: 'https://staffeng.com/', type: 'article', description: 'Technical leadership' },
+        ],
+      },
+      {
+        value: 'autonomy7',
+        label: 'I excel at independent work, proactively identify gaps and risks, and suggest improvements before being asked.',
+        recommendations: [
+          'Own problem spaces, not just tasks',
+          'Drive architectural decisions',
+          'Mentor team on autonomous work',
+          'Shape product direction',
+        ],
+        scoreWeight: 0.7,
+        mentorExplanation: "Excellent! You see around corners - identifying issues before they're problems. This is senior-level autonomy. Focus on multiplying impact - build processes, mentor others, shape strategy.",
+        resources: [
+          { title: 'Multipliers', url: 'https://www.multipliersbooks.com/', type: 'book', description: 'Amplifying others' },
+          { title: 'An Elegant Puzzle', url: 'https://lethain.com/elegant-puzzle/', type: 'book', description: 'Engineering management' },
+        ],
+      },
+      {
+        value: 'autonomy8',
+        label: 'I have expert-level autonomy. I identify problems before they\'re assigned, define solutions, and drive initiatives independently.',
+        recommendations: [
+          'Lead cross-functional initiatives',
+          'Establish team working agreements',
+          'Build organizational capabilities',
+          'Drive technical strategy',
+        ],
+        scoreWeight: 0.8,
+        mentorExplanation: "Senior/expert level! You create work, not just complete it. You see what needs to exist. Focus on organizational leverage - build systems that make everyone more autonomous.",
+        resources: [
+          { title: 'The Manager\'s Path', url: 'https://www.oreilly.com/library/view/the-managers-path/9781491973882/', type: 'book', description: 'Technical leadership paths' },
+          { title: 'Team Topologies', url: 'https://teamtopologies.com/', type: 'book', description: 'Organizational design' },
+        ],
+      },
+      {
+        value: 'autonomy9',
+        label: 'I have mastery-level independence. I define problems, create solutions, and drive organizational change autonomously.',
+        recommendations: [
+          'Shape company technical direction',
+          'Build self-sufficient teams',
+          'Establish engineering culture',
+          'Influence industry practices',
+        ],
+        scoreWeight: 0.9,
+        mentorExplanation: "Outstanding! You operate at strategic levels. Your autonomy enables organizational autonomy. Share your approach - write about decision-making, build frameworks, develop future leaders.",
+        resources: [
+          { title: 'Accelerate', url: 'https://itrevolution.com/book/accelerate/', type: 'book', description: 'High-performing teams' },
+          { title: 'Engineering Culture', url: 'https://www.git-tower.com/blog/version-control-best-practices/', type: 'article', description: 'Building engineering culture' },
+        ],
+      },
+      {
+        value: 'autonomy10',
+        label: 'I have world-class autonomy and self-direction. I identify industry-level problems and drive solutions that benefit thousands.',
+        recommendations: [
+          'Lead industry initiatives',
+          'Create frameworks used widely',
+          'Establish best practices',
+          'Build movements, not just products',
+        ],
+        scoreWeight: 1.0,
+        mentorExplanation: "Exceptional! Your autonomy shapes industries. You identify what should exist and make it real. Focus on generational impact - create tools, standards, and practices that outlive any single project.",
+        resources: [
+          { title: 'The Phoenix Project', url: 'https://itrevolution.com/book/the-phoenix-project/', type: 'book', description: 'DevOps transformation' },
+          { title: 'Open Source Leadership', url: 'https://opensource.guide/leadership-and-governance/', type: 'docs', description: 'Leading communities' },
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // QUESTION 38 — Independence: Help-Seeking Behavior & Persistence
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    id: uuidv4(),
+    title: 'How would you describe your approach to seeking help and persisting through challenges?',
+    category: CATEGORIES.INDEPENDENCE,
+    type: 'multiple-choice',
+    hint: 'Consider: frequency of asking for help when info is available, effort to research independently, asking only when stuck, persistence vs giving up',
+    options: [
+      {
+        value: 'help1',
+        label: 'I ask for help very frequently, even when information is available. I give up quickly when stuck.',
+        recommendations: [
+          'Commit to trying for 15 minutes before asking',
+          'Build a research checklist (docs, Stack Overflow, etc.)',
+          'Track what you tried before asking',
+          'Set a timer to build persistence',
+        ],
+        scoreWeight: 0.1,
+        mentorExplanation: "Building independence means building tolerance for struggle! Set a 15-minute rule: try that long before asking. Document what you tried - this builds problem-solving skills and helps others help you better.",
+        resources: [
+          { title: 'How to Ask Questions', url: 'https://stackoverflow.com/help/how-to-ask', type: 'docs', description: 'Asking effective questions' },
+          { title: 'Rubber Duck Debugging', url: 'https://rubberduckdebugging.com/', type: 'article', description: 'Self-help technique' },
+        ],
+      },
+      {
+        value: 'help2',
+        label: 'I ask for help frequently and give up somewhat easily. I don\'t always check available resources first.',
+        recommendations: [
+          'Create a "before I ask" checklist',
+          'Practice Googling your questions first',
+          'Read documentation before asking',
+          'Try at least 2 approaches before seeking help',
+        ],
+        scoreWeight: 0.2,
+        mentorExplanation: "Before asking, complete this checklist: Did I Google it? Check docs? Try two approaches? This builds self-sufficiency. Each time you find answers yourself, it gets easier next time.",
+        resources: [
+          { title: 'Self-Directed Learning', url: 'https://www.coursera.org/learn/learning-how-to-learn', type: 'course', description: 'Learning strategies' },
+          { title: 'Research Skills', url: 'https://missing.csail.mit.edu/', type: 'course', description: 'Missing CS semester' },
+        ],
+      },
+      {
+        value: 'help3',
+        label: 'I try to solve problems myself but ask for help more than needed. I persist for a while but give up before trying all options.',
+        recommendations: [
+          'Extend your struggle time to 30-45 minutes',
+          'Exhaust documentation and search results',
+          'Try uncommon approaches before asking',
+          'Keep a learning journal of solutions found',
+        ],
+        scoreWeight: 0.3,
+        mentorExplanation: "You're developing! Push your struggle tolerance. Before asking, ensure you've checked: official docs, Stack Overflow, GitHub issues, similar code. The answer's often there - finding it yourself builds capability.",
+        resources: [
+          { title: 'Deep Work', url: 'https://www.calnewport.com/books/deep-work/', type: 'book', description: 'Focus and persistence' },
+          { title: 'Growth Mindset', url: 'https://www.mindsetworks.com/science/', type: 'article', description: 'Embracing challenges' },
+        ],
+      },
+      {
+        value: 'help4',
+        label: 'I research independently before asking but still ask more than I need to. I persist through challenges but not always fully.',
+        recommendations: [
+          'Join community forums to learn from others',
+          'Answer questions to reinforce learning',
+          'Build confidence in your solutions',
+          'Track when you solve things yourself',
+        ],
+        scoreWeight: 0.4,
+        mentorExplanation: "Good foundation! Build confidence - track problems you solve independently. You'll see you can figure out more than you think. When you do ask, you'll ask better questions.",
+        resources: [
+          { title: 'Deliberate Practice', url: 'https://jamesclear.com/deliberate-practice-theory', type: 'article', description: 'Skill building' },
+          { title: 'StackExchange Network', url: 'https://stackexchange.com/', type: 'docs', description: 'Community learning' },
+        ],
+      },
+      {
+        value: 'help5',
+        label: 'I ask for help only when genuinely stuck after researching. I persist through most challenges without giving up.',
+        recommendations: [
+          'Help others with their blockers',
+          'Document your problem-solving process',
+          'Tackle increasingly complex problems',
+          'Build expertise in persistence strategies',
+        ],
+        scoreWeight: 0.5,
+        mentorExplanation: "Strong intermediate! You have healthy help-seeking balance. Now help others develop this - share your research process, explain how you persist. Teaching reinforces your own skills.",
+        resources: [
+          { title: 'Learning in Public', url: 'https://www.swyx.io/learn-in-public/', type: 'article', description: 'Share your learning' },
+          { title: 'Mentoring Guide', url: 'https://www.codementor.io/learn/mentorship', type: 'article', description: 'Helping others' },
+        ],
+      },
+      {
+        value: 'help6',
+        label: 'I rarely ask for help, researching thoroughly first. I persist through difficult problems and exhaust options before asking.',
+        recommendations: [
+          'Share your research strategies',
+          'Mentor others on persistence',
+          'Tackle expert-level problems',
+          'Contribute solutions to documentation',
+        ],
+        scoreWeight: 0.6,
+        mentorExplanation: "Advanced self-sufficiency! You're a resource others can learn from. Document your problem-solving approaches. Help build a team culture of healthy persistence and smart help-seeking.",
+        resources: [
+          { title: 'Technical Writing', url: 'https://developers.google.com/tech-writing', type: 'course', description: 'Document solutions' },
+          { title: 'Building Learning Organizations', url: 'https://hbr.org/2008/03/is-yours-a-learning-organization', type: 'article', description: 'Team learning' },
+        ],
+      },
+      {
+        value: 'help7',
+        label: 'I solve nearly all problems independently. I only ask when collaborating with experts on complex edge cases.',
+        recommendations: [
+          'Lead problem-solving workshops',
+          'Create team troubleshooting guides',
+          'Build knowledge bases',
+          'Establish escalation criteria',
+        ],
+        scoreWeight: 0.7,
+        mentorExplanation: "Excellent! Your independence is a strength. Share it - create troubleshooting guides, define when to ask for help vs persist. Your approach helps the whole team become more self-sufficient.",
+        resources: [
+          { title: 'Documentation Best Practices', url: 'https://www.writethedocs.org/guide/', type: 'docs', description: 'Creating guides' },
+          { title: 'Building Runbooks', url: 'https://www.pagerduty.com/resources/learn/what-is-a-runbook/', type: 'article', description: 'Operational guides' },
+        ],
+      },
+      {
+        value: 'help8',
+        label: 'I have expert-level self-sufficiency. I solve complex problems independently and help others build their independence.',
+        recommendations: [
+          'Scale your impact through systems',
+          'Build self-service tools and docs',
+          'Establish team learning culture',
+          'Reduce organizational dependencies',
+        ],
+        scoreWeight: 0.8,
+        mentorExplanation: "Senior/expert level! You multiply team capability. Build systems that make everyone more independent - comprehensive docs, debugging tools, clear escalation paths. Your impact extends through others.",
+        resources: [
+          { title: 'The Coaching Habit', url: 'https://boxofcrayons.com/the-coaching-habit-book/', type: 'book', description: 'Developing others' },
+          { title: 'Scaling Teams', url: 'https://www.scalingteams.com/', type: 'book', description: 'Growing capabilities' },
+        ],
+      },
+      {
+        value: 'help9',
+        label: 'I have mastery-level independence. I solve novel problems and build systems that enable organizational self-sufficiency.',
+        recommendations: [
+          'Create learning infrastructure',
+          'Establish best practices widely',
+          'Build autonomous teams',
+          'Influence industry standards',
+        ],
+        scoreWeight: 0.9,
+        mentorExplanation: "Outstanding! You create independence at scale. Your tools, docs, and systems let thousands solve problems themselves. Share widely - blog posts, conference talks, open source. Shape how teams work.",
+        resources: [
+          { title: 'Developer Experience', url: 'https://developerexperience.io/', type: 'article', description: 'Enabling developers' },
+          { title: 'Platform Engineering', url: 'https://platformengineering.org/', type: 'docs', description: 'Self-service infrastructure' },
+        ],
+      },
+      {
+        value: 'help10',
+        label: 'I have world-class self-sufficiency. I solve unprecedented problems and create frameworks that enable independence globally.',
+        recommendations: [
+          'Lead industry-wide initiatives',
+          'Create revolutionary tools',
+          'Establish global best practices',
+          'Build movements for self-sufficiency',
+        ],
+        scoreWeight: 1.0,
+        mentorExplanation: "Exceptional! Your work enables millions to solve problems independently. Tools you create, standards you establish, practices you pioneer - these have generational impact. Focus on maximum leverage and legacy.",
+        resources: [
+          { title: 'Open Source Economics', url: 'https://opensource.org/', type: 'docs', description: 'Global collaboration' },
+          { title: 'Creative Selection', url: 'https://creativeselection.io/', type: 'book', description: 'Innovation at scale' },
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // QUESTION 39 — Precision: Work Quality & Attention to Detail
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    id: uuidv4(),
+    title: 'How would you describe the quality of your work and your attention to detail?',
+    category: CATEGORIES.PRECISION,
+    type: 'multiple-choice',
+    hint: 'Consider: error frequency, catching small inconsistencies, reviewing your own work thoroughly, producing consistent quality output',
+    options: [
+      {
+        value: 'quality1',
+        label: 'My work frequently contains errors. I often overlook details and inconsistencies.',
+        recommendations: [
+          'Create personal checklists for common errors',
+          'Use linters and automated tools',
+          'Practice reviewing code before submitting',
+          'Ask for code review feedback on detail issues',
+        ],
+        scoreWeight: 0.1,
+        mentorExplanation: "Building attention to detail is a learnable skill! Start with a review checklist: Does it compile? Did I test it? Are variable names clear? Run automated tools to catch common issues. Review your own work before asking others.",
+        resources: [
+          { title: 'ESLint Setup', url: 'https://eslint.org/docs/latest/use/getting-started', type: 'docs', description: 'Automated error detection' },
+          { title: 'Code Review Checklist', url: 'https://github.com/mgreiler/code-review-checklist', type: 'github', description: 'Quality checklist' },
+        ],
+      },
+      {
+        value: 'quality2',
+        label: 'I produce work with noticeable errors regularly. I miss many details during review.',
+        recommendations: [
+          'Slow down and review methodically',
+          'Test your changes thoroughly',
+          'Learn common error patterns',
+          'Use TypeScript for type safety',
+        ],
+        scoreWeight: 0.2,
+        mentorExplanation: "Quality improves with deliberate practice! Before marking work complete, test it yourself. Click through features. Try edge cases. Read your code as if you didn't write it. Slow down to speed up.",
+        resources: [
+          { title: 'TypeScript Handbook', url: 'https://www.typescriptlang.org/docs/', type: 'docs', description: 'Type safety' },
+          { title: 'Testing JavaScript', url: 'https://testingjavascript.com/', type: 'course', description: 'Testing fundamentals' },
+        ],
+      },
+      {
+        value: 'quality3',
+        label: 'My work has occasional errors. I catch some details but miss smaller inconsistencies.',
+        recommendations: [
+          'Develop a consistent review process',
+          'Learn to spot common error patterns',
+          'Use debugging tools proactively',
+          'Practice self-review techniques',
+        ],
+        scoreWeight: 0.3,
+        mentorExplanation: "You're improving! Build a habit: after writing code, walk away for 5 minutes, then review fresh. Look for: inconsistent naming, missing error handling, untested paths. Pattern recognition develops over time.",
+        resources: [
+          { title: 'Clean Code', url: 'https://www.oreilly.com/library/view/clean-code-a/9780136083238/', type: 'book', description: 'Code quality principles' },
+          { title: 'Self-Review Guide', url: 'https://google.github.io/eng-practices/review/developer/', type: 'docs', description: 'Google code review guide' },
+        ],
+      },
+      {
+        value: 'quality4',
+        label: 'I generally produce quality work with minor errors. I catch most issues but occasionally miss details.',
+        recommendations: [
+          'Establish thorough testing habits',
+          'Review edge cases systematically',
+          'Learn advanced debugging techniques',
+          'Study quality work from senior developers',
+        ],
+        scoreWeight: 0.4,
+        mentorExplanation: "Good foundation! Level up by anticipating issues before they occur. Think: 'What could break?' Test those cases. Review for consistency across the codebase. Quality is about prevention, not just detection.",
+        resources: [
+          { title: 'Jest Testing', url: 'https://jestjs.io/docs/getting-started', type: 'docs', description: 'Testing framework' },
+          { title: 'Refactoring', url: 'https://refactoring.com/', type: 'book', description: 'Improving code quality' },
+        ],
+      },
+      {
+        value: 'quality5',
+        label: 'I consistently produce high-quality work with few errors. I catch most details during self-review.',
+        recommendations: [
+          'Mentor others on quality practices',
+          'Establish team quality standards',
+          'Automate quality checks',
+          'Review complex edge cases proactively',
+        ],
+        scoreWeight: 0.5,
+        mentorExplanation: "Strong intermediate quality! Your work is reliable. Now help others reach this level - share your review process, create quality guidelines, build automated checks. Quality culture starts with individuals.",
+        resources: [
+          { title: 'Code Quality Tools', url: 'https://github.com/collections/code-quality', type: 'github', description: 'Quality automation' },
+          { title: 'The Pragmatic Programmer', url: 'https://pragprog.com/titles/tpp20/', type: 'book', description: 'Professional practices' },
+        ],
+      },
+      {
+        value: 'quality6',
+        label: 'I produce error-free work consistently. I have strong attention to detail and rarely miss issues.',
+        recommendations: [
+          'Review others\' work to share standards',
+          'Build quality tooling and processes',
+          'Establish best practices for the team',
+          'Focus on preventing entire error categories',
+        ],
+        scoreWeight: 0.6,
+        mentorExplanation: "Advanced quality mindset! You prevent issues, not just catch them. Share this - create linting rules, write style guides, build CI/CD checks. Your attention to detail becomes team capability.",
+        resources: [
+          { title: 'Continuous Integration', url: 'https://www.martinfowler.com/articles/continuousIntegration.html', type: 'article', description: 'Automated quality' },
+          { title: 'SonarQube', url: 'https://www.sonarsource.com/products/sonarqube/', type: 'docs', description: 'Code quality platform' },
+        ],
+      },
+      {
+        value: 'quality7',
+        label: 'I excel at producing flawless work. I catch subtle issues others miss and maintain exceptional standards.',
+        recommendations: [
+          'Lead quality initiatives',
+          'Create comprehensive quality frameworks',
+          'Mentor team on detail orientation',
+          'Drive quality culture change',
+        ],
+        scoreWeight: 0.7,
+        mentorExplanation: "Excellent! Your eye for detail is a competitive advantage. Scale it - build quality into processes, create automated checks, establish team standards. Quality leadership means everyone produces better work.",
+        resources: [
+          { title: 'Site Reliability Engineering', url: 'https://sre.google/books/', type: 'book', description: 'Quality at scale' },
+          { title: 'Quality Engineering', url: 'https://www.ministryoftesting.com/', type: 'article', description: 'Quality practices' },
+        ],
+      },
+      {
+        value: 'quality8',
+        label: 'I have expert-level precision. I consistently deliver perfect work and establish quality standards for others.',
+        recommendations: [
+          'Build organizational quality systems',
+          'Develop quality metrics and dashboards',
+          'Create quality training programs',
+          'Influence engineering culture',
+        ],
+        scoreWeight: 0.8,
+        mentorExplanation: "Senior/expert level! Your precision sets the bar. Build systems - quality dashboards, automated testing pipelines, code review guidelines. Your standards become organizational standards.",
+        resources: [
+          { title: 'Google Testing Blog', url: 'https://testing.googleblog.com/', type: 'article', description: 'Testing at scale' },
+          { title: 'Quality Metrics', url: 'https://www.atlassian.com/engineering/software-quality', type: 'article', description: 'Measuring quality' },
+        ],
+      },
+      {
+        value: 'quality9',
+        label: 'I have mastery-level precision. I create quality frameworks and tools that elevate entire organizations.',
+        recommendations: [
+          'Lead industry quality initiatives',
+          'Publish quality research and tools',
+          'Establish best practices widely',
+          'Build quality into engineering culture',
+        ],
+        scoreWeight: 0.9,
+        mentorExplanation: "Outstanding! You define what quality means. Your frameworks, tools, and practices are adopted widely. Share through open source, conference talks, influential writing. Shape industry standards.",
+        resources: [
+          { title: 'Test Automation University', url: 'https://testautomationu.applitools.com/', type: 'course', description: 'Advanced testing' },
+          { title: 'Chaos Engineering', url: 'https://principlesofchaos.org/', type: 'docs', description: 'System resilience' },
+        ],
+      },
+      {
+        value: 'quality10',
+        label: 'I have world-class precision standards. My quality frameworks and practices are used globally.',
+        recommendations: [
+          'Create revolutionary quality tools',
+          'Establish global quality standards',
+          'Lead transformational initiatives',
+          'Build quality movements',
+        ],
+        scoreWeight: 1.0,
+        mentorExplanation: "Exceptional! Your work defines modern quality standards. Tools you create, practices you pioneer, frameworks you build - used by millions. Focus on generational impact in quality engineering.",
+        resources: [
+          { title: 'NASA Software Engineering', url: 'https://standards.nasa.gov/', type: 'docs', description: 'Critical systems quality' },
+          { title: 'Formal Methods', url: 'https://www.hillelwayne.com/post/making-illegal-states-unrepresentable/', type: 'article', description: 'Provable correctness' },
+        ],
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // QUESTION 40 — Precision: Instruction Following & Bug Prevention
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    id: uuidv4(),
+    title: 'How would you describe your ability to follow instructions and prevent bugs in your code?',
+    category: CATEGORIES.PRECISION,
+    type: 'multiple-choice',
+    hint: 'Consider: following given instructions accurately, implementing feedback correctly, bug frequency in your contributions, speed of identifying and fixing your own errors',
+    options: [
+      {
+        value: 'bugs1',
+        label: 'I frequently create bugs and often fail to follow instructions correctly. I need significant help fixing issues.',
+        recommendations: [
+          'Read instructions completely before starting',
+          'Take notes during discussions',
+          'Test thoroughly before submitting',
+          'Ask clarifying questions upfront',
+        ],
+        scoreWeight: 0.1,
+        mentorExplanation: "Start with clarity! Before coding, list what you're asked to do. Confirm understanding. Test each requirement. When you get feedback, implement it exactly, then verify. Precision comes from process.",
+        resources: [
+          { title: 'Requirement Analysis', url: 'https://www.atlassian.com/agile/project-management/requirements', type: 'docs', description: 'Understanding requirements' },
+          { title: 'Bug Prevention', url: 'https://www.amazon.com/Code-Complete-Practical-Handbook-Construction/dp/0735619670', type: 'book', description: 'Writing solid code' },
+        ],
+      },
+      {
+        value: 'bugs2',
+        label: 'I often create bugs and sometimes misunderstand instructions. I can fix issues with guidance.',
+        recommendations: [
+          'Create acceptance criteria checklists',
+          'Test against requirements systematically',
+          'Learn common bug patterns to avoid',
+          'Document implementation before coding',
+        ],
+        scoreWeight: 0.2,
+        mentorExplanation: "Build systematic habits! For every task: 1) List requirements, 2) Plan approach, 3) Implement, 4) Test each requirement, 5) Review. This structure reduces bugs and ensures you deliver what's asked.",
+        resources: [
+          { title: 'Acceptance Testing', url: 'https://www.agilealliance.org/glossary/acceptance/', type: 'article', description: 'Testing against requirements' },
+          { title: 'Debugging Strategies', url: 'https://jvns.ca/blog/2019/06/23/a-few-debugging-resources/', type: 'article', description: 'Finding bugs' },
+        ],
+      },
+      {
+        value: 'bugs3',
+        label: 'I occasionally create bugs and sometimes need clarification on instructions. I can usually fix issues myself.',
+        recommendations: [
+          'Improve requirement understanding',
+          'Test edge cases more thoroughly',
+          'Learn defensive programming',
+          'Practice reproducing and fixing bugs quickly',
+        ],
+        scoreWeight: 0.3,
+        mentorExplanation: "You're developing! Reduce bugs by thinking: 'What could go wrong?' Test those cases. When you get instructions, repeat them back to confirm. When bugs appear, fix quickly and learn the pattern.",
+        resources: [
+          { title: 'Defensive Programming', url: 'https://en.wikipedia.org/wiki/Defensive_programming', type: 'article', description: 'Preventing errors' },
+          { title: 'Error Handling', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Control_flow_and_error_handling', type: 'docs', description: 'Handling failures' },
+        ],
+      },
+      {
+        value: 'bugs4',
+        label: 'I follow instructions well with occasional need for clarification. I create bugs sometimes but fix them independently.',
+        recommendations: [
+          'Proactively clarify ambiguities',
+          'Build comprehensive test coverage',
+          'Learn from bugs to prevent recurrence',
+          'Review your code for potential issues',
+        ],
+        scoreWeight: 0.4,
+        mentorExplanation: "Good progress! When instructions are unclear, ask before implementing (saves time). After a bug, ask: 'How could I have prevented this?' Build that check into your process. Learn from every issue.",
+        resources: [
+          { title: 'Test-Driven Development', url: 'https://www.amazon.com/Test-Driven-Development-Kent-Beck/dp/0321146530', type: 'book', description: 'TDD approach' },
+          { title: 'Bug Tracking', url: 'https://linear.app/docs', type: 'docs', description: 'Issue management' },
+        ],
+      },
+      {
+        value: 'bugs5',
+        label: 'I follow instructions accurately and rarely create bugs. I quickly identify and fix my own issues.',
+        recommendations: [
+          'Share your bug prevention techniques',
+          'Help others understand requirements',
+          'Build testing best practices',
+          'Document common pitfalls',
+        ],
+        scoreWeight: 0.5,
+        mentorExplanation: "Strong intermediate! You're reliable - following instructions well and delivering quality. Now help others - share your approach, review their work, create guides for common issues. Multiply your impact.",
+        resources: [
+          { title: 'Code Review Best Practices', url: 'https://google.github.io/eng-practices/review/', type: 'docs', description: 'Effective reviews' },
+          { title: 'Quality Assurance', url: 'https://www.ministryoftesting.com/dojo/lessons/what-is-quality-assurance', type: 'article', description: 'QA practices' },
+        ],
+      },
+      {
+        value: 'bugs6',
+        label: 'I consistently follow instructions precisely and rarely introduce bugs. I fix issues quickly when they occur.',
+        recommendations: [
+          'Lead by example in code quality',
+          'Create bug prevention processes',
+          'Establish testing standards',
+          'Mentor others on precision',
+        ],
+        scoreWeight: 0.6,
+        mentorExplanation: "Advanced reliability! People trust your implementations. Build on this - create team standards for requirement clarification, testing protocols, bug prevention checklists. Your precision becomes team capability.",
+        resources: [
+          { title: 'Static Analysis', url: 'https://github.com/analysis-tools-dev/static-analysis', type: 'github', description: 'Automated bug detection' },
+          { title: 'Integration Testing', url: 'https://martinfowler.com/bliki/IntegrationTest.html', type: 'article', description: 'Testing interactions' },
+        ],
+      },
+      {
+        value: 'bugs7',
+        label: 'I excel at precise implementation and almost never create bugs. I often exceed expectations in following directions.',
+        recommendations: [
+          'Drive quality initiatives',
+          'Build comprehensive testing frameworks',
+          'Create requirement templates',
+          'Establish team quality culture',
+        ],
+        scoreWeight: 0.7,
+        mentorExplanation: "Excellent! You're a model of precision. Scale this - build requirement templates, create testing frameworks, establish review processes. Help the team achieve your level of reliability.",
+        resources: [
+          { title: 'Behavior-Driven Development', url: 'https://cucumber.io/docs/bdd/', type: 'docs', description: 'BDD approach' },
+          { title: 'Quality Gates', url: 'https://docs.sonarsource.com/sonarqube/latest/user-guide/quality-gates/', type: 'docs', description: 'Automated quality checks' },
+        ],
+      },
+      {
+        value: 'bugs8',
+        label: 'I have expert-level precision in implementation. I virtually never create bugs and always implement feedback flawlessly.',
+        recommendations: [
+          'Establish organizational quality standards',
+          'Build prevention-focused systems',
+          'Create quality training programs',
+          'Drive cultural change around precision',
+        ],
+        scoreWeight: 0.8,
+        mentorExplanation: "Senior/expert level! Your work is production-ready on first submission. Build systems - automated testing pipelines, quality metrics, requirement frameworks. Your precision sets organizational standards.",
+        resources: [
+          { title: 'Release Engineering', url: 'https://sre.google/sre-book/release-engineering/', type: 'book', description: 'Production reliability' },
+          { title: 'Quality Culture', url: 'https://www.scaledagileframework.com/built-in-quality/', type: 'article', description: 'Built-in quality' },
+        ],
+      },
+      {
+        value: 'bugs9',
+        label: 'I have mastery-level precision. I create bug-free systems and help organizations achieve near-zero defect rates.',
+        recommendations: [
+          'Lead industry quality transformations',
+          'Publish on bug prevention',
+          'Create widely-used quality tools',
+          'Influence engineering practices broadly',
+        ],
+        scoreWeight: 0.9,
+        mentorExplanation: "Outstanding! You achieve near-perfect implementation. Share this mastery - publish methodologies, create frameworks, speak at conferences. Influence how the industry thinks about quality and precision.",
+        resources: [
+          { title: 'Lean Software Development', url: 'https://www.amazon.com/Implementing-Lean-Software-Development-Concept/dp/0321437381', type: 'book', description: 'Zero-defect thinking' },
+          { title: 'Microsoft Research', url: 'https://www.microsoft.com/en-us/research/', type: 'article', description: 'Quality research' },
+        ],
+      },
+      {
+        value: 'bugs10',
+        label: 'I have world-class precision standards. My bug prevention frameworks and quality practices are used globally.',
+        recommendations: [
+          'Create revolutionary quality systems',
+          'Establish global standards',
+          'Lead critical systems development',
+          'Shape industry quality practices',
+        ],
+        scoreWeight: 1.0,
+        mentorExplanation: "Exceptional! Your precision enables mission-critical systems. Your frameworks prevent bugs at scale. Focus on maximum impact - create tools and standards that ensure quality for millions of users worldwide.",
+        resources: [
+          { title: 'Safety-Critical Systems', url: 'https://www.amazon.com/Safety-Critical-Computer-Systems-Neil-Storey/dp/0201427877', type: 'book', description: 'Critical system quality' },
+          { title: 'Formal Verification', url: 'https://www.amazon.com/Principles-Model-Checking-MIT-Press/dp/0262026499', type: 'book', description: 'Provable correctness' },
+        ],
+      },
+    ],
+  },
 ];
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SCORE LEVELS

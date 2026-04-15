@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, where, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Resource, ResourceType } from '@/types';
+import { extractQuestionResources } from '@/lib/extractQuestionResources';
+import { clearResourceCache } from '@/lib/getQuestionResources';
 
 interface Category {
   id: string;
@@ -22,6 +24,9 @@ export default function ResourcesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
   const [formData, setFormData] = useState({
     title: '',
     url: '',
@@ -135,6 +140,7 @@ export default function ResourcesPage() {
       }
 
       setShowModal(false);
+      clearResourceCache(); // Clear cache so changes are reflected immediately
       fetchData();
     } catch (error) {
       console.error('Error saving resource:', error);
@@ -151,10 +157,71 @@ export default function ResourcesPage() {
 
     try {
       await deleteDoc(doc(db, 'resources', resource.id));
+      clearResourceCache(); // Clear cache after deletion
       fetchData();
     } catch (error) {
       console.error('Error deleting resource:', error);
       alert('Failed to delete resource');
+    }
+  };
+
+  const handleSyncQuestionResources = async () => {
+    if (!confirm('This will sync all resources from questions to Firestore. Resources with the same URL will not be duplicated. Continue?')) {
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      // Extract resources from questions
+      const questionResources = extractQuestionResources();
+      
+      // Get existing resources to check for duplicates
+      const existingUrls = new Set(resources.map(r => r.url));
+      
+      // Create a map of category names to IDs
+      const categoryMap = new Map(categories.map(c => [c.name.toLowerCase(), c.id]));
+      
+      let addedCount = 0;
+      let skippedCount = 0;
+
+      for (const qr of questionResources) {
+        // Skip if URL already exists
+        if (existingUrls.has(qr.url)) {
+          skippedCount++;
+          continue;
+        }
+
+        // Find matching category ID (case-insensitive)
+        const categoryId = categoryMap.get(qr.questionCategory.toLowerCase());
+        
+        if (!categoryId) {
+          console.warn(`No matching category found for "${qr.questionCategory}", skipping resource: ${qr.title}`);
+          skippedCount++;
+          continue;
+        }
+
+        // Add resource to Firestore
+        const resourceData = {
+          title: qr.title,
+          url: qr.url,
+          type: qr.type || 'article',
+          description: qr.description || `From ${qr.questionTitle} - ${qr.optionLabel || 'option'}`,
+          categoryId: categoryId,
+          tags: [],
+          createdAt: Timestamp.now()
+        };
+
+        await addDoc(collection(db, 'resources'), resourceData);
+        addedCount++;
+      }
+
+      alert(`Sync complete!\nAdded: ${addedCount}\nSkipped (duplicates or no category): ${skippedCount}`);
+      fetchData();
+    } catch (error) {
+      console.error('Error syncing resources:', error);
+      alert('Failed to sync resources');
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -167,28 +234,39 @@ export default function ResourcesPage() {
     return matchesCategory && matchesSearch;
   });
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredResources.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedResources = filteredResources.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory]);
+
   const getCategoryName = (categoryId: string) => {
     return categories.find(c => c.id === categoryId)?.name || 'Unknown';
   };
 
   const getTypeColor = (type: ResourceType) => {
     const colors: Record<ResourceType, string> = {
-      article: 'bg-blue-100 text-blue-700',
-      video: 'bg-red-100 text-red-700',
-      course: 'bg-green-100 text-green-700',
-      docs: 'bg-purple-100 text-purple-700',
-      github: 'bg-gray-800 text-white',
-      book: 'bg-amber-100 text-amber-700',
-      roadmap: 'bg-pink-100 text-pink-700'
+      article: 'bg-blue-100 !text-blue-700',
+      video: 'bg-red-100 !text-red-700',
+      course: 'bg-green-100 !text-green-700',
+      docs: 'bg-purple-100 !text-purple-700',
+      github: 'bg-gray-800 !text-white',
+      book: 'bg-amber-100 !text-amber-700',
+      roadmap: 'bg-pink-100 !text-pink-700'
     };
-    return colors[type] || 'bg-gray-100 text-gray-700';
+    return colors[type] || 'bg-gray-100 !text-gray-700';
   };
 
   const getDifficultyColor = (difficulty?: string) => {
     const colors = {
-      beginner: 'bg-green-50 text-green-700 border-green-200',
-      intermediate: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-      advanced: 'bg-red-50 text-red-700 border-red-200'
+      beginner: 'bg-green-50 !text-green-700 border-green-200',
+      intermediate: 'bg-yellow-50 !text-yellow-700 border-yellow-200',
+      advanced: 'bg-red-50 !text-red-700 border-red-200'
     };
     return difficulty ? colors[difficulty as keyof typeof colors] : '';
   };
@@ -229,6 +307,13 @@ export default function ResourcesPage() {
             <option key={cat.id} value={cat.id}>{cat.name}</option>
           ))}
         </select>
+        {/* <button
+          onClick={handleSyncQuestionResources}
+          disabled={isSyncing}
+          className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          {isSyncing ? 'Syncing...' : '⬇ Sync from Questions'}
+        </button> */}
         <button
           onClick={handleAdd}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
@@ -289,7 +374,7 @@ export default function ResourcesPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredResources.map((resource) => (
+                {paginatedResources.map((resource) => (
                   <tr key={resource.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
@@ -363,6 +448,71 @@ export default function ResourcesPage() {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination */}
+          {filteredResources.length > 0 && (
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-gray-700">
+                  Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
+                  <span className="font-medium">{Math.min(endIndex, filteredResources.length)}</span> of{' '}
+                  <span className="font-medium">{filteredResources.length}</span> resources
+                </div>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value={10}>10 per page</option>
+                  <option value={25}>25 per page</option>
+                  <option value={50}>50 per page</option>
+                  <option value={100}>100 per page</option>
+                </select>
+              </div>
+              
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  First
+                </button>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                
+                <div className="flex items-center gap-2 px-4">
+                  <span className="text-sm text-gray-700">
+                    Page <span className="font-medium">{currentPage}</span> of{' '}
+                    <span className="font-medium">{totalPages}</span>
+                  </span>
+                </div>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+                <button
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Last
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

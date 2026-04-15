@@ -26,24 +26,31 @@ export default function QuestionManagement() {
 
   const syncCategoriesFromQuestions = async (allQuestions: Question[]) => {
     try {
-      // Get unique categories from all questions
-      const questionCategories = Array.from(new Set(allQuestions.map(q => q.category).filter(Boolean)));
+      // Get unique categories from all questions (trim and filter empty)
+      const questionCategories = Array.from(
+        new Set(allQuestions.map(q => q.category?.trim()).filter(Boolean))
+      );
       
       // Get existing categories from Firestore
       const categoriesSnapshot = await getDocs(collection(db, 'categories'));
       const existingCategories = new Map(
-        categoriesSnapshot.docs.map(doc => [doc.data().name, { id: doc.id, ...doc.data() }])
+        categoriesSnapshot.docs.map(doc => [doc.data().name.toLowerCase().trim(), { id: doc.id, ...doc.data() }])
       );
       
       // Add any missing categories
+      let currentOrder = existingCategories.size;
       for (const categoryName of questionCategories) {
-        if (!existingCategories.has(categoryName)) {
+        const normalizedName = categoryName.toLowerCase().trim();
+        if (!existingCategories.has(normalizedName)) {
           await addDoc(collection(db, 'categories'), {
-            name: categoryName,
+            name: categoryName, // Keep original casing for display
             description: `Auto-synced from questions`,
-            order: existingCategories.size,
+            order: currentOrder,
             createdAt: new Date()
           });
+          // Update the map to prevent duplicates in same sync operation
+          existingCategories.set(normalizedName, { id: '', ...{ name: categoryName, order: currentOrder } });
+          currentOrder++;
         }
       }
     } catch (error) {
@@ -61,15 +68,9 @@ export default function QuestionManagement() {
       
       if (firestoreCategories.length > 0) {
         setCategories(firestoreCategories);
-      } else {
-        // Fallback to constants
-        const { CATEGORIES } = await import('@/lib/constants');
-        setCategories(Object.values(CATEGORIES));
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
-      const { CATEGORIES } = await import('@/lib/constants');
-      setCategories(Object.values(CATEGORIES));
     }
   };
 
@@ -85,18 +86,18 @@ export default function QuestionManagement() {
       const firestoreIds = new Set(firestoreQuestions.map(q => q.id));
       setFirestoreQuestionIds(firestoreIds);
       
-      // Only show editable Firestore questions, not built-in constant questions
-      setQuestions(firestoreQuestions);
-      
-      // Sync categories from questions (including constants for category list)
+      // Include constant questions that aren't overridden in Firestore
       const constantsOnlyQuestions = CONSTANT_QUESTIONS.filter(q => !firestoreIds.has(q.id));
       const allQuestions = [...firestoreQuestions, ...constantsOnlyQuestions];
+      setQuestions(allQuestions);
+      
+      // Sync categories from questions (including constants for category list)
       await syncCategoriesFromQuestions(allQuestions);
       await fetchCategories();
     } catch (error) {
       console.error('Error fetching questions:', error);
-      // Don't fallback to constant questions - just show empty list
-      setQuestions([]);
+      // Fallback to showing constant questions if Firestore fails
+      // setQuestions(CONSTANT_QUESTIONS);
       setFirestoreQuestionIds(new Set());
     } finally {
       setLoading(false);

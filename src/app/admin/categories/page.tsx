@@ -214,7 +214,6 @@ export default function CategoriesPage() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-3">
-                                <span className="text-gray-400 font-mono text-sm">#{category.order}</span>
                                 <h3 className="text-xl font-bold text-gray-900">{category.name}</h3>
                               </div>
                               {category.description && (
