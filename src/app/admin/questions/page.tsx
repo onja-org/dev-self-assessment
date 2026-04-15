@@ -298,7 +298,7 @@ export default function QuestionManagement() {
                   >
                     + Add Question
                   </button>
-                  {/* <button
+                  <button
                     onClick={handleSyncCategories}
                     className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium whitespace-nowrap"
                   >
@@ -310,7 +310,7 @@ export default function QuestionManagement() {
                     className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium whitespace-nowrap disabled:opacity-50"
                   >
                     {migratingQuestions ? 'Migrating...' : '📥 Migrate Built-in Questions'}
-                  </button> */}
+                  </button>
                 </div>
                 <p className="text-xs text-gray-600">
                   💡 Categories are auto-synced from questions. Use "Sync Categories" to manually update or manage them in the <Link href="/admin/categories" className="text-blue-600 hover:underline">Categories</Link> tab.
@@ -685,11 +685,11 @@ function QuestionModal({ question, categories, onSave, onClose }: QuestionModalP
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Label
                         </label>
-                        <input
-                          type="text"
+                        <textarea
                           value={option.label}
                           onChange={(e) => handleOptionChange(index, 'label', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-y min-h-[60px]"
+                          rows={2}
                           placeholder="Display text"
                         />
                       </div>
@@ -721,8 +721,8 @@ function QuestionModal({ question, categories, onSave, onClose }: QuestionModalP
                         <textarea
                           value={option.mentorExplanation}
                           onChange={(e) => handleOptionChange(index, 'mentorExplanation', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-y"
-                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-y min-h-[120px]"
+                          rows={5}
                           placeholder="Explain why this option is correct/incorrect..."
                         />
                       </div>
@@ -733,9 +733,9 @@ function QuestionModal({ question, categories, onSave, onClose }: QuestionModalP
                         </label>
                         <textarea
                           value={(option.recommendations || []).join('\n')}
-                          onChange={(e) => handleOptionChange(index, 'recommendations', e.target.value.split('\n').filter(r => r.trim()))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-y"
-                          rows={3}
+                          onChange={(e) => handleOptionChange(index, 'recommendations', e.target.value.split('\n'))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-y min-h-[100px]"
+                          rows={5}
                           placeholder="Enter recommendations, one per line..."
                         />
                       </div>
