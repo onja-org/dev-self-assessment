@@ -151,17 +151,67 @@ export default function ResourcesPage() {
   };
 
   const handleDelete = async (resource: Resource) => {
-    if (!confirm(`Are you sure you want to delete "${resource.title}"? This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete "${resource.title}"? This action cannot be undone. This will also remove this resource from all questions that reference it.`)) {
       return;
     }
 
     try {
+      // Delete the resource from the resources collection
       await deleteDoc(doc(db, 'resources', resource.id));
+      
+      // Remove this resource from all questions that reference it
+      await removeResourceFromQuestions(resource.url);
+      
       clearResourceCache(); // Clear cache after deletion
       fetchData();
+      alert('Resource deleted successfully and removed from all questions.');
     } catch (error) {
       console.error('Error deleting resource:', error);
       alert('Failed to delete resource');
+    }
+  };
+
+  const removeResourceFromQuestions = async (resourceUrl: string) => {
+    try {
+      // Get all questions from Firestore
+      const questionsSnapshot = await getDocs(collection(db, 'questions'));
+      
+      let updatedCount = 0;
+      
+      // Check each question for the resource
+      for (const questionDoc of questionsSnapshot.docs) {
+        const questionData = questionDoc.data();
+        const options = questionData.options || [];
+        
+        let questionModified = false;
+        const updatedOptions = options.map((option: any) => {
+          const resources = option.resources || [];
+          const filteredResources = resources.filter((r: any) => r.url !== resourceUrl);
+          
+          // Check if any resources were removed
+          if (filteredResources.length !== resources.length) {
+            questionModified = true;
+            return { ...option, resources: filteredResources };
+          }
+          return option;
+        });
+        
+        // Update the question if it was modified
+        if (questionModified) {
+          await updateDoc(doc(db, 'questions', questionDoc.id), {
+            options: updatedOptions,
+            updatedAt: Timestamp.now()
+          });
+          updatedCount++;
+        }
+      }
+      
+      if (updatedCount > 0) {
+        console.log(`Resource removed from ${updatedCount} question(s)`);
+      }
+    } catch (error) {
+      console.error('Error removing resource from questions:', error);
+      throw error;
     }
   };
 
