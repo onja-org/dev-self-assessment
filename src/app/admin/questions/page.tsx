@@ -19,6 +19,8 @@ export default function QuestionManagement() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [migratingQuestions, setMigratingQuestions] = useState(false);
 
+  console.log("questions", questions);
+
   useEffect(() => {
     fetchQuestions();
     fetchCategories();
