@@ -298,13 +298,13 @@ export default function ResourcePicker({ categoryId, selectedResources, onResour
 
   const getTypeColor = (type: ResourceType) => {
     const colors: Record<ResourceType, string> = {
-      article: 'bg-blue-100 text-blue-700',
-      video: 'bg-red-100 text-red-700',
-      course: 'bg-green-100 text-green-700',
-      docs: 'bg-purple-100 text-purple-700',
-      github: 'bg-gray-800 text-white',
-      book: 'bg-amber-100 text-amber-700',
-      roadmap: 'bg-pink-100 text-pink-700'
+      article: 'bg-blue-100 !text-blue-700',
+      video: 'bg-red-100 !text-red-700',
+      course: 'bg-green-100 !text-green-700',
+      docs: 'bg-purple-100 !text-purple-700',
+      github: 'bg-gray-800 !text-white',
+      book: 'bg-amber-100 !text-amber-700',
+      roadmap: 'bg-pink-100 !text-pink-700'
     };
     return colors[type] || 'bg-gray-100 text-gray-700';
   };
