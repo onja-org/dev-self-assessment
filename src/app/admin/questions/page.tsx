@@ -392,12 +392,12 @@ export default function QuestionManagement() {
                                 </span>
                               )}
                               <div className="flex-1">
-                                <div className="font-medium text-gray-900 max-w-md truncate">
+                                <div className="font-medium text-gray-900 max-w-md">
                                   {question.title}
                                 </div>
                                 {question.hint && (
                                   <div className="text-sm text-gray-500 mt-1">
-                                    💡 {question.hint.substring(0, 60)}...
+                                    💡 {question.hint}
                                   </div>
                                 )}
                               </div>
