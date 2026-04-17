@@ -18,6 +18,7 @@ export default function QuestionManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [migratingQuestions, setMigratingQuestions] = useState(false);
+  const [syncingCategories, setSyncingCategories] = useState(false);
 
   console.log("questions", questions);
 
@@ -36,11 +37,16 @@ export default function QuestionManagement() {
       // Get existing categories from Firestore
       const categoriesSnapshot = await getDocs(collection(db, 'categories'));
       const existingCategories = new Map(
-        categoriesSnapshot.docs.map(doc => [doc.data().name.toLowerCase().trim(), { id: doc.id, ...doc.data() }])
+        categoriesSnapshot.docs.map(doc => [
+          doc.data().name.toLowerCase().trim(), 
+          { id: doc.id, ...doc.data() }
+        ])
       );
       
       // Add any missing categories
       let currentOrder = existingCategories.size;
+      let addedCount = 0;
+      
       for (const categoryName of questionCategories) {
         const normalizedName = categoryName.toLowerCase().trim();
         if (!existingCategories.has(normalizedName)) {
@@ -51,12 +57,19 @@ export default function QuestionManagement() {
             createdAt: new Date()
           });
           // Update the map to prevent duplicates in same sync operation
-          existingCategories.set(normalizedName, { id: '', ...{ name: categoryName, order: currentOrder } });
+          existingCategories.set(normalizedName, { 
+            id: '', 
+            ...{ name: categoryName, order: currentOrder }
+          });
           currentOrder++;
+          addedCount++;
         }
       }
+      
+      return { total: questionCategories.length, added: addedCount };
     } catch (error) {
       console.error('Error syncing categories:', error);
+      throw error;
     }
   };
 
@@ -224,13 +237,26 @@ export default function QuestionManagement() {
   };
 
   const handleSyncCategories = async () => {
+    setSyncingCategories(true);
     try {
-      await syncCategoriesFromQuestions(questions);
+      // Include both Firestore questions and constant questions for comprehensive sync
+      const allQuestions = [...questions, ...CONSTANT_QUESTIONS.filter(
+        q => !questions.some(fq => fq.id === q.id)
+      )];
+      
+      const result = await syncCategoriesFromQuestions(allQuestions);
       await fetchCategories();
-      alert('Categories synced successfully!');
+      
+      if (result.added > 0) {
+        alert(`Categories synced successfully! ${result.added} new categories added, ${result.total} total categories found.`);
+      } else {
+        alert(`Categories synced successfully! All ${result.total} categories were already in sync.`);
+      }
     } catch (error) {
       console.error('Error syncing categories:', error);
-      alert('Failed to sync categories.');
+      alert('Failed to sync categories. Please try again.');
+    } finally {
+      setSyncingCategories(false);
     }
   };
 
@@ -302,9 +328,10 @@ export default function QuestionManagement() {
                   </button>
                   <button
                     onClick={handleSyncCategories}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium whitespace-nowrap"
+                    disabled={syncingCategories}
+                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    🔄 Sync Categories
+                    {syncingCategories ? '⏳ Syncing...' : '🔄 Sync Categories'}
                   </button>
                   <button
                     onClick={migrateConstantQuestions}

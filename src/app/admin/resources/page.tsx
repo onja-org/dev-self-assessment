@@ -117,6 +117,20 @@ export default function ResourcesPage() {
 
     setIsSubmitting(true);
     try {
+      const normalizedUrl = normalizeUrl(formData.url.trim());
+      
+      // Check for duplicate URL (skip check if editing the same resource)
+      const duplicateResource = resources.find(r => {
+        const isDifferentResource = !editingResource || r.id !== editingResource.id;
+        return isDifferentResource && normalizeUrl(r.url) === normalizedUrl;
+      });
+      
+      if (duplicateResource) {
+        alert(`A resource with this URL already exists:\n"${duplicateResource.title}"\n\nPlease use a different URL or edit the existing resource.`);
+        setIsSubmitting(false);
+        return;
+      }
+
       const resourceData: any = {
         title: formData.title.trim(),
         url: formData.url.trim(),
@@ -215,6 +229,19 @@ export default function ResourcesPage() {
     }
   };
 
+  const normalizeUrl = (url: string): string => {
+    // Remove trailing slashes, query params (optional), and fragments
+    // Convert to lowercase for comparison
+    try {
+      const urlObj = new URL(url);
+      // Keep protocol, hostname, and pathname, normalize by removing trailing slash
+      return `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname.replace(/\/$/, '')}`.toLowerCase();
+    } catch {
+      // If URL parsing fails, just normalize the string
+      return url.trim().toLowerCase().replace(/\/$/, '');
+    }
+  };
+
   const handleSyncQuestionResources = async () => {
     if (!confirm('This will sync all resources from questions to Firestore. Resources with the same URL will not be duplicated. Continue?')) {
       return;
@@ -225,19 +252,30 @@ export default function ResourcesPage() {
       // Extract resources from questions
       const questionResources = extractQuestionResources();
       
-      // Get existing resources to check for duplicates
-      const existingUrls = new Set(resources.map(r => r.url));
+      // Get ALL existing resources from Firestore (not just from state)
+      const existingResourcesSnapshot = await getDocs(collection(db, 'resources'));
+      const existingUrls = new Map<string, string>(); // normalized URL -> original URL
+      
+      existingResourcesSnapshot.docs.forEach(doc => {
+        const url = doc.data().url;
+        const normalized = normalizeUrl(url);
+        existingUrls.set(normalized, url);
+      });
       
       // Create a map of category names to IDs
       const categoryMap = new Map(categories.map(c => [c.name.toLowerCase(), c.id]));
       
       let addedCount = 0;
       let skippedCount = 0;
+      const skippedDetails: string[] = [];
 
       for (const qr of questionResources) {
-        // Skip if URL already exists
-        if (existingUrls.has(qr.url)) {
+        const normalizedUrl = normalizeUrl(qr.url);
+        
+        // Skip if URL already exists (check normalized version)
+        if (existingUrls.has(normalizedUrl)) {
           skippedCount++;
+          skippedDetails.push(`Duplicate: ${qr.title} (${qr.url})`);
           continue;
         }
 
@@ -247,6 +285,7 @@ export default function ResourcesPage() {
         if (!categoryId) {
           console.warn(`No matching category found for "${qr.questionCategory}", skipping resource: ${qr.title}`);
           skippedCount++;
+          skippedDetails.push(`No category: ${qr.title} (category: ${qr.questionCategory})`);
           continue;
         }
 
@@ -262,14 +301,26 @@ export default function ResourcesPage() {
         };
 
         await addDoc(collection(db, 'resources'), resourceData);
+        // Add to our tracking map to prevent duplicates within same sync
+        existingUrls.set(normalizedUrl, qr.url);
         addedCount++;
       }
 
-      alert(`Sync complete!\nAdded: ${addedCount}\nSkipped (duplicates or no category): ${skippedCount}`);
+      // Show detailed results
+      let message = `Sync complete!\n✅ Added: ${addedCount}\n⏭️ Skipped: ${skippedCount}`;
+      
+      if (skippedDetails.length > 0 && skippedDetails.length <= 10) {
+        message += '\n\nSkipped resources:\n' + skippedDetails.slice(0, 10).join('\n');
+      } else if (skippedDetails.length > 10) {
+        message += `\n\nFirst 10 skipped:\n${skippedDetails.slice(0, 10).join('\n')}\n... and ${skippedDetails.length - 10} more`;
+      }
+      
+      alert(message);
+      clearResourceCache(); // Clear cache after sync
       fetchData();
     } catch (error) {
       console.error('Error syncing resources:', error);
-      alert('Failed to sync resources');
+      alert('Failed to sync resources. Check console for details.');
     } finally {
       setIsSyncing(false);
     }

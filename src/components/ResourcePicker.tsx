@@ -142,6 +142,15 @@ export default function ResourcePicker({ categoryId, selectedResources, onResour
     setShowPicker(false);
   };
 
+  const normalizeUrl = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      return `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname.replace(/\/$/, '')}`.toLowerCase();
+    } catch {
+      return url.trim().toLowerCase().replace(/\/$/, '');
+    }
+  };
+
   const handleAddNew = async () => {
     if (!formData.title.trim() || !formData.url.trim()) {
       alert('Title and URL are required');
@@ -150,20 +159,55 @@ export default function ResourcePicker({ categoryId, selectedResources, onResour
 
     setIsSubmitting(true);
     try {
-      // Add to resources collection
+      const normalizedUrl = normalizeUrl(formData.url.trim());
+      
+      // Check for duplicates in existing resources
+      const existingResourcesSnapshot = await getDocs(collection(db, 'resources'));
+      const isDuplicate = existingResourcesSnapshot.docs.some(doc => {
+        const existingUrl = doc.data().url;
+        return normalizeUrl(existingUrl) === normalizedUrl;
+      });
+      
+      if (isDuplicate) {
+        alert('A resource with this URL already exists in the library. Please use "Pick from Library" to select it.');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Check if already in selected resources
+      const alreadySelected = selectedResources.some(r => normalizeUrl(r.url) === normalizedUrl);
+      if (alreadySelected) {
+        alert('This resource is already added to this question.');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Add to resources collection - only include fields with values
       const resourceData: any = {
         title: formData.title.trim(),
         url: formData.url.trim(),
         type: formData.type,
-        description: formData.description.trim() || undefined,
         categoryId: actualCategoryId,
-        tags: formData.tags.trim() ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
-        difficulty: formData.difficulty || undefined,
-        duration: formData.duration.trim() || undefined,
-        author: formData.author.trim() || undefined,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
       };
+      
+      // Only add optional fields if they have values
+      if (formData.description.trim()) {
+        resourceData.description = formData.description.trim();
+      }
+      if (formData.tags.trim()) {
+        resourceData.tags = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
+      }
+      if (formData.difficulty) {
+        resourceData.difficulty = formData.difficulty;
+      }
+      if (formData.duration.trim()) {
+        resourceData.duration = formData.duration.trim();
+      }
+      if (formData.author.trim()) {
+        resourceData.author = formData.author.trim();
+      }
       
       await addDoc(collection(db, 'resources'), resourceData);
 
@@ -333,13 +377,16 @@ export default function ResourcePicker({ categoryId, selectedResources, onResour
         <button
           type="button"
           onClick={() => setShowAddModal(true)}
-          disabled={!categoryId}
+          disabled={!actualCategoryId}
           className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           + Add New Resource
         </button>
       </div>
 
+      {!actualCategoryId && categoryId && (
+        <p className="text-sm text-amber-600">⏳ Loading category...</p>
+      )}
       {!categoryId && (
         <p className="text-sm text-amber-600">Please select a category to add new resources</p>
       )}
