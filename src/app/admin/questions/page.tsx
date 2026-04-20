@@ -332,7 +332,7 @@ export default function QuestionManagement() {
                   >
                     + Add Question
                   </button>
-                  <button
+                  {/* <button
                     onClick={handleSyncCategories}
                     disabled={syncingCategories}
                     className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
@@ -345,7 +345,7 @@ export default function QuestionManagement() {
                     className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium whitespace-nowrap disabled:opacity-50"
                   >
                     {migratingQuestions ? 'Migrating...' : '📥 Migrate Built-in Questions'}
-                  </button>
+                  </button> */}
                 </div>
                 <p className="text-xs text-gray-600">
                   💡 Categories are auto-synced from questions. Use "Sync Categories" to manually update or manage them in the <Link href="/admin/categories" className="text-blue-600 hover:underline">Categories</Link> tab.
@@ -388,15 +388,6 @@ export default function QuestionManagement() {
                         <tr key={question.id} className="hover:bg-gray-50">
                           <td className="px-4 py-4">
                             <div className="flex items-start gap-2">
-                              {isEditable ? (
-                                <span className="inline-block px-2 py-1 text-xs font-medium text-green-600 bg-green-100 rounded mt-1">
-                                  Editable
-                                </span>
-                              ) : (
-                                <span className="inline-block px-2 py-1 text-xs font-medium text-orange-600 bg-orange-100 rounded mt-1">
-                                  Read-only
-                                </span>
-                              )}
                               <div className="flex-1">
                                 <div className="font-medium text-gray-900 max-w-md">
                                   {question.title}
