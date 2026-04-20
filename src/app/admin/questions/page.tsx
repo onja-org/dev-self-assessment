@@ -20,8 +20,6 @@ export default function QuestionManagement() {
   const [migratingQuestions, setMigratingQuestions] = useState(false);
   const [syncingCategories, setSyncingCategories] = useState(false);
 
-  console.log("questions", questions);
-
   useEffect(() => {
     fetchQuestions();
     fetchCategories();
