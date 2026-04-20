@@ -194,12 +194,20 @@ export default function QuestionManagement() {
     }
   };
 
-  const filteredQuestions = questions.filter(q => {
-    const matchesSearch = q.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         q.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || q.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredQuestions = questions
+    .filter(q => {
+      const matchesSearch = q.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           q.category.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = categoryFilter === 'all' || q.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      // Sort by category first
+      const categoryCompare = a.category.localeCompare(b.category);
+      if (categoryCompare !== 0) return categoryCompare;
+      // Then by title within the same category
+      return a.title.localeCompare(b.title);
+    });
 
   const migrateConstantQuestions = async () => {
     setMigratingQuestions(true);

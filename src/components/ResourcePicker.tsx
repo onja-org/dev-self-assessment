@@ -768,7 +768,7 @@ export default function ResourcePicker({ categoryId, selectedResources, onResour
                     />
                   </div>
                 </div>
-
+https://support.google.com/accounts?hl=en-GB&p=account_iph
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Author
